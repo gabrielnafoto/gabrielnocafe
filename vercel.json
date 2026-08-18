@@ -2,7 +2,6 @@
   "version": 2,
   "routes": [
     { "src": "/api/data", "dest": "/api/data.js" },
-    { "src": "/admin", "dest": "/public/admin.html" },
-    { "src": "/", "dest": "/public/index.html" }
+    { "src": "/admin", "dest": "/admin.html" }
   ]
 }
