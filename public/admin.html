@@ -172,8 +172,13 @@
     <!-- PERFIL & SITE -->
     <div id="tab-perfil" style="display:none">
 
-      <div style="font-size:15px;font-weight:600;margin-bottom:4px">Perfil público</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Campos marcados com <span style="color:var(--red)">EN</span> são a versão em inglês.</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px">
+        <div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Perfil público</div>
+          <div style="font-size:12px;color:var(--muted)">Campos marcados com <span style="color:var(--red)">EN</span> são a versão em inglês.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="translate-profile-btn" onclick="translateProfileSite(this)">🌐 Traduzir PT→EN</button>
+      </div>
 
       <div class="row">
         <div class="field"><label>nome</label><input type="text" id="p-name" placeholder="Seu Nome" /></div>
@@ -279,6 +284,61 @@ async function saveAll() {
 function v(id) { return document.getElementById(id)?.value || ''; }
 function set(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; }
 
+async function translateText(text) {
+  if (!text || !text.trim()) return '';
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=pt|en`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('translate failed');
+  const json = await res.json();
+  const translated = json?.responseData?.translatedText;
+  if (!translated || json.responseStatus !== 200) throw new Error('translate failed');
+  return translated;
+}
+
+async function withTranslateButton(btn, fn) {
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Traduzindo…';
+  try {
+    await fn();
+    showToast('Traduzido ✓', false);
+  } catch {
+    showToast('Erro ao traduzir', true);
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+  }
+}
+
+function translateProfileSite(btn) {
+  withTranslateButton(btn, async () => {
+    const pairs = [['p-bio', 'p-bio-en'], ['s-title', 's-title-en'], ['s-headline', 's-headline-en'], ['s-subheadline', 's-subheadline-en'], ['s-affiliate', 's-affiliate-en']];
+    for (const [ptId, enId] of pairs) {
+      const ptVal = v(ptId);
+      if (ptVal) set(enId, await translateText(ptVal));
+    }
+  });
+}
+
+function translateSection(btn) {
+  withTranslateButton(btn, async () => {
+    const card = btn.closest('.section-card');
+    const ptInput = card.querySelector('.sec-title');
+    const enInput = card.querySelector('.sec-title-en');
+    if (ptInput.value) enInput.value = await translateText(ptInput.value);
+  });
+}
+
+function translateItem(btn) {
+  withTranslateButton(btn, async () => {
+    const row = btn.closest('.item-row');
+    const pairs = [['.i-label', '.i-label-en'], ['.i-name', '.i-name-en'], ['.i-desc', '.i-desc-en']];
+    for (const [ptSel, enSel] of pairs) {
+      const ptEl = row.querySelector(ptSel);
+      const enEl = row.querySelector(enSel);
+      if (ptEl.value) enEl.value = await translateText(ptEl.value);
+    }
+  });
+}
+
 function renderAll() {
   if (!data) return;
   const p = data.profile || {};
@@ -340,6 +400,7 @@ function buildSectionCard(sec, si) {
         <div class="field"><label>Título — PT</label><input type="text" class="sec-title" value="${sec.title||''}" placeholder="Moer" oninput="updateSecHeader(this)" /></div>
         <div class="field"><label>Título — <span style="color:var(--red)">EN</span></label><input type="text" class="sec-title-en" value="${sec.title_en||''}" placeholder="Grind" /></div>
       </div>
+      <div style="margin-bottom:16px"><button class="btn btn-ghost btn-sm" onclick="translateSection(this)">🌐 Traduzir seção PT→EN</button></div>
       <div class="field" style="margin-bottom:20px">
         <label>Layout</label>
         <select class="sec-type">
@@ -373,9 +434,12 @@ function buildItemRow(item) {
       <div class="item-row-name">${item.name || 'Novo item'}</div>
       <button class="btn btn-danger btn-sm" onclick="if(confirm('Remover?')){const c=this.closest('.section-card');this.closest('.item-row').remove();c.querySelector('.section-card-meta').textContent=c.querySelectorAll('.item-row').length+' item(s)'}">Remover</button>
     </div>
-    <div class="lang-tabs">
-      <button class="lang-tab active" onclick="switchLangTab(this,'pt')">🇧🇷 Português</button>
-      <button class="lang-tab" onclick="switchLangTab(this,'en')">🇺🇸 English</button>
+    <div class="lang-tabs" style="justify-content:space-between;align-items:center">
+      <div style="display:flex">
+        <button class="lang-tab active" onclick="switchLangTab(this,'pt')">🇧🇷 Português</button>
+        <button class="lang-tab" onclick="switchLangTab(this,'en')">🇺🇸 English</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-bottom:6px" onclick="translateItem(this)">🌐 Traduzir PT→EN</button>
     </div>
     <div class="lang-panel active" data-lang="pt">
       <div class="row">
