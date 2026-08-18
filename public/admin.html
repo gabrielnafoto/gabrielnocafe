@@ -118,6 +118,20 @@
     .hint { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
     hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
+    /* BLOCK CARD — visually separates groups in Perfil & Site */
+    .block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 22px 24px; margin-bottom: 20px; }
+    .block-card.c-profile { border-left: 4px solid #4c8bf5; }
+    .block-card.c-site { border-left: 4px solid var(--red); }
+    .block-card.c-affiliate { border-left: 4px solid var(--success); }
+    .block-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .block-header-left { display: flex; align-items: center; gap: 10px; }
+    .block-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .c-profile .block-icon { background: rgba(76,139,245,.15); }
+    .c-site .block-icon { background: #1a0500; }
+    .c-affiliate .block-icon { background: #0a1f12; }
+    .block-title-wrap .block-title { font-size: 15px; font-weight: 700; }
+    .block-title-wrap .block-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
     @media (max-width: 600px) {
       .container { padding: 16px; }
       .topbar { padding: 12px 16px; }
@@ -172,60 +186,81 @@
     <!-- PERFIL & SITE -->
     <div id="tab-perfil" style="display:none">
 
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px">
-        <div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Perfil público</div>
-          <div style="font-size:12px;color:var(--muted)">Campos marcados com <span style="color:var(--red)">EN</span> são a versão em inglês.</div>
+      <div class="block-card c-profile">
+        <div class="block-header">
+          <div class="block-header-left">
+            <div class="block-icon">👤</div>
+            <div class="block-title-wrap">
+              <div class="block-title">Perfil público</div>
+              <div class="block-desc">Campos marcados com <span style="color:var(--red)">EN</span> são a versão em inglês.</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="translate-profile-btn" onclick="translateProfileSite(this)">🌐 Traduzir PT→EN</button>
         </div>
-        <button class="btn btn-ghost btn-sm" id="translate-profile-btn" onclick="translateProfileSite(this)">🌐 Traduzir PT→EN</button>
+
+        <div class="row">
+          <div class="field"><label>nome</label><input type="text" id="p-name" placeholder="Seu Nome" /></div>
+          <div class="field"><label>handle</label><input type="text" id="p-handle" placeholder="@seuhandle" /></div>
+        </div>
+        <div class="field">
+          <label>URL da foto de perfil</label>
+          <input type="url" id="p-photo" placeholder="https://.../sua-foto.jpg" />
+          <p class="hint">Cole o link de uma imagem já hospedada (ex: arquivo em /profile.jpg no site, ou qualquer URL pública). Deixe vazio pra usar as iniciais do nome.</p>
+        </div>
+        <div class="row">
+          <div class="field"><label>bio — PT</label><input type="text" id="p-bio" placeholder="Barista em casa" /></div>
+          <div class="field"><label>bio — <span style="color:var(--red)">EN</span></label><input type="text" id="p-bio-en" placeholder="Home barista" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>instagram</label><input type="url" id="p-instagram" placeholder="https://instagram.com/..." /></div>
+          <div class="field"><label>youtube</label><input type="url" id="p-youtube" placeholder="https://youtube.com/..." /></div>
+        </div>
+        <div class="field" style="margin-bottom:0"><label>twitter / x</label><input type="url" id="p-twitter" placeholder="https://x.com/..." /></div>
       </div>
 
-      <div class="row">
-        <div class="field"><label>nome</label><input type="text" id="p-name" placeholder="Seu Nome" /></div>
-        <div class="field"><label>handle</label><input type="text" id="p-handle" placeholder="@seuhandle" /></div>
-      </div>
-      <div class="field">
-        <label>URL da foto de perfil</label>
-        <input type="url" id="p-photo" placeholder="https://.../sua-foto.jpg" />
-        <p class="hint">Cole o link de uma imagem já hospedada (ex: arquivo em /profile.jpg no site, ou qualquer URL pública). Deixe vazio pra usar as iniciais do nome.</p>
-      </div>
-      <div class="row">
-        <div class="field"><label>bio — PT</label><input type="text" id="p-bio" placeholder="Barista em casa" /></div>
-        <div class="field"><label>bio — <span style="color:var(--red)">EN</span></label><input type="text" id="p-bio-en" placeholder="Home barista" /></div>
-      </div>
-      <div class="row">
-        <div class="field"><label>instagram</label><input type="url" id="p-instagram" placeholder="https://instagram.com/..." /></div>
-        <div class="field"><label>youtube</label><input type="url" id="p-youtube" placeholder="https://youtube.com/..." /></div>
-      </div>
-      <div class="field"><label>twitter / x</label><input type="url" id="p-twitter" placeholder="https://x.com/..." /></div>
+      <div class="block-card c-site">
+        <div class="block-header">
+          <div class="block-header-left">
+            <div class="block-icon">✎</div>
+            <div class="block-title-wrap">
+              <div class="block-title">Textos do site</div>
+              <div class="block-desc">Título, headline e subtítulo que aparecem no topo da página.</div>
+            </div>
+          </div>
+        </div>
 
-      <hr />
-      <div style="font-size:15px;font-weight:600;margin-bottom:20px">Textos do site</div>
-
-      <div class="row">
-        <div class="field"><label>título — PT</label><input type="text" id="s-title" placeholder="setup de café" /></div>
-        <div class="field"><label>título — <span style="color:var(--red)">EN</span></label><input type="text" id="s-title-en" placeholder="coffee setup" /></div>
-      </div>
-      <div class="row">
-        <div class="field"><label>headline — PT</label><input type="text" id="s-headline" placeholder="o que eu uso." /><p class="hint">Última palavra fica em destaque.</p></div>
-        <div class="field"><label>headline — <span style="color:var(--red)">EN</span></label><input type="text" id="s-headline-en" placeholder="what i use." /></div>
-      </div>
-      <div class="row">
-        <div class="field"><label>subtítulo — PT</label><textarea id="s-subheadline" placeholder="Cada equipamento..."></textarea></div>
-        <div class="field"><label>subtítulo — <span style="color:var(--red)">EN</span></label><textarea id="s-subheadline-en" placeholder="Every piece of gear..."></textarea></div>
-      </div>
-
-      <hr />
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:15px;font-weight:600">Nota de afiliado</div>
-        <div class="toggle-wrap">
-          <div class="toggle" id="affiliate-toggle" onclick="this.classList.toggle('on');document.getElementById('aff-label').textContent=this.classList.contains('on')?'ativada':'desativada'"></div>
-          <span class="toggle-label" id="aff-label">desativada</span>
+        <div class="row">
+          <div class="field"><label>título — PT</label><input type="text" id="s-title" placeholder="setup de café" /></div>
+          <div class="field"><label>título — <span style="color:var(--red)">EN</span></label><input type="text" id="s-title-en" placeholder="coffee setup" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>headline — PT</label><input type="text" id="s-headline" placeholder="o que eu uso." /><p class="hint">Última palavra fica em destaque.</p></div>
+          <div class="field"><label>headline — <span style="color:var(--red)">EN</span></label><input type="text" id="s-headline-en" placeholder="what i use." /></div>
+        </div>
+        <div class="row">
+          <div class="field" style="margin-bottom:0"><label>subtítulo — PT</label><textarea id="s-subheadline" placeholder="Cada equipamento..."></textarea></div>
+          <div class="field" style="margin-bottom:0"><label>subtítulo — <span style="color:var(--red)">EN</span></label><textarea id="s-subheadline-en" placeholder="Every piece of gear..."></textarea></div>
         </div>
       </div>
-      <div class="row">
-        <div class="field"><label>texto afiliado — PT</label><textarea id="s-affiliate" placeholder="Alguns links são de afiliado..."></textarea></div>
-        <div class="field"><label>texto afiliado — <span style="color:var(--red)">EN</span></label><textarea id="s-affiliate-en" placeholder="Some links are affiliate links..."></textarea></div>
+
+      <div class="block-card c-affiliate">
+        <div class="block-header">
+          <div class="block-header-left">
+            <div class="block-icon">🔗</div>
+            <div class="block-title-wrap">
+              <div class="block-title">Nota de afiliado</div>
+              <div class="block-desc">Aviso mostrado no rodapé do site, se ativado.</div>
+            </div>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle" id="affiliate-toggle" onclick="this.classList.toggle('on');document.getElementById('aff-label').textContent=this.classList.contains('on')?'ativada':'desativada'"></div>
+            <span class="toggle-label" id="aff-label">desativada</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field" style="margin-bottom:0"><label>texto afiliado — PT</label><textarea id="s-affiliate" placeholder="Alguns links são de afiliado..."></textarea></div>
+          <div class="field" style="margin-bottom:0"><label>texto afiliado — <span style="color:var(--red)">EN</span></label><textarea id="s-affiliate-en" placeholder="Some links are affiliate links..."></textarea></div>
+        </div>
       </div>
     </div>
   </div>
