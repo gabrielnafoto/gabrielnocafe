@@ -176,7 +176,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
           <div style="font-size:16px;font-weight:600">Seções e itens</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">Cada seção pode ter layout lista ou grid. Clique para expandir.</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Cada seção vira um grupo de equipamentos (ex: Espresso, Filter). Clique para expandir.</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="addSection()">+ Nova seção</button>
       </div>
@@ -208,8 +208,16 @@
           <p class="hint">Cole o link de uma imagem já hospedada (ex: arquivo em /profile.jpg no site, ou qualquer URL pública). Deixe vazio pra usar as iniciais do nome.</p>
         </div>
         <div class="row">
-          <div class="field"><label>bio — PT</label><input type="text" id="p-bio" placeholder="Barista em casa" /></div>
-          <div class="field"><label>bio — <span style="color:var(--red)">EN</span></label><input type="text" id="p-bio-en" placeholder="Home barista" /></div>
+          <div class="field"><label>função / papel — PT</label><input type="text" id="p-role" placeholder="Fotógrafo, filmmaker & coffee creator" /><p class="hint">Aparece ao lado do nome no topo.</p></div>
+          <div class="field"><label>função / papel — <span style="color:var(--red)">EN</span></label><input type="text" id="p-role-en" placeholder="Photographer, filmmaker & coffee creator" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>bio curta — PT</label><input type="text" id="p-bio" placeholder="Barista em casa" /></div>
+          <div class="field"><label>bio curta — <span style="color:var(--red)">EN</span></label><input type="text" id="p-bio-en" placeholder="Home barista" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>introdução — PT</label><textarea id="p-intro" placeholder="Eu sou Gabriel — fotógrafo, filmmaker e..."></textarea><p class="hint">Parágrafo curto mostrado no topo e na seção "About".</p></div>
+          <div class="field"><label>introdução — <span style="color:var(--red)">EN</span></label><textarea id="p-intro-en" placeholder="I'm Gabriel — a photographer, filmmaker..."></textarea></div>
         </div>
         <div class="row">
           <div class="field"><label>instagram</label><input type="url" id="p-instagram" placeholder="https://instagram.com/..." /></div>
@@ -230,8 +238,12 @@
         </div>
 
         <div class="row">
-          <div class="field"><label>título — PT</label><input type="text" id="s-title" placeholder="setup de café" /></div>
-          <div class="field"><label>título — <span style="color:var(--red)">EN</span></label><input type="text" id="s-title-en" placeholder="coffee setup" /></div>
+          <div class="field"><label>título — PT</label><input type="text" id="s-title" placeholder="gabriel no café" /></div>
+          <div class="field"><label>título — <span style="color:var(--red)">EN</span></label><input type="text" id="s-title-en" placeholder="gabriel no café" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>tagline — PT</label><input type="text" id="s-tagline" placeholder="café, criatividade e as coisas que eu uso." /><p class="hint">Linha pequena no badge do topo.</p></div>
+          <div class="field"><label>tagline — <span style="color:var(--red)">EN</span></label><input type="text" id="s-tagline-en" placeholder="coffee, creativity & things I use." /></div>
         </div>
         <div class="row">
           <div class="field"><label>headline — PT</label><input type="text" id="s-headline" placeholder="o que eu uso." /><p class="hint">Última palavra fica em destaque.</p></div>
@@ -350,7 +362,11 @@ async function withTranslateButton(btn, fn) {
 
 function translateProfileSite(btn) {
   withTranslateButton(btn, async () => {
-    const pairs = [['p-bio', 'p-bio-en'], ['s-title', 's-title-en'], ['s-headline', 's-headline-en'], ['s-subheadline', 's-subheadline-en'], ['s-affiliate', 's-affiliate-en']];
+    const pairs = [
+      ['p-role', 'p-role-en'], ['p-bio', 'p-bio-en'], ['p-intro', 'p-intro-en'],
+      ['s-title', 's-title-en'], ['s-tagline', 's-tagline-en'], ['s-headline', 's-headline-en'],
+      ['s-subheadline', 's-subheadline-en'], ['s-affiliate', 's-affiliate-en'],
+    ];
     for (const [ptId, enId] of pairs) {
       const ptVal = v(ptId);
       if (ptVal) set(enId, await translateText(ptVal));
@@ -384,9 +400,12 @@ function renderAll() {
   const p = data.profile || {};
   const s = data.site || {};
   set('p-name', p.name); set('p-handle', p.handle); set('p-photo', p.photo);
+  set('p-role', p.role); set('p-role-en', p.role_en);
   set('p-bio', p.bio); set('p-bio-en', p.bio_en);
+  set('p-intro', p.intro); set('p-intro-en', p.intro_en);
   set('p-instagram', p.instagram); set('p-youtube', p.youtube); set('p-twitter', p.twitter);
   set('s-title', s.title); set('s-title-en', s.title_en);
+  set('s-tagline', s.tagline); set('s-tagline-en', s.tagline_en);
   set('s-headline', s.headline); set('s-headline-en', s.headline_en);
   set('s-subheadline', s.subheadline); set('s-subheadline-en', s.subheadline_en);
   set('s-affiliate', s.affiliateNote); set('s-affiliate-en', s.affiliateNote_en);
@@ -400,11 +419,14 @@ function getFormData() {
   return {
     profile: {
       name: v('p-name'), handle: v('p-handle'), photo: v('p-photo'),
+      role: v('p-role'), role_en: v('p-role-en'),
       bio: v('p-bio'), bio_en: v('p-bio-en'),
+      intro: v('p-intro'), intro_en: v('p-intro-en'),
       instagram: v('p-instagram'), youtube: v('p-youtube'), twitter: v('p-twitter'),
     },
     site: {
       title: v('s-title'), title_en: v('s-title-en'),
+      tagline: v('s-tagline'), tagline_en: v('s-tagline-en'),
       headline: v('s-headline'), headline_en: v('s-headline-en'),
       subheadline: v('s-subheadline'), subheadline_en: v('s-subheadline-en'),
       affiliateNote: v('s-affiliate'), affiliateNote_en: v('s-affiliate-en'),
@@ -422,11 +444,16 @@ function renderSections() {
   (data.sections || []).forEach((sec, si) => list.appendChild(buildSectionCard(sec, si)));
 }
 
+const CATEGORY_OPTIONS = [
+  ['espresso', 'Espresso'], ['filter', 'Filter'], ['latte-art', 'Latte Art'], ['apps', 'Apps'], ['other', 'Outro'],
+];
+
 function buildSectionCard(sec, si) {
   const card = document.createElement('div');
   card.className = 'section-card';
   card.dataset.id = sec.id;
-  const isGrid = sec.type === 'grid';
+  const category = sec.category || 'other';
+  const group = sec.group || 'setup';
   card.innerHTML = `
     <div class="section-card-header" onclick="this.closest('.section-card').classList.toggle('open')">
       <span class="section-num-badge">${sec.number || String(si+1).padStart(2,'0')}</span>
@@ -441,12 +468,21 @@ function buildSectionCard(sec, si) {
         <div class="field"><label>Título — <span style="color:var(--red)">EN</span></label><input type="text" class="sec-title-en" value="${sec.title_en||''}" placeholder="Grind" /></div>
       </div>
       <div style="margin-bottom:16px"><button class="btn btn-ghost btn-sm" onclick="translateSection(this)">🌐 Traduzir seção PT→EN</button></div>
-      <div class="field" style="margin-bottom:20px">
-        <label>Layout</label>
-        <select class="sec-type">
-          <option value="list" ${!isGrid?'selected':''}>Lista (com descrição)</option>
-          <option value="grid" ${isGrid?'selected':''}>Grid (apps/serviços)</option>
-        </select>
+      <div class="row" style="margin-bottom:20px">
+        <div class="field">
+          <label>Categoria</label>
+          <select class="sec-category">
+            ${CATEGORY_OPTIONS.map(([v,l]) => `<option value="${v}" ${category===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+          <p class="hint">Usada nos filtros de "My Setup".</p>
+        </div>
+        <div class="field">
+          <label>Grupo</label>
+          <select class="sec-group">
+            <option value="setup" ${group==='setup'?'selected':''}>My Setup (faz parte da rotina)</option>
+            <option value="other" ${group==='other'?'selected':''}>Other things I like (já testei/gostei)</option>
+          </select>
+        </div>
       </div>
       <div class="items-container"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
@@ -497,11 +533,20 @@ function buildItemRow(item) {
     </div>
     <div class="row" style="margin-top:12px">
       <div class="field"><label>URL do link</label><input type="url" class="i-url" value="${item.url||''}" placeholder="https://..." /></div>
-      <div class="field" style="display:flex;align-items:flex-end;padding-bottom:1px">
-        <div class="toggle-wrap">
-          <div class="toggle ${item.affilliate?'on':''}" onclick="this.classList.toggle('on')"></div>
-          <span class="toggle-label">Link de afiliado</span>
-        </div>
+      <div class="field"><label>URL da imagem (opcional)</label><input type="url" class="i-image" value="${item.image||''}" placeholder="https://..." /></div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px">
+      <div class="toggle-wrap">
+        <div class="toggle ${item.affilliate?'on':''}" onclick="this.classList.toggle('on')"></div>
+        <span class="toggle-label">Link de afiliado</span>
+      </div>
+      <div class="toggle-wrap">
+        <div class="toggle i-daily ${item.dailyUse?'on':''}" onclick="this.classList.toggle('on')"></div>
+        <span class="toggle-label">Uso todos os dias (aparece em destaque)</span>
+      </div>
+      <div class="toggle-wrap">
+        <div class="toggle i-videos ${item.seenInVideos?'on':''}" onclick="this.classList.toggle('on')"></div>
+        <span class="toggle-label">Aparece em "seen in my videos"</span>
       </div>
     </div>`;
   return row;
@@ -517,7 +562,7 @@ function switchLangTab(btn, lang) {
 
 function addSection() {
   if (!data.sections) data.sections = [];
-  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', type: 'list', items: [] };
+  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', category: 'other', group: 'setup', items: [] };
   data.sections.push(sec);
   const card = buildSectionCard(sec, data.sections.length-1);
   card.classList.add('open');
@@ -525,7 +570,7 @@ function addSection() {
 }
 
 function addItem(btn) {
-  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', affilliate:false };
+  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', image:'', affilliate:false, dailyUse:false, seenInVideos:false };
   const container = btn.closest('.section-body').querySelector('.items-container');
   container.appendChild(buildItemRow(item));
   const card = btn.closest('.section-card');
@@ -538,7 +583,8 @@ function collectSections() {
     number: card.querySelector('.sec-number').value,
     title: card.querySelector('.sec-title').value,
     title_en: card.querySelector('.sec-title-en').value,
-    type: card.querySelector('.sec-type').value,
+    category: card.querySelector('.sec-category').value,
+    group: card.querySelector('.sec-group').value,
     items: [...card.querySelectorAll('.item-row')].map(row => ({
       id: row.dataset.id,
       label: row.querySelector('.i-label').value,
@@ -548,7 +594,10 @@ function collectSections() {
       description: row.querySelector('.i-desc').value,
       description_en: row.querySelector('.i-desc-en').value,
       url: row.querySelector('.i-url').value,
-      affilliate: row.querySelector('.toggle').classList.contains('on'),
+      image: row.querySelector('.i-image').value,
+      affilliate: row.querySelector('.toggle:not(.i-daily):not(.i-videos)').classList.contains('on'),
+      dailyUse: row.querySelector('.i-daily').classList.contains('on'),
+      seenInVideos: row.querySelector('.i-videos').classList.contains('on'),
     })),
   }));
 }
