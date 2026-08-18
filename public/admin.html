@@ -444,15 +444,11 @@ function renderSections() {
   (data.sections || []).forEach((sec, si) => list.appendChild(buildSectionCard(sec, si)));
 }
 
-const CATEGORY_OPTIONS = [
-  ['espresso', 'Espresso'], ['filter', 'Filter'], ['latte-art', 'Latte Art'], ['apps', 'Apps'], ['other', 'Outro'],
-];
-
 function buildSectionCard(sec, si) {
   const card = document.createElement('div');
   card.className = 'section-card';
   card.dataset.id = sec.id;
-  const category = sec.category || 'other';
+  const category = sec.category || '';
   const group = sec.group || 'setup';
   card.innerHTML = `
     <div class="section-card-header" onclick="this.closest('.section-card').classList.toggle('open')">
@@ -471,10 +467,8 @@ function buildSectionCard(sec, si) {
       <div class="row" style="margin-bottom:20px">
         <div class="field">
           <label>Categoria</label>
-          <select class="sec-category">
-            ${CATEGORY_OPTIONS.map(([v,l]) => `<option value="${v}" ${category===v?'selected':''}>${l}</option>`).join('')}
-          </select>
-          <p class="hint">Usada nos filtros de "My Setup".</p>
+          <input type="text" class="sec-category" value="${category}" placeholder="ex: moedores, espresso, balanças" />
+          <p class="hint">Usada nos filtros e na cor da seção em "My Setup". Use suas próprias palavras — seções com a mesma categoria ganham a mesma cor.</p>
         </div>
         <div class="field">
           <label>Grupo</label>
@@ -562,7 +556,7 @@ function switchLangTab(btn, lang) {
 
 function addSection() {
   if (!data.sections) data.sections = [];
-  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', category: 'other', group: 'setup', items: [] };
+  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', category: '', group: 'setup', items: [] };
   data.sections.push(sec);
   const card = buildSectionCard(sec, data.sections.length-1);
   card.classList.add('open');

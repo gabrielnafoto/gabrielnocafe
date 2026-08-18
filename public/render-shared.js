@@ -14,11 +14,25 @@
     en: { buy: "view product ↗", copyLink: "copy link", copied: "link copied", inSetup: "in setup", tried: "tried it", setupTitle: "My Setup", setupDesc: "Things that are really part of my routine.", otherTitle: "Other things I like", otherDesc: "Products I've tried or liked, but that aren't necessarily part of my current setup.", featuredTitle: "things I use every day", videosTitle: "seen in my videos", videosDesc: "some of the things you always ask about in my videos.", aboutTitle: "about", navSetup: "setup", navRecipes: "recipes", navFavorites: "favorites", navAbout: "about", soon: "coming soon", filterAll: "all", menu: "menu" },
   };
 
-  const CATEGORY_ACCENTS = { espresso: "#e8a856", filter: "#d97a4a", "latte-art": "#c9a63f", apps: "#e0916b", other: "#8a7a68" };
+  // Known slugs keep their designed color; anything else (including free-text
+  // categories typed in the admin, or legacy sections with no category at
+  // all) still gets a distinct, consistent color instead of collapsing to grey.
+  const CATEGORY_ACCENTS = { espresso: "#e8a856", filter: "#d97a4a", "latte-art": "#c9a63f", apps: "#e0916b" };
   const CATEGORY_LABELS = {
-    pt: { espresso: "Espresso", filter: "Filter", "latte-art": "Latte Art", apps: "Apps", other: "Outros" },
-    en: { espresso: "Espresso", filter: "Filter", "latte-art": "Latte Art", apps: "Apps", other: "Other" },
+    pt: { espresso: "Espresso", filter: "Filter", "latte-art": "Latte Art", apps: "Apps" },
+    en: { espresso: "Espresso", filter: "Filter", "latte-art": "Latte Art", apps: "Apps" },
   };
+  const FALLBACK_ACCENTS = ["#e8a856", "#d97a4a", "#c9a63f", "#e0916b", "#b98a52", "#cf9a5f"];
+
+  function hashIndex(str, len) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h % len;
+  }
+
+  function titleCase(str) {
+    return String(str).replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
 
   function t(lang, key) { return (I18N[lang] || I18N.pt)[key] || ""; }
 
@@ -36,7 +50,22 @@
     return (name || "S").split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   }
 
-  function accentFor(category) { return CATEGORY_ACCENTS[category] || CATEGORY_ACCENTS.other; }
+  function accentFor(category) {
+    if (!category) return null;
+    return CATEGORY_ACCENTS[category] || FALLBACK_ACCENTS[hashIndex(category, FALLBACK_ACCENTS.length)];
+  }
+
+  function categoryLabel(category, lang) {
+    return (CATEGORY_LABELS[lang] || CATEGORY_LABELS.pt)[category] || titleCase(category);
+  }
+
+  // Sections with an explicit category get a color tied to that category
+  // (stable across renders). Sections without one (legacy data, or simply
+  // not filled in yet) still get a distinct color by cycling the same warm
+  // palette based on position, so the page never looks flat.
+  function accentForSection(sec, index) {
+    return accentFor(sec.category) || FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length];
+  }
 
   function renderItemCard(item, lang, isOther) {
     const label = f(item, "label", lang);
@@ -60,10 +89,10 @@
     </article>`;
   }
 
-  function renderSection(sec, lang, isOther) {
-    const accent = isOther ? "var(--dim)" : accentFor(sec.category);
+  function renderSection(sec, lang, isOther, index) {
+    const accent = isOther ? "var(--dim)" : accentForSection(sec, index);
     const items = (sec.items || []).map((i) => renderItemCard(i, lang, isOther)).join("");
-    return `<div class="section" style="--accent:${accent}" data-category="${escapeHtml(sec.category || "other")}">
+    return `<div class="section" style="--accent:${accent}" data-category="${escapeHtml(sec.category || sec.id || "")}">
       <div class="section-head">
         <div class="section-num">${escapeHtml(sec.number || "")}</div>
         <h3 class="section-title">${escapeHtml(f(sec, "title", lang))}</h3>
@@ -106,7 +135,7 @@
     const cats = [...new Set(setupSections.map((s) => s.category).filter(Boolean))];
     if (cats.length < 2) return "";
     const chips = [`<button class="chip active" data-filter="all">${escapeHtml(t(lang, "filterAll"))}</button>`]
-      .concat(cats.map((c) => `<button class="chip" data-filter="${escapeHtml(c)}"><span class="chip-dot" style="background:${accentFor(c)}"></span>${escapeHtml((CATEGORY_LABELS[lang] || CATEGORY_LABELS.pt)[c] || c)}</button>`));
+      .concat(cats.map((c) => `<button class="chip" data-filter="${escapeHtml(c)}"><span class="chip-dot" style="background:${accentFor(c)}"></span>${escapeHtml(categoryLabel(c, lang))}</button>`));
     return `<div class="filters" role="tablist" aria-label="filtrar equipamentos">${chips.join("")}</div>`;
   }
 
@@ -119,7 +148,7 @@
         <p>${escapeHtml(t(lang, "setupDesc"))}</p>
       </div>
       ${renderFilters(sections, lang)}
-      ${setupSections.map((s) => renderSection(s, lang, false)).join("")}
+      ${setupSections.map((s, i) => renderSection(s, lang, false, i)).join("")}
     </section>`;
   }
 
