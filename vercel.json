@@ -6,6 +6,6 @@
     { "src": "/", "dest": "/public/index.html" }
   ],
   "env": {
-    "ADMIN_PASSWORD": "@admin-password"
+    "ADMIN_PASSWORD": "Billecco@2121"
   }
 }
