@@ -25,6 +25,7 @@ module.exports = async function handler(req, res) {
   const dataJson = JSON.stringify(data).replace(/</g, "\\u003c");
 
   const navHtml = `
+<div class="nav-wrap">
 <header class="nav" id="site-nav">
   <a class="brand-mark" href="/">
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 0 L11.5 8 L20 10 L11.5 12 L10 20 L8.5 12 L0 10 L8.5 8 Z" fill="#e8a856"/></svg>
@@ -44,7 +45,8 @@ module.exports = async function handler(req, res) {
     </div>
     <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav-links" aria-label="menu">☰</button>
   </div>
-</header>`;
+</header>
+</div>`;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");

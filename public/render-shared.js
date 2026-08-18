@@ -83,8 +83,8 @@
         ${desc ? `<p class="item-desc">${escapeHtml(desc)}</p>` : ""}
       </div>
       <div class="item-actions">
-        ${url ? `<a href="${escapeHtml(url)}" class="btn-main" target="_blank" rel="noopener sponsored">${t(lang, "buy")}</a>` : ""}
-        ${url ? `<button class="btn-copy" data-copy="${escapeHtml(url)}">${t(lang, "copyLink")}</button>` : ""}
+        ${url ? `<a href="${escapeHtml(url)}" class="cta-link" target="_blank" rel="noopener sponsored">${t(lang, "buy")}</a>` : ""}
+        ${url ? `<span class="action-sep" aria-hidden="true">·</span><button class="btn-copy" data-copy="${escapeHtml(url)}">${t(lang, "copyLink")}</button>` : ""}
       </div>
     </article>`;
   }
@@ -92,11 +92,17 @@
   function renderSection(sec, lang, isOther, index) {
     const accent = isOther ? "var(--dim)" : accentForSection(sec, index);
     const items = (sec.items || []).map((i) => renderItemCard(i, lang, isOther)).join("");
+    // Optional editorial photo slot — only renders when a real image is set
+    // (nothing invented, no placeholder box shown when empty).
+    const photo = sec.image
+      ? `<div class="section-photo"><img src="${escapeHtml(sec.image)}" alt="" loading="lazy" /></div>`
+      : "";
     return `<div class="section" style="--accent:${accent}" data-category="${escapeHtml(sec.category || sec.id || "")}">
       <div class="section-head">
         <div class="section-num">${escapeHtml(sec.number || "")}</div>
         <h3 class="section-title">${escapeHtml(f(sec, "title", lang))}</h3>
       </div>
+      ${photo}
       ${items}
     </div>`;
   }
@@ -165,8 +171,10 @@
     const intro = f(profile, "intro", lang);
     if (!intro) return "";
     return `<section class="about" id="about">
-      <h2>${escapeHtml(t(lang, "aboutTitle"))}</h2>
-      <p>${escapeHtml(intro)}</p>
+      <div class="about-inner">
+        <h2>${escapeHtml(t(lang, "aboutTitle"))}</h2>
+        <p>${escapeHtml(intro)}</p>
+      </div>
     </section>`;
   }
 
@@ -225,7 +233,10 @@
       ${s.showAffiliateNote && affiliate ? `<div class="affiliate-note">☕ ${escapeHtml(affiliate)}</div>` : ""}
 
       <footer class="footer">
-        <div class="footer-brand">${escapeHtml(f(s, "title", lang) || "gabriel no café")} ✦</div>
+        <div class="footer-poster">
+          <span class="footer-poster-text">${escapeHtml(f(s, "title", lang) || "gabriel no café")}</span>
+          <span class="footer-mark" aria-hidden="true">✦</span>
+        </div>
         ${socialLinks ? `<div class="socials">${socialLinks}</div>` : ""}
       </footer>
     `;
