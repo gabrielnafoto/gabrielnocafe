@@ -184,6 +184,11 @@
         <div class="field"><label>nome</label><input type="text" id="p-name" placeholder="Seu Nome" /></div>
         <div class="field"><label>handle</label><input type="text" id="p-handle" placeholder="@seuhandle" /></div>
       </div>
+      <div class="field">
+        <label>URL da foto de perfil</label>
+        <input type="url" id="p-photo" placeholder="https://.../sua-foto.jpg" />
+        <p class="hint">Cole o link de uma imagem já hospedada (ex: arquivo em /profile.jpg no site, ou qualquer URL pública). Deixe vazio pra usar as iniciais do nome.</p>
+      </div>
       <div class="row">
         <div class="field"><label>bio — PT</label><input type="text" id="p-bio" placeholder="Barista em casa" /></div>
         <div class="field"><label>bio — <span style="color:var(--red)">EN</span></label><input type="text" id="p-bio-en" placeholder="Home barista" /></div>
@@ -343,7 +348,7 @@ function renderAll() {
   if (!data) return;
   const p = data.profile || {};
   const s = data.site || {};
-  set('p-name', p.name); set('p-handle', p.handle);
+  set('p-name', p.name); set('p-handle', p.handle); set('p-photo', p.photo);
   set('p-bio', p.bio); set('p-bio-en', p.bio_en);
   set('p-instagram', p.instagram); set('p-youtube', p.youtube); set('p-twitter', p.twitter);
   set('s-title', s.title); set('s-title-en', s.title_en);
@@ -359,7 +364,7 @@ function renderAll() {
 function getFormData() {
   return {
     profile: {
-      name: v('p-name'), handle: v('p-handle'),
+      name: v('p-name'), handle: v('p-handle'), photo: v('p-photo'),
       bio: v('p-bio'), bio_en: v('p-bio-en'),
       instagram: v('p-instagram'), youtube: v('p-youtube'), twitter: v('p-twitter'),
     },
