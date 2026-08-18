@@ -1,11 +1,8 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/api/data", "dest": "/api/data.js" },
     { "src": "/admin", "dest": "/public/admin.html" },
     { "src": "/", "dest": "/public/index.html" }
-  ],
-  "env": {
-    "ADMIN_PASSWORD": "Billecco@2121"
-  }
+  ]
 }
