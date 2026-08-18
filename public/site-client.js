@@ -43,6 +43,27 @@
   document.getElementById("btn-pt")?.addEventListener("click", () => setLang("pt", true));
   document.getElementById("btn-en")?.addEventListener("click", () => setLang("en", true));
 
+  // Mobile menu (hamburger) — dropdown panel reusing the same nav-links markup.
+  const navEl = document.getElementById("site-nav");
+  const menuBtn = document.getElementById("menu-btn");
+  const navLinks = document.getElementById("nav-links");
+
+  function closeMenu() {
+    navEl?.classList.remove("menu-open");
+    menuBtn?.setAttribute("aria-expanded", "false");
+  }
+  function toggleMenu() {
+    const open = navEl?.classList.toggle("menu-open");
+    menuBtn?.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  menuBtn?.addEventListener("click", (e) => { e.stopPropagation(); toggleMenu(); });
+  navLinks?.addEventListener("click", (e) => { if (e.target.closest("a")) closeMenu(); });
+  document.addEventListener("click", (e) => {
+    if (navEl?.classList.contains("menu-open") && !navEl.contains(e.target)) closeMenu();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+
   app.addEventListener("click", (e) => {
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {

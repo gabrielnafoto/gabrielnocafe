@@ -25,21 +25,24 @@ module.exports = async function handler(req, res) {
   const dataJson = JSON.stringify(data).replace(/</g, "\\u003c");
 
   const navHtml = `
-<header class="nav">
+<header class="nav" id="site-nav">
   <a class="brand-mark" href="/">
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 0 L11.5 8 L20 10 L11.5 12 L10 20 L8.5 12 L0 10 L8.5 8 Z" fill="#e8a856"/></svg>
     ${escapeHtml(f(p, "name") || "gabriel no café")}
   </a>
-  <nav class="nav-links" aria-label="navegação principal">
+  <nav class="nav-links" aria-label="navegação principal" id="nav-links">
     <a class="nav-link" href="#setup">setup</a>
     <span class="nav-soon" title="em breve">recipes</span>
     <span class="nav-soon" title="em breve">favorites</span>
     <a class="nav-link" href="#about">about</a>
   </nav>
-  <div class="lang-toggle">
-    <button class="lang-btn active" id="btn-pt" aria-label="Português">PT</button>
-    <span class="lang-sep">·</span>
-    <button class="lang-btn" id="btn-en" aria-label="English">EN</button>
+  <div class="nav-right">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-pt" aria-label="Português">PT</button>
+      <span class="lang-sep">·</span>
+      <button class="lang-btn" id="btn-en" aria-label="English">EN</button>
+    </div>
+    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav-links" aria-label="menu">☰</button>
   </div>
 </header>`;
 
@@ -49,7 +52,7 @@ module.exports = async function handler(req, res) {
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>${escapeHtml(metaTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${escapeHtml(canonical)}" />
