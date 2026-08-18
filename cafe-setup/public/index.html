@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>o setup</title>
+  <meta name="description" content="Equipamentos, links e ferramentas que eu uso." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,900&family=Barlow:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #e82d1c;
+      --black: #0d0d0d;
+      --cream: #f2ede6;
+      --muted: #555;
+      --dim: #888;
+      --line: #d8d3cc;
+    }
+    body { font-family: 'Barlow', sans-serif; background: var(--cream); color: var(--black); }
+
+    /* LANG TOGGLE */
+    .lang-bar {
+      background: var(--black);
+      padding: 10px 36px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+    }
+    .lang-btn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      background: none;
+      border: none;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 4px 10px;
+      transition: color .15s;
+    }
+    .lang-btn.active { color: var(--red); border-bottom: 2px solid var(--red); }
+    .lang-sep { color: #333; font-size: 12px; }
+
+    /* HERO */
+    .hero { background: var(--red); padding: 48px 36px 40px; }
+    .hero-kicker {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 800;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: var(--black); margin-bottom: 12px;
+    }
+    .hero-h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(72px, 14vw, 120px);
+      font-weight: 900; line-height: .88;
+      text-transform: uppercase; color: var(--black);
+    }
+    .hero-h1 span { display: block; color: var(--cream); }
+    .hero-rule { width: 100%; height: 3px; background: var(--black); margin: 28px 0 20px; }
+    .hero-sub { font-size: 15px; color: var(--black); line-height: 1.5; max-width: 400px; }
+
+    /* PROFILE */
+    .profile {
+      background: var(--black); color: var(--cream);
+      padding: 20px 36px;
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .avatar {
+      width: 44px; height: 44px; background: var(--red);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 900; color: var(--black);
+      text-transform: uppercase; flex-shrink: 0;
+    }
+    .profile-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 900;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .profile-bio { font-size: 12px; color: var(--dim); margin-top: 2px; letter-spacing: .06em; text-transform: uppercase; }
+    .socials { margin-left: auto; display: flex; gap: 16px; }
+    .social-a {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--cream);
+      text-decoration: none; border-bottom: 2px solid var(--red);
+      padding-bottom: 1px; font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    /* SECTION */
+    .section { border-top: 3px solid var(--black); }
+    .section-head { display: flex; align-items: stretch; background: var(--black); }
+    .section-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 900; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--red);
+      padding: 14px 20px; display: flex; align-items: center;
+      border-right: 1px solid #222;
+    }
+    .section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px; font-weight: 900;
+      text-transform: uppercase; color: var(--cream);
+      padding: 10px 24px; line-height: 1; letter-spacing: .02em;
+    }
+
+    /* ITEMS */
+    .item {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 20px; align-items: start;
+      padding: 22px 36px;
+      border-bottom: 1px solid var(--line);
+    }
+    .item:last-child { border-bottom: none; }
+    .item-cat {
+      font-size: 10px; font-weight: 800; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--red);
+      margin-bottom: 5px; font-family: 'Barlow Condensed', sans-serif;
+    }
+    .item-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 900;
+      text-transform: uppercase; color: var(--black);
+      line-height: .95; margin-bottom: 7px;
+    }
+    .item-desc { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 460px; }
+    .item-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; flex-shrink: 0; padding-top: 4px; }
+
+    .btn-main {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 900; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--cream);
+      background: var(--black); border: none;
+      padding: 10px 18px; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: background .15s; white-space: nowrap;
+    }
+    .btn-main:hover { background: var(--red); }
+    .btn-copy {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 800; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--dim);
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .btn-copy:hover { color: var(--red); }
+
+    /* GRID */
+    .grid-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      background: var(--black); gap: 1px;
+    }
+    .grid-cell { background: var(--cream); padding: 20px 22px; }
+    .grid-cell-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 900;
+      text-transform: uppercase; color: var(--black);
+      line-height: 1; margin-bottom: 4px;
+    }
+    .grid-cell-cat { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+    .grid-cell-link {
+      display: inline-block; margin-top: 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 900; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--red); text-decoration: none;
+    }
+
+    /* FOOTER */
+    .footer {
+      background: var(--red); padding: 20px 36px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .footer-brand {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 900;
+      text-transform: uppercase; color: var(--black);
+    }
+    .footer-note { font-size: 11px; color: var(--black); max-width: 260px; text-align: right; line-height: 1.5; opacity: .7; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--black); color: var(--cream);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase;
+      padding: 10px 20px; opacity: 0;
+      transition: opacity .25s, transform .25s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 600px) {
+      .hero, .profile, .item, .footer, .lang-bar { padding-left: 20px; padding-right: 20px; }
+      .item { grid-template-columns: 1fr; }
+      .item-actions { flex-direction: row; }
+      .socials { margin-left: 0; margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <button class="lang-btn active" id="btn-pt" onclick="setLang('pt')">PT</button>
+  <span class="lang-sep">/</span>
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+</div>
+
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/data';
+let siteData = null;
+let lang = localStorage.getItem('lang') || 'pt';
+
+const i18n = {
+  pt: {
+    buy: 'Comprar →',
+    copyLink: 'copiar link',
+    copied: 'link copiado',
+    access: '↗ acessar',
+    affiliateNote: suffix => suffix,
+  },
+  en: {
+    buy: 'Buy →',
+    copyLink: 'copy link',
+    copied: 'link copied',
+    access: '↗ open',
+    affiliateNote: suffix => suffix,
+  }
+};
+
+const translations = {
+  site: {
+    pt: { kicker: 'setup de café', h1line1: 'o que', h1line2: 'eu uso.' },
+    en: { kicker: 'coffee setup', h1line1: 'what', h1line2: 'i use.' },
+  }
+};
+
+function t(key) { return i18n[lang][key]; }
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('lang', l);
+  document.getElementById('btn-pt').classList.toggle('active', l === 'pt');
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.documentElement.lang = l === 'pt' ? 'pt-BR' : 'en';
+  render();
+}
+
+async function load() {
+  try {
+    const res = await fetch(API);
+    siteData = await res.json();
+  } catch { siteData = null; }
+  render();
+}
+
+function initials(name) {
+  return (name || 'S').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    const el = document.getElementById('toast');
+    el.textContent = t('copied');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 1800);
+  });
+}
+
+function renderItem(item, isGrid) {
+  const nameField = lang === 'en' && item.name_en ? item.name_en : item.name;
+  const descField = lang === 'en' && item.description_en ? item.description_en : item.description;
+  const labelField = lang === 'en' && item.label_en ? item.label_en : item.label;
+
+  if (isGrid) {
+    return `
+      <div class="grid-cell">
+        <div class="grid-cell-name">${nameField}</div>
+        <div class="grid-cell-cat">${labelField}</div>
+        ${item.url ? `<a href="${item.url}" class="grid-cell-link" target="_blank" rel="noopener">${t('access')}</a>` : ''}
+      </div>`;
+  }
+  return `
+    <div class="item">
+      <div>
+        ${labelField ? `<div class="item-cat">${labelField}</div>` : ''}
+        <div class="item-name">${nameField}</div>
+        ${descField ? `<div class="item-desc">${descField}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        ${item.url ? `<a href="${item.url}" class="btn-main" target="_blank" rel="noopener">${t('buy')}</a>` : ''}
+        ${item.url ? `<button class="btn-copy" onclick="copyLink('${item.url}')">${t('copyLink')}</button>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderSection(sec) {
+  const isGrid = sec.type === 'grid';
+  const titleField = lang === 'en' && sec.title_en ? sec.title_en : sec.title;
+  const items = isGrid
+    ? `<div class="grid-items">${(sec.items||[]).map(i => renderItem(i, true)).join('')}</div>`
+    : (sec.items||[]).map(i => renderItem(i, false)).join('');
+  return `
+    <div class="section">
+      <div class="section-head">
+        <div class="section-num">${sec.number}</div>
+        <div class="section-title">${titleField}</div>
+      </div>
+      ${items}
+    </div>`;
+}
+
+function render() {
+  const d = siteData;
+  if (!d) {
+    document.getElementById('app').innerHTML = '<div style="padding:80px 36px;color:#888;font-size:14px">erro ao carregar.</div>';
+    return;
+  }
+
+  const p = d.profile || {};
+  const s = d.site || {};
+  const tr = translations.site[lang];
+
+  const kicker = lang === 'en' && s.title_en ? s.title_en : (s.title || tr.kicker);
+  const h1 = lang === 'en' && s.headline_en ? s.headline_en : (s.headline || tr.h1line1 + ' ' + tr.h1line2);
+  const sub = lang === 'en' && s.subheadline_en ? s.subheadline_en : (s.subheadline || '');
+  const bio = lang === 'en' && p.bio_en ? p.bio_en : (p.bio || '');
+  const affiliate = lang === 'en' && s.affiliateNote_en ? s.affiliateNote_en : (s.affiliateNote || '');
+
+  const h1words = h1.split(' ');
+  const h1last = h1words.pop();
+  const h1rest = h1words.join(' ');
+
+  const socialLinks = [
+    p.instagram && `<a href="${p.instagram}" class="social-a" target="_blank" rel="noopener">instagram</a>`,
+    p.youtube && `<a href="${p.youtube}" class="social-a" target="_blank" rel="noopener">youtube</a>`,
+    p.twitter && `<a href="${p.twitter}" class="social-a" target="_blank" rel="noopener">twitter</a>`,
+  ].filter(Boolean).join('');
+
+  document.title = kicker || 'o setup';
+
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <div class="hero-kicker">${kicker}</div>
+      <h1 class="hero-h1">${h1rest}<span>${h1last}</span></h1>
+      <div class="hero-rule"></div>
+      <p class="hero-sub">${sub}</p>
+    </div>
+
+    <div class="profile">
+      <div class="avatar">${initials(p.name)}</div>
+      <div>
+        <div class="profile-name">${p.name || ''}</div>
+        <div class="profile-bio">${bio}</div>
+      </div>
+      ${socialLinks ? `<div class="socials">${socialLinks}</div>` : ''}
+    </div>
+
+    ${(d.sections || []).map(renderSection).join('')}
+
+    ${s.showAffiliateNote && affiliate
+      ? `<div style="font-size:11px;color:#888;text-align:center;padding:24px 36px;border-top:1px solid var(--line)">${affiliate}</div>`
+      : ''}
+
+    <div class="footer">
+      <div class="footer-brand">O Setup.</div>
+      ${socialLinks ? `<div class="socials">${socialLinks}</div>` : ''}
+    </div>
+  `;
+}
+
+setLang(lang);
+load();
+</script>
+</body>
+</html>

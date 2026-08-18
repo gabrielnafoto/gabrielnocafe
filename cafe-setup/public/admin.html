@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>admin · o setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #e82d1c; --black: #0d0d0d; --cream: #f2ede6;
+      --surface: #111; --card: #161616; --border: #222;
+      --text: #f0ebe3; --muted: #777; --danger: #e05050; --success: #4caf7d;
+    }
+    body { font-family: 'Barlow', sans-serif; background: var(--black); color: var(--text); min-height: 100vh; }
+
+    /* LOGIN */
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+    .login-box { background: var(--surface); border: 1px solid var(--border); padding: 40px; width: 100%; max-width: 360px; }
+    .login-box h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+    .login-box p { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+    /* APP */
+    #app-screen { display: none; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 32px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--black); z-index: 10;
+    }
+    .topbar-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--red); }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 32px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+    .tab {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); background: none; border: none;
+      border-bottom: 3px solid transparent; padding: 12px 20px;
+      cursor: pointer; font-family: inherit; transition: color .15s, border-color .15s;
+    }
+    .tab.active, .tab:hover { color: var(--red); border-bottom-color: var(--red); }
+
+    /* LANG TABS (inside item) */
+    .lang-tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .lang-tab {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted); background: none; border: none;
+      border-bottom: 2px solid transparent; padding: 8px 14px;
+      cursor: pointer; font-family: inherit; transition: color .15s, border-color .15s;
+    }
+    .lang-tab.active { color: var(--red); border-bottom-color: var(--red); }
+    .lang-panel { display: none; }
+    .lang-panel.active { display: block; }
+
+    /* FORMS */
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+    input[type=text], input[type=url], input[type=password], textarea, select {
+      width: 100%; background: var(--card); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: 14px;
+      padding: 10px 14px; outline: none; transition: border-color .15s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--red); }
+    textarea { min-height: 72px; resize: vertical; line-height: 1.55; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 9px 16px; cursor: pointer; border: 1px solid; transition: background .15s, color .15s; text-decoration: none; }
+    .btn-primary { background: var(--red); color: white; border-color: var(--red); }
+    .btn-primary:hover { background: #c5200f; border-color: #c5200f; }
+    .btn-ghost { background: none; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+    .btn-danger { background: none; color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* SECTION CARD */
+    .section-card { background: var(--surface); border: 1px solid var(--border); margin-bottom: 12px; }
+    .section-card-header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+    .section-card-header:hover { background: var(--card); }
+    .section-num-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: var(--red); letter-spacing: .14em; font-weight: 900; background: #1a0500; padding: 3px 8px; text-transform: uppercase; }
+    .section-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; flex: 1; }
+    .section-card-meta { font-size: 11px; color: var(--muted); }
+    .collapse-icon { color: var(--muted); font-size: 18px; transition: transform .2s; }
+    .section-card.open .collapse-icon { transform: rotate(180deg); }
+    .section-body { display: none; padding: 20px; }
+    .section-card.open .section-body { display: block; }
+
+    /* ITEM ROW */
+    .item-row { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 10px; }
+    .item-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .item-row-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+
+    /* TOGGLE */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle { width: 38px; height: 20px; background: var(--border); border-radius: 10px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .toggle.on { background: var(--red); }
+    .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: left .2s; }
+    .toggle.on::after { left: 21px; }
+    .toggle-label { font-size: 12px; color: var(--muted); }
+
+    /* ALERTS */
+    .alert { padding: 12px 16px; font-size: 13px; margin-bottom: 16px; border-left: 3px solid; }
+    .alert-success { background: #0a1f12; border-color: var(--success); color: var(--success); }
+    .alert-error { background: #1f0a0a; border-color: var(--danger); color: var(--danger); }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--red); color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; padding: 12px 24px; opacity: 0; transition: opacity .3s, transform .3s; z-index: 99; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--danger); }
+
+    .hint { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    @media (max-width: 600px) {
+      .container { padding: 16px; }
+      .topbar { padding: 12px 16px; }
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Admin</h1>
+    <p>Digite a senha para acessar o editor.</p>
+    <div class="field">
+      <label>senha</label>
+      <input type="password" id="pwd-input" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div id="login-error" style="font-size:12px;color:var(--danger);margin-bottom:16px;display:none">senha incorreta.</div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar →</button>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-title">Admin · O Setup</div>
+    <div class="topbar-actions">
+      <a href="/" class="btn btn-ghost btn-sm" target="_blank">Ver site →</a>
+      <button class="btn btn-primary btn-sm" id="save-btn" onclick="saveAll()">Salvar tudo</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="alert-area"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('conteudo', this)">Conteúdo</button>
+      <button class="tab" onclick="switchTab('perfil', this)">Perfil & Site</button>
+    </div>
+
+    <!-- CONTEÚDO -->
+    <div id="tab-conteudo">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <div style="font-size:16px;font-weight:600">Seções e itens</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Cada seção pode ter layout lista ou grid. Clique para expandir.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addSection()">+ Nova seção</button>
+      </div>
+      <div id="sections-list"></div>
+    </div>
+
+    <!-- PERFIL & SITE -->
+    <div id="tab-perfil" style="display:none">
+
+      <div style="font-size:15px;font-weight:600;margin-bottom:4px">Perfil público</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Campos marcados com <span style="color:var(--red)">EN</span> são a versão em inglês.</div>
+
+      <div class="row">
+        <div class="field"><label>nome</label><input type="text" id="p-name" placeholder="Seu Nome" /></div>
+        <div class="field"><label>handle</label><input type="text" id="p-handle" placeholder="@seuhandle" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>bio — PT</label><input type="text" id="p-bio" placeholder="Barista em casa" /></div>
+        <div class="field"><label>bio — <span style="color:var(--red)">EN</span></label><input type="text" id="p-bio-en" placeholder="Home barista" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>instagram</label><input type="url" id="p-instagram" placeholder="https://instagram.com/..." /></div>
+        <div class="field"><label>youtube</label><input type="url" id="p-youtube" placeholder="https://youtube.com/..." /></div>
+      </div>
+      <div class="field"><label>twitter / x</label><input type="url" id="p-twitter" placeholder="https://x.com/..." /></div>
+
+      <hr />
+      <div style="font-size:15px;font-weight:600;margin-bottom:20px">Textos do site</div>
+
+      <div class="row">
+        <div class="field"><label>título — PT</label><input type="text" id="s-title" placeholder="setup de café" /></div>
+        <div class="field"><label>título — <span style="color:var(--red)">EN</span></label><input type="text" id="s-title-en" placeholder="coffee setup" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>headline — PT</label><input type="text" id="s-headline" placeholder="o que eu uso." /><p class="hint">Última palavra fica em destaque.</p></div>
+        <div class="field"><label>headline — <span style="color:var(--red)">EN</span></label><input type="text" id="s-headline-en" placeholder="what i use." /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>subtítulo — PT</label><textarea id="s-subheadline" placeholder="Cada equipamento..."></textarea></div>
+        <div class="field"><label>subtítulo — <span style="color:var(--red)">EN</span></label><textarea id="s-subheadline-en" placeholder="Every piece of gear..."></textarea></div>
+      </div>
+
+      <hr />
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:600">Nota de afiliado</div>
+        <div class="toggle-wrap">
+          <div class="toggle" id="affiliate-toggle" onclick="this.classList.toggle('on');document.getElementById('aff-label').textContent=this.classList.contains('on')?'ativada':'desativada'"></div>
+          <span class="toggle-label" id="aff-label">desativada</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>texto afiliado — PT</label><textarea id="s-affiliate" placeholder="Alguns links são de afiliado..."></textarea></div>
+        <div class="field"><label>texto afiliado — <span style="color:var(--red)">EN</span></label><textarea id="s-affiliate-en" placeholder="Some links are affiliate links..."></textarea></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/data';
+let password = '';
+let data = null;
+
+document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  const pwd = document.getElementById('pwd-input').value.trim();
+  if (!pwd) return;
+  password = pwd;
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pwd}` },
+    body: JSON.stringify(null)
+  });
+  if (res.status === 401) {
+    document.getElementById('login-error').style.display = 'block';
+    password = '';
+    return;
+  }
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  loadData();
+}
+
+async function loadData() {
+  const res = await fetch(API);
+  data = await res.json();
+  renderAll();
+}
+
+async function saveAll() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  const payload = getFormData();
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${password}` },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      data = payload;
+      showToast('Salvo ✓', false);
+      if (!json.persisted) showAlert('Salvo em memória. Conecte o Vercel KV para persistir entre deploys.', 'success');
+    } else { showToast('Erro ao salvar', true); }
+  } catch { showToast('Erro de rede', true); }
+  btn.disabled = false; btn.textContent = 'Salvar tudo';
+}
+
+function v(id) { return document.getElementById(id)?.value || ''; }
+function set(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; }
+
+function renderAll() {
+  if (!data) return;
+  const p = data.profile || {};
+  const s = data.site || {};
+  set('p-name', p.name); set('p-handle', p.handle);
+  set('p-bio', p.bio); set('p-bio-en', p.bio_en);
+  set('p-instagram', p.instagram); set('p-youtube', p.youtube); set('p-twitter', p.twitter);
+  set('s-title', s.title); set('s-title-en', s.title_en);
+  set('s-headline', s.headline); set('s-headline-en', s.headline_en);
+  set('s-subheadline', s.subheadline); set('s-subheadline-en', s.subheadline_en);
+  set('s-affiliate', s.affiliateNote); set('s-affiliate-en', s.affiliateNote_en);
+  const tog = document.getElementById('affiliate-toggle');
+  const lbl = document.getElementById('aff-label');
+  if (s.showAffiliateNote) { tog.classList.add('on'); lbl.textContent = 'ativada'; }
+  renderSections();
+}
+
+function getFormData() {
+  return {
+    profile: {
+      name: v('p-name'), handle: v('p-handle'),
+      bio: v('p-bio'), bio_en: v('p-bio-en'),
+      instagram: v('p-instagram'), youtube: v('p-youtube'), twitter: v('p-twitter'),
+    },
+    site: {
+      title: v('s-title'), title_en: v('s-title-en'),
+      headline: v('s-headline'), headline_en: v('s-headline-en'),
+      subheadline: v('s-subheadline'), subheadline_en: v('s-subheadline-en'),
+      affiliateNote: v('s-affiliate'), affiliateNote_en: v('s-affiliate-en'),
+      showAffiliateNote: document.getElementById('affiliate-toggle').classList.contains('on'),
+    },
+    sections: collectSections(),
+  };
+}
+
+function uid() { return 'id_' + Math.random().toString(36).slice(2, 9); }
+
+function renderSections() {
+  const list = document.getElementById('sections-list');
+  list.innerHTML = '';
+  (data.sections || []).forEach((sec, si) => list.appendChild(buildSectionCard(sec, si)));
+}
+
+function buildSectionCard(sec, si) {
+  const card = document.createElement('div');
+  card.className = 'section-card';
+  card.dataset.id = sec.id;
+  const isGrid = sec.type === 'grid';
+  card.innerHTML = `
+    <div class="section-card-header" onclick="this.closest('.section-card').classList.toggle('open')">
+      <span class="section-num-badge">${sec.number || String(si+1).padStart(2,'0')}</span>
+      <span class="section-card-title">${sec.title || 'Sem título'}</span>
+      <span class="section-card-meta">${(sec.items||[]).length} item(s)</span>
+      <span class="collapse-icon">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="row-3" style="margin-bottom:16px">
+        <div class="field"><label>Número</label><input type="text" class="sec-number" value="${sec.number||''}" placeholder="01" oninput="updateSecHeader(this)" /></div>
+        <div class="field"><label>Título — PT</label><input type="text" class="sec-title" value="${sec.title||''}" placeholder="Moer" oninput="updateSecHeader(this)" /></div>
+        <div class="field"><label>Título — <span style="color:var(--red)">EN</span></label><input type="text" class="sec-title-en" value="${sec.title_en||''}" placeholder="Grind" /></div>
+      </div>
+      <div class="field" style="margin-bottom:20px">
+        <label>Layout</label>
+        <select class="sec-type">
+          <option value="list" ${!isGrid?'selected':''}>Lista (com descrição)</option>
+          <option value="grid" ${isGrid?'selected':''}>Grid (apps/serviços)</option>
+        </select>
+      </div>
+      <div class="items-container"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-ghost btn-sm" onclick="addItem(this)">+ Novo item</button>
+        <button class="btn btn-danger btn-sm" onclick="if(confirm('Remover seção?'))this.closest('.section-card').remove()">Remover seção</button>
+      </div>
+    </div>`;
+  const container = card.querySelector('.items-container');
+  (sec.items || []).forEach(item => container.appendChild(buildItemRow(item)));
+  return card;
+}
+
+function updateSecHeader(input) {
+  const card = input.closest('.section-card');
+  card.querySelector('.section-num-badge').textContent = card.querySelector('.sec-number').value || '—';
+  card.querySelector('.section-card-title').textContent = card.querySelector('.sec-title').value || 'Sem título';
+}
+
+function buildItemRow(item) {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.dataset.id = item.id || uid();
+  row.innerHTML = `
+    <div class="item-row-header">
+      <div class="item-row-name">${item.name || 'Novo item'}</div>
+      <button class="btn btn-danger btn-sm" onclick="if(confirm('Remover?')){const c=this.closest('.section-card');this.closest('.item-row').remove();c.querySelector('.section-card-meta').textContent=c.querySelectorAll('.item-row').length+' item(s)'}">Remover</button>
+    </div>
+    <div class="lang-tabs">
+      <button class="lang-tab active" onclick="switchLangTab(this,'pt')">🇧🇷 Português</button>
+      <button class="lang-tab" onclick="switchLangTab(this,'en')">🇺🇸 English</button>
+    </div>
+    <div class="lang-panel active" data-lang="pt">
+      <div class="row">
+        <div class="field"><label>Label / categoria</label><input type="text" class="i-label" value="${item.label||''}" placeholder="moedor" /></div>
+        <div class="field"><label>Nome do item</label><input type="text" class="i-name" value="${item.name||''}" placeholder="Baratza Encore" oninput="this.closest('.item-row').querySelector('.item-row-name').textContent=this.value||'Novo item'" /></div>
+      </div>
+      <div class="field"><label>Descrição</label><textarea class="i-desc" placeholder="Descreva o produto...">${item.description||''}</textarea></div>
+    </div>
+    <div class="lang-panel" data-lang="en">
+      <div class="row">
+        <div class="field"><label>Label — <span style="color:var(--red)">EN</span></label><input type="text" class="i-label-en" value="${item.label_en||''}" placeholder="grinder" /></div>
+        <div class="field"><label>Nome — <span style="color:var(--red)">EN</span></label><input type="text" class="i-name-en" value="${item.name_en||''}" placeholder="Baratza Encore" /></div>
+      </div>
+      <div class="field"><label>Descrição — <span style="color:var(--red)">EN</span></label><textarea class="i-desc-en" placeholder="Describe the product...">${item.description_en||''}</textarea></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="field"><label>URL do link</label><input type="url" class="i-url" value="${item.url||''}" placeholder="https://..." /></div>
+      <div class="field" style="display:flex;align-items:flex-end;padding-bottom:1px">
+        <div class="toggle-wrap">
+          <div class="toggle ${item.affilliate?'on':''}" onclick="this.classList.toggle('on')"></div>
+          <span class="toggle-label">Link de afiliado</span>
+        </div>
+      </div>
+    </div>`;
+  return row;
+}
+
+function switchLangTab(btn, lang) {
+  const row = btn.closest('.item-row');
+  row.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+  row.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  row.querySelector(`.lang-panel[data-lang="${lang}"]`).classList.add('active');
+}
+
+function addSection() {
+  if (!data.sections) data.sections = [];
+  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', type: 'list', items: [] };
+  data.sections.push(sec);
+  const card = buildSectionCard(sec, data.sections.length-1);
+  card.classList.add('open');
+  document.getElementById('sections-list').appendChild(card);
+}
+
+function addItem(btn) {
+  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', affilliate:false };
+  const container = btn.closest('.section-body').querySelector('.items-container');
+  container.appendChild(buildItemRow(item));
+  const card = btn.closest('.section-card');
+  card.querySelector('.section-card-meta').textContent = card.querySelectorAll('.item-row').length + ' item(s)';
+}
+
+function collectSections() {
+  return [...document.querySelectorAll('#sections-list .section-card')].map(card => ({
+    id: card.dataset.id,
+    number: card.querySelector('.sec-number').value,
+    title: card.querySelector('.sec-title').value,
+    title_en: card.querySelector('.sec-title-en').value,
+    type: card.querySelector('.sec-type').value,
+    items: [...card.querySelectorAll('.item-row')].map(row => ({
+      id: row.dataset.id,
+      label: row.querySelector('.i-label').value,
+      label_en: row.querySelector('.i-label-en').value,
+      name: row.querySelector('.i-name').value,
+      name_en: row.querySelector('.i-name-en').value,
+      description: row.querySelector('.i-desc').value,
+      description_en: row.querySelector('.i-desc-en').value,
+      url: row.querySelector('.i-url').value,
+      affilliate: row.querySelector('.toggle').classList.contains('on'),
+    })),
+  }));
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-conteudo').style.display = name === 'conteudo' ? 'block' : 'none';
+  document.getElementById('tab-perfil').style.display = name === 'perfil' ? 'block' : 'none';
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showAlert(msg, type) {
+  const area = document.getElementById('alert-area');
+  area.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => area.innerHTML = '', 6000);
+}
+</script>
+</body>
+</html>

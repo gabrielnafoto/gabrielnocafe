@@ -1,0 +1,12 @@
+{
+  "name": "cafe-setup",
+  "version": "1.0.0",
+  "description": "Página de setup pessoal — café",
+  "type": "module",
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
