@@ -2,6 +2,19 @@
 // resized/compressed client-side) and stores it in Vercel Blob, returning
 // its public URL. Requires the same admin password as api/data.js.
 
+// Vercel only auto-parses req.body for a handful of known content types
+// (json/text/urlencoded/multipart) — for a raw image/* body it's left
+// unparsed, so we read the request stream ourselves.
+function readRawBody(req) {
+  if (Buffer.isBuffer(req.body)) return Promise.resolve(req.body);
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -23,10 +36,17 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: "Vercel Blob não está configurado neste projeto." });
   }
 
-  if (!Buffer.isBuffer(req.body) || !req.body.length) {
+  let body;
+  try {
+    body = await readRawBody(req);
+  } catch (e) {
+    return res.status(400).json({ error: "Erro ao ler a imagem enviada." });
+  }
+
+  if (!body || !body.length) {
     return res.status(400).json({ error: "Nenhuma imagem recebida." });
   }
-  if (req.body.length > 8 * 1024 * 1024) {
+  if (body.length > 8 * 1024 * 1024) {
     return res.status(413).json({ error: "Imagem muito grande (máx. 8MB)." });
   }
 
@@ -35,7 +55,7 @@ module.exports = async function handler(req, res) {
   const filename = `photos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
   try {
-    const blob = await put(filename, req.body, { access: "public", contentType });
+    const blob = await put(filename, body, { access: "public", contentType });
     return res.status(200).json({ url: blob.url });
   } catch (err) {
     return res.status(500).json({ error: "Erro ao enviar imagem." });
