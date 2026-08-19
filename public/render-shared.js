@@ -398,15 +398,20 @@
     const media = productMedia(item, lang, pad2(null, index));
     const sideClass = media ? "" : " fiche--no-media";
 
+    // Hierarchy: product name leads, then the personal phrase, then the CTA —
+    // the label (category metadata) trails last, deliberately quiet.
     const body_ = `<div class="fiche-body">
-        ${ficheLabel(item, lang, false)}
         <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
-        ${body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
-        ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : ""}
+        ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : (body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : "")}
+        ${note && body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
         ${ficheActions(item, lang)}
+        ${ficheLabel(item, lang, false)}
       </div>`;
     const mediaHtml = media ? `<div class="fiche-media">${media}</div>` : "";
-    const arrow = media ? `<span class="item-arrow-wrap" aria-hidden="true">${doodleDownArrow()}</span>` : "";
+    // Skip the arrow when the photo already carries its own editorial mark
+    // (a handwritten note draws its own arrow) — one graphic gesture per item.
+    const arrow = media && !item.editorialTreatment
+      ? `<span class="item-arrow-wrap" aria-hidden="true">${doodleDownArrow()}</span>` : "";
 
     return `<article class="fiche fiche--item${sideClass} rise">
       ${body_}${arrow}${mediaHtml}

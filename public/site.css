@@ -478,15 +478,15 @@ body.index-open { overflow: hidden; }
   position: absolute;
   top: 4px;
   right: var(--gutter);
-  width: 92px;
-  height: 92px;
-  border: 1.5px solid var(--amber);
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--amber);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: rotate(-11deg);
-  opacity: .9;
+  opacity: .55;
   z-index: 3;
 }
 .cover-stamp span {
@@ -994,6 +994,13 @@ body.index-open { overflow: hidden; }
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
+/* inside a product item, the label trails as quiet metadata — not another
+   accent-coloured element competing with the note/CTA/arrow above it */
+.fiche--item .fiche-label {
+  margin-bottom: 0;
+  margin-top: 18px;
+  color: var(--faint);
+}
 .fiche-flag {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -1468,8 +1475,7 @@ body.index-open { overflow: hidden; }
   }
   .cover-title { position: relative; z-index: 2; }
   .cover-in { padding-bottom: 0; }
-  .cover-stamp { width: 74px; height: 74px; top: 0; }
-  .cover-stamp span { font-size: 6.5px; }
+  .cover-stamp { top: 0; }
   .cover-kicker { max-width: calc(100% - 92px); }
   .cover-meta { margin-top: 30px; gap: 16px; }
 
@@ -1493,7 +1499,7 @@ body.index-open { overflow: hidden; }
 
 @media (max-width: 400px) {
   :root { --gutter: 18px; }
-  .cover-stamp { width: 64px; height: 64px; }
+  .cover-stamp { width: 52px; height: 52px; }
   .cover-stamp span { font-size: 6px; letter-spacing: .06em; }
   .daily-item .lb { display: none; }
 }
