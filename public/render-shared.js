@@ -3,14 +3,21 @@
 // (loaded via <script src="/render-shared.js">, attaches to window.SiteRender).
 // One copy keeps the server-rendered markup and the client hydration identical.
 //
-// The site renders as a ZINE: a vertical sequence of "pages", each carrying its
-// own palette. Rhythm comes from those palettes alternating — dark, dark,
-// CREAM, dark, dark, CREAM — so the cream page lands like an actual printed
-// sheet flashing through a dark reel.
+// The site renders as a ZINE built like a photographer's CONTACT SHEET: the
+// cover is two registers (a typographic top, a full-bleed strip of numbered
+// frames below), and every chapter lays its copy beside numbered square
+// frames. Rhythm comes from palettes alternating — dark, dark, CREAM — so the
+// cream page lands like an actual printed sheet flashing through a dark reel.
+//
+// Nothing on the page is hidden behind a click and nothing animates its own
+// height or position on entrance: the whole publication is present in the
+// server HTML, which is what keeps layout shift at zero.
 //
 // The admin data contract is unchanged: every field admin.html writes
-// (label, name, description, url, image, affilliate, dailyUse, seenInVideos,
-// category, group, number, title, and every _en variant) still drives the page.
+// (label, name, description, url, image, gallery, affilliate, dailyUse,
+// seenInVideos, category, group, number, title, editorialTreatment,
+// editorialStyle, imagePosition, imageScale, and every _en variant) still
+// drives the page.
 
 (function (root, factory) {
   const mod = factory();
@@ -31,6 +38,15 @@
       thisIssue: "esta edição", creditsBy: "fotografado, filmado e editado por",
       gearHeading: "equipamento de gravação",
       skipToContent: "pular para o conteúdo",
+      // contact-sheet vocabulary
+      contactSheet: "contact sheet", frames: "frames", frame: "frame",
+      fileLabel: "a ficha", affiliate: "afiliado",
+      chapters: "capítulos",
+      colophonTitle: "colofão", colophonSub: "quem escreve isso aqui",
+      dailyDesc: "o que sai da bancada toda manhã, sem exceção.",
+      affiliateTitle: "nota de afiliado",
+      prevPhoto: "foto anterior", nextPhoto: "próxima foto",
+      photoOf: "foto {i} de {n}",
     },
     en: {
       buy: "view product", copyLink: "copy link", copied: "link copied",
@@ -45,6 +61,14 @@
       thisIssue: "this issue", creditsBy: "photographed, filmed and edited by",
       gearHeading: "recording gear",
       skipToContent: "skip to content",
+      contactSheet: "contact sheet", frames: "frames", frame: "frame",
+      fileLabel: "the file", affiliate: "affiliate",
+      chapters: "chapters",
+      colophonTitle: "colophon", colophonSub: "who writes this",
+      dailyDesc: "what comes off the counter every morning, no exceptions.",
+      affiliateTitle: "affiliate note",
+      prevPhoto: "previous photo", nextPhoto: "next photo",
+      photoOf: "photo {i} of {n}",
     },
   };
 
@@ -54,18 +78,13 @@
 
   function t(lang, key) { return (I18N[lang] || I18N.pt)[key] || ""; }
 
+  function tf(lang, key, vars) {
+    return String(t(lang, key)).replace(/\{(\w+)\}/g, (_, k) => String((vars || {})[k] == null ? "" : vars[k]));
+  }
+
   function escapeHtml(str) {
     return String(str == null ? "" : str).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  }
-
-  // Wraps every character in its own span carrying a --i index, so CSS can
-  // stagger them into a letter-by-letter "handwriting" reveal. Spaces stay
-  // as real spaces (not spans) so the line still wraps naturally.
-  function typeChars(text) {
-    return [...String(text || "")]
-      .map((ch, i) => ch === " " ? " " : `<span style="--i:${i}">${escapeHtml(ch)}</span>`)
-      .join("");
   }
 
   // Only allow URLs we're willing to put in an href — blocks javascript: etc.
@@ -94,6 +113,11 @@
     return String(i + 1).padStart(2, "0");
   }
 
+  // Frame counter, contact-sheet style: 01/04.
+  function frameNo(i, total) {
+    return `${String(i + 1).padStart(2, "0")}/${String(total).padStart(2, "0")}`;
+  }
+
   // The inverse of splitNote: pulls the FIRST sentence out as a big
   // handwritten "lede", leaving the rest as normal, readable body copy.
   // A whole paragraph set in a script face is exhausting to read — one
@@ -101,12 +125,7 @@
   function splitLede(text) {
     const s = String(text || "").trim();
     if (!s) return { lede: "", rest: "" };
-    // Short enough to read comfortably as one handwritten block on its own —
-    // the whole thing IS the lede, nothing repeats underneath.
     if (s.length <= 90) return { lede: s, rest: "" };
-    // Longer notes: a short opening phrase acts as a handwritten kicker,
-    // and the FULL text (not just the remainder) reads as normal body copy
-    // underneath — so nothing is cut or duplicated, just given two paces.
     const words = s.split(/\s+/);
     let lede = "";
     for (const w of words) {
@@ -116,9 +135,11 @@
     return { lede: lede ? lede + "…" : "", rest: s };
   }
 
-  // Splits a description into body + handwritten aside. When there's more than
-  // one sentence, the LAST one becomes the margin note in Caveat — a personal
-  // remark pulled out of prose, no new admin field required.
+  // Splits a sentence-y field into body + a short trailing remark. Used twice:
+  // for a product description (body + margin note) and for site.subheadline,
+  // whose closing sentence becomes the cover's right-hand lede while the
+  // opening sentence carries the colophon — one field, two placements, and
+  // never the same words printed twice.
   function splitNote(desc) {
     const text = String(desc || "").trim();
     if (!text) return { body: "", note: "" };
@@ -126,65 +147,137 @@
     if (!parts || parts.length < 2) return { body: text, note: "" };
     const note = parts.pop().trim();
     const body = parts.join("").trim();
-    // Only pull it out if the remark is short enough to read as an aside.
-    if (note.length > 90 || !body) return { body: text, note: "" };
+    if (note.length > 110 || !body) return { body: text, note: "" };
     return { body, note };
   }
 
   /* ---------------------------------------------------------------------- */
-  /* photo slots                                                            */
+  /* photo pool                                                             */
   /* ---------------------------------------------------------------------- */
 
-  // Renders a real image when one is set, otherwise a clearly-marked
-  // placeholder that holds the exact composition shape. Gabriel drops photos
-  // into `image` (admin) and the layout doesn't move. `eager` is for the one
-  // photo that's always above the fold (the cover) — lazy-loading it just
-  // delays the first thing a visitor sees.
-  function photo(src, ratio, caption, alt, eager) {
+  // Every real photograph in the publication, in reading order: the portrait
+  // first, then each product's cover shot and its gallery. The contact strip
+  // and the colophon tiles draw from this pool, which means both fill in
+  // automatically as Gabriel adds photos in admin — no extra fields, and no
+  // hatched "FOTO — CAPA" placeholder ever ships to a visitor. When the pool
+  // is empty those slots simply don't render (see renderContactStrip).
+  function collectPhotos(data) {
+    const out = [];
+    const push = (u) => {
+      const s = safeUrl(u);
+      if (s && out.indexOf(s) === -1) out.push(s);
+    };
+    push((data.profile || {}).photo);
+    (data.sections || []).forEach((sec) => (sec.items || []).forEach((it) => {
+      push(it.image);
+      (it.gallery || []).forEach(push);
+    }));
+    return out;
+  }
+
+  // Wraps around the pool so a slot always gets *a* photograph when at least
+  // one exists — a contact sheet reprinting a frame is normal, an empty cell
+  // in a printed grid is not.
+  function pick(pool, i) {
+    if (!pool.length) return "";
+    return pool[i % pool.length];
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* frames — one figure primitive, numbered like a contact sheet            */
+  /* ---------------------------------------------------------------------- */
+
+  // Renders a numbered photographic frame. Never renders anything at all
+  // without a real image: callers decide how the layout absorbs the absence.
+  function frame(src, opts) {
+    const o = opts || {};
     const url = safeUrl(src);
-    if (url) {
-      const loadAttr = eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`;
-      return `<div class="ph ph--${ratio}"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt || "")}" ${loadAttr} /></div>`;
-    }
-    return `<div class="ph ph--${ratio} ph--empty" role="img" aria-label="${escapeHtml(caption || "")}">
-      <span>✦<br/>${escapeHtml(caption || "")}<br/>${ratio.replace("x", ":")}</span>
-    </div>`;
+    if (!url) return "";
+    const ratio = o.ratio || "1x1";
+    const cls = ["ph", `ph--${ratio}`, o.className].filter(Boolean).join(" ");
+    const load = o.eager
+      ? `loading="eager" fetchpriority="high" decoding="async"`
+      : `loading="lazy" decoding="async"`;
+    const style = o.style ? ` style="${escapeHtml(o.style)}"` : "";
+    const cap = o.num ? `<figcaption class="frame-no">${escapeHtml(o.num)}</figcaption>` : "";
+    return `<figure class="${cls}">
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(o.alt || "")}" ${load}${style} />
+      ${o.overlay || ""}${cap}
+    </figure>`;
+  }
+
+  // imagePosition (object-position) and imageScale (a light zoom) are
+  // admin-editable and apply to an item's own cover shot only.
+  function mediaStyle(item) {
+    const parts = [];
+    if (item.imagePosition) parts.push(`object-position:${item.imagePosition}`);
+    const scale = Number(item.imageScale);
+    if (scale && scale !== 1 && scale > 0 && scale <= 2) parts.push(`transform:scale(${scale})`);
+    return parts.join(";");
+  }
+
+  // 2+ gallery photos share one frame as a scroll-snap carousel — native
+  // swipe on touch, arrows + dots on pointer devices, no library.
+  function carouselFrame(photos, name, lang, num) {
+    const slides = photos.map((url, i) =>
+      `<div class="ph-slide" data-slide="${i}">
+        <img src="${escapeHtml(url)}" alt="${escapeHtml(name)} — ${i + 2}" loading="lazy" decoding="async" />
+      </div>`).join("");
+    const dots = photos.map((_, i) =>
+      `<button type="button" class="ph-dot${i === 0 ? " is-active" : ""}" data-goto="${i}"
+        aria-label="${escapeHtml(tf(lang, "photoOf", { i: i + 1, n: photos.length }))}"
+        aria-current="${i === 0 ? "true" : "false"}"></button>`).join("");
+
+    return `<figure class="ph ph--1x1 ph--carousel fiche-frame" data-carousel>
+      <div class="ph-track" data-track tabindex="0" role="group" aria-label="${photos.length} ${escapeHtml(t(lang, "frames"))}">${slides}</div>
+      <button type="button" class="ph-nav ph-nav--prev" data-nav="-1" aria-label="${escapeHtml(t(lang, "prevPhoto"))}">‹</button>
+      <button type="button" class="ph-nav ph-nav--next" data-nav="1" aria-label="${escapeHtml(t(lang, "nextPhoto"))}">›</button>
+      <div class="ph-dots">${dots}</div>
+      ${num ? `<figcaption class="frame-no">${escapeHtml(num)}</figcaption>` : ""}
+    </figure>`;
   }
 
   /* ---------------------------------------------------------------------- */
   /* doodles — hand-drawn SVG, budgeted at two per screen                   */
   /* ---------------------------------------------------------------------- */
 
-  // Irregular ellipse: deliberately not a perfect circle, so it reads as ink.
+  // The cover scribble: a loose ellipse that fully ENCLOSES the last word and
+  // loops back past its final letter, the way you'd ring a word with a pen.
   function doodleCircle() {
-    return `<svg class="cover-circle" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <path d="M42,78 C28,44 96,16 198,13 C302,10 378,34 380,72 C382,110 300,140 196,139 C92,138 18,116 24,80 C28,54 74,36 140,28" style="--len:1250" />
+    return `<svg class="cover-circle" viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path d="M42,148 C36,78 220,26 504,20 C790,14 964,66 958,146 C952,226 748,284 462,288 C216,291 54,250 34,172 C20,116 132,66 350,44 C520,27 730,22 892,32 C946,35 972,44 984,58" style="--len:3200" />
     </svg>`;
   }
 
-  // Wobbly underline for chapter titles.
+  // Full-measure wobbly rule under a chapter header.
   function doodleUnderline() {
-    return `<svg class="chapter-underline" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <path d="M3,8 C64,3 118,10 178,6 C240,2 300,9 397,4" style="--len:420" />
+    return `<svg class="chapter-underline" viewBox="0 0 1200 14" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path d="M3,9 C160,4 320,11 486,6 C640,2 812,10 968,5 C1064,2 1140,8 1197,5" style="--len:1300" />
     </svg>`;
   }
 
-  // Small arrow, for the handwritten-note treatment.
+  // Short rule, for the daily band's intro column.
+  function doodleRule() {
+    return `<svg class="mini-rule" viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path d="M2,7 C46,3 92,9 138,5 C182,1 232,8 298,4" style="--len:340" />
+    </svg>`;
+  }
+
+  // Small arrow, for the handwritten-note photo treatment.
   function doodleArrow() {
     return `<svg class="note-arrow" viewBox="0 0 40 32" aria-hidden="true" focusable="false">
       <path d="M3,26 C14,28 27,22 35,7 M26,5 L35,7 L31,16" />
     </svg>`;
   }
 
-  // Single loose mark, for the minimal-doodle treatment — one gesture, nothing more.
+  // Single loose mark, for the minimal-doodle treatment.
   function doodleMark() {
     return `<svg class="mini-doodle" viewBox="0 0 60 60" aria-hidden="true" focusable="false">
       <path d="M13,31 C10,17 27,8 41,11 C54,14 55,29 46,38 C38,47 19,45 14,37 C11,32 13,31 13,31" />
     </svg>`;
   }
 
-  // Long hand-drawn arrow pointing down — sits between an item's text and its
-  // photo, a hand pointing at "this one" rather than a UI affordance.
+  // Long hand-drawn arrow, for the arrow-note block gesture.
   function doodleDownArrow() {
     return `<svg class="item-arrow" viewBox="0 0 40 90" aria-hidden="true" focusable="false">
       <path d="M20,3 C19,28 21,54 20,76 M6,63 C11,70 16,76 20,80 C24,75 29,68 33,61" />
@@ -192,10 +285,9 @@
   }
 
   /* ---------------------------------------------------------------------- */
-  /* product image — one fixed frame, five reusable editorial treatments   */
+  /* product image treatments — five reusable editorial interventions        */
   /* ---------------------------------------------------------------------- */
 
-  // Sensible default corner per treatment when the admin hasn't set one.
   const TREATMENT_DEFAULT_POS = {
     "oversized-type": "bl",
     "handwritten-note": "tr",
@@ -203,10 +295,9 @@
     "minimal-doodle": "tr",
   };
 
-  // Everything here draws ON TOP of the photo (typography over image, per the
-  // brief) rather than attempting any cutout/mask — .ph already clips
-  // overflow, so a treatment can bleed toward an edge without ever risking
-  // page-level overflow.
+  // Everything here draws ON TOP of the photo (typography over image) rather
+  // than attempting any cutout/mask — .ph already clips overflow, so a
+  // treatment can bleed toward an edge without risking page-level overflow.
   function editorialOverlay(item, lang, fallbackNumber) {
     const kind = item.editorialTreatment;
     if (!kind) return "";
@@ -238,11 +329,9 @@
 
   /* ---------------------------------------------------------------------- */
   /* product block gesture — one optional graphic move in the block's own    */
-  /* empty space (not on the photo). At most one per item, by design.       */
+  /* empty space (not on the photo). At most one per item, by design.        */
   /* ---------------------------------------------------------------------- */
 
-  // item.editorialStyle picks exactly one of these — "clean" (or unset) means
-  // no gesture at all, which is the correct choice for most items.
   function blockGesture(item, lang, fallbackNumber) {
     const style = item.editorialStyle;
     if (!style || style === "clean") return "";
@@ -271,163 +360,200 @@
     return "";
   }
 
-  // The one frame every product photo uses: fixed 4:5 ratio, same width,
-  // same weight. `imagePosition` (object-position) and `imageScale` (a light
-  // zoom) apply to the cover photo only — extra gallery shots are assumed
-  // to already be framed how Gabriel wants them.
-  //
-  // `item.gallery` (array of extra photo URLs, admin-editable) turns the
-  // frame into a horizontal scroll-snap carousel: item.image is always
-  // slide one, gallery photos follow. One photo behaves exactly as before
-  // (no carousel chrome at all) — this only activates with 2+ photos.
-  function productMedia(item, lang, fallbackNumber) {
-    const cover = safeUrl(item.image);
-    const extra = (item.gallery || []).map(safeUrl).filter(Boolean);
-    const photos = [cover, ...extra].filter(Boolean);
-    if (!photos.length) return "";
+  /* ---------------------------------------------------------------------- */
+  /* 01 — cover: two registers                                              */
+  /* ---------------------------------------------------------------------- */
 
-    const name = escapeHtml(f(item, "name", lang));
-    // Only the cover slide carries imagePosition/imageScale and the
-    // editorial-treatment overlay — extra photos stay clean.
-    const styleParts = [];
-    if (item.imagePosition) styleParts.push(`object-position:${item.imagePosition}`);
-    const scale = Number(item.imageScale);
-    if (scale && scale !== 1 && scale > 0 && scale <= 2) styleParts.push(`transform:scale(${scale})`);
-    const coverStyleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
-    const overlay = editorialOverlay(item, lang, fallbackNumber);
+  // The strip is the cover's bottom register: three photographs and one
+  // burnt-red typographic frame carrying the handwritten role line, all
+  // numbered like a contact sheet. The type frame is ALWAYS present, so with
+  // no photographs at all the strip degrades to a single full-width red
+  // band — still a deliberate composition, never an empty grid.
+  function renderContactStrip(data, lang) {
+    const p = data.profile || {};
+    const role = f(p, "role", lang);
+    const name = p.name || "";
+    const photos = collectPhotos(data).slice(0, 3);
 
-    if (photos.length === 1) {
-      return `<div class="ph ph--4x5">
-        <img src="${escapeHtml(photos[0])}" alt="${name}" loading="lazy"${coverStyleAttr} />
-        ${overlay}
-      </div>`;
-    }
+    const cells = [];
+    if (photos[0]) cells.push({ kind: "photo", src: photos[0], eager: true });
+    cells.push({ kind: "type" });
+    if (photos[1]) cells.push({ kind: "photo", src: photos[1] });
+    if (photos[2]) cells.push({ kind: "photo", src: photos[2] });
 
-    const slides = photos.map((url, i) => `<div class="ph-slide" data-slide="${i}">
-        <img src="${escapeHtml(url)}" alt="${name}${i > 0 ? ` — foto ${i + 1}` : ""}" loading="lazy"${i === 0 ? coverStyleAttr : ""} />
-        ${i === 0 ? overlay : ""}
-      </div>`).join("");
-    const dots = photos.map((_, i) =>
-      `<button type="button" class="ph-dot${i === 0 ? " is-active" : ""}" data-goto="${i}" aria-label="Foto ${i + 1} de ${photos.length}" aria-current="${i === 0 ? "true" : "false"}"></button>`
-    ).join("");
+    const total = cells.length;
+    const alt = [name, role].filter(Boolean).join(" — ");
 
-    return `<div class="ph ph--4x5 ph--carousel" data-carousel>
-      <div class="ph-track" data-track tabindex="0" role="group" aria-label="${photos.length} fotos — arraste ou use as setas para ver mais">${slides}</div>
-      <button type="button" class="ph-nav ph-nav--prev" data-nav="-1" aria-label="Foto anterior">‹</button>
-      <button type="button" class="ph-nav ph-nav--next" data-nav="1" aria-label="Próxima foto">›</button>
-      <div class="ph-dots">${dots}</div>
-    </div>`;
+    const html = cells.map((cell, i) => {
+      if (cell.kind === "type") {
+        return `<div class="strip-tile">
+          <span class="t-meta strip-tile-label">${escapeHtml(t(lang, "fileLabel"))}</span>
+          <p class="strip-tile-hand">${escapeHtml(alt)}</p>
+          <span class="frame-no">${frameNo(i, total)}</span>
+        </div>`;
+      }
+      return frame(cell.src, {
+        ratio: "4x5",
+        alt,
+        num: frameNo(i, total),
+        eager: cell.eager,
+        className: "strip-frame",
+      });
+    }).join("");
+
+    return {
+      count: total,
+      html: `<div class="strip" style="--strip-cols:${total}">${html}</div>`,
+    };
   }
-
-  /* ---------------------------------------------------------------------- */
-  /* cover                                                                  */
-  /* ---------------------------------------------------------------------- */
 
   function renderCover(data, lang) {
     const p = data.profile || {};
     const s = data.site || {};
 
-    const headline = f(s, "headline", lang) || (lang === "en" ? "what i use." : "o que eu uso.");
+    const headline = f(s, "headline", lang) || (lang === "en" ? "it's just an espresso." : "é só um café.");
     const tagline = f(s, "tagline", lang);
-    const role = f(p, "role", lang);
+    // The subheadline's closing sentence rides the cover; its opening sentence
+    // carries the colophon. Same admin field, two placements, no repetition.
+    const lede = splitNote(f(s, "subheadline", lang)).note;
 
-    // Break the headline into up to three lines so it composes like a poster.
-    // The final word carries the drawn circle and the coloured full stop.
+    // Two lines: everything up to the last word, then the last word — which
+    // takes the drawn scribble and the coloured full stop.
     const words = headline.trim().split(/\s+/);
     const last = words.pop() || "";
-    const lead = words;
-    let l1 = "", l2 = "";
-    if (lead.length <= 1) {
-      l1 = lead.join(" ");
-    } else if (lead.length === 2) {
-      l1 = lead[0]; l2 = lead[1];
-    } else {
-      const cut = Math.ceil(lead.length / 2);
-      l1 = lead.slice(0, cut).join(" ");
-      l2 = lead.slice(cut).join(" ");
-    }
-
-    // Split the trailing punctuation so the dot can be coloured on its own.
+    const lead = words.join(" ");
     const m = last.match(/^(.*?)([.!?]*)$/);
     const lastWord = m ? m[1] : last;
     const lastDot = m ? m[2] : "";
 
-    return `<header class="page cover" id="capa">
+    const strip = renderContactStrip(data, lang);
+
+    return `<header class="page page--ink cover" id="capa">
       <div class="cover-in">
-        ${tagline ? `<span class="cover-kicker">${escapeHtml(tagline)}</span>` : ""}
-
-        <h1 class="cover-title">
-          ${l1 ? `<span class="l1">${escapeHtml(l1)}</span>` : ""}
-          ${l2 ? `<span class="l2">${escapeHtml(l2)}</span>` : ""}
-          <span class="l3">${escapeHtml(lastWord)}<span class="dot">${escapeHtml(lastDot)}</span>${doodleCircle()}</span>
-        </h1>
-
-        <div class="cover-photo"${p.photoPositionY ? ` style="--photo-y:${escapeHtml(p.photoPositionY)}%"` : ""}>
-          ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang), true)}
+        <div class="cover-rule">
+          <span class="t-meta cover-kicker">${escapeHtml(tagline)}</span>
+          <span class="t-meta cover-handle">${escapeHtml(p.handle || "")}</span>
         </div>
-        ${role ? `<div class="cover-role" aria-hidden="true"><span>${typeChars(`${p.name || ""} — ${role}`)}</span></div>` : ""}
-        ${role ? `<span class="sr-only">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
 
-        <div class="cover-meta">
-          <a class="cover-scroll" href="#colofao">${escapeHtml(t(lang, "readOn"))} <span class="arr" aria-hidden="true">↓</span></a>
+        <div class="cover-head">
+          <h1 class="cover-title">
+            ${lead ? `<span class="l1">${escapeHtml(lead)}</span>` : ""}
+            <span class="l2">${escapeHtml(lastWord)}<span class="dot">${escapeHtml(lastDot)}</span>${doodleCircle()}</span>
+          </h1>
+          ${lede ? `<p class="t-body cover-lede">${escapeHtml(lede)}</p>` : ""}
+        </div>
+
+        <div class="cover-cue">
+          <a class="t-meta cover-scroll" href="#colofao">${escapeHtml(t(lang, "readOn"))} <span class="arr" aria-hidden="true">↓</span></a>
+          <span class="t-meta cover-strip-meta">${escapeHtml(t(lang, "contactSheet"))} — ${String(strip.count).padStart(2, "0")} ${escapeHtml(t(lang, "frames"))}</span>
         </div>
       </div>
+      ${strip.html}
     </header>`;
   }
 
   /* ---------------------------------------------------------------------- */
-  /* colophon                                                               */
+  /* 02 — colophon: a modular block, copy left, two square frames right      */
   /* ---------------------------------------------------------------------- */
 
   function renderColophon(data, lang) {
     const p = data.profile || {};
     const s = data.site || {};
+    const lead = splitNote(f(s, "subheadline", lang)).body;
     const intro = f(p, "intro", lang);
-    const sub = f(s, "subheadline", lang);
     const bio = f(p, "bio", lang);
 
+    const pool = collectPhotos(data);
+    // Reach past the three frames the cover already printed when the pool is
+    // deep enough; wrap around when it isn't. Never print the same frame twice
+    // side by side — one tile reads as a choice, two identical ones as a bug.
+    const tiles = [];
+    [3, 4].forEach((i) => {
+      const url = pick(pool, i);
+      if (url && tiles.indexOf(url) === -1) tiles.push(url);
+    });
+
+    // The recording gear doubles as a production credit line, joined from the
+    // same "Label: Value" textarea the back cover reads.
+    const credit = parseGear(f(p, "recordingGear", lang))
+      .map((g) => g.value).filter(Boolean).join(" · ");
+
+    const tilesHtml = tiles.map((url, i) => frame(url, {
+      ratio: "1x1",
+      alt: f(p, "name", lang),
+      num: String.fromCharCode(65 + i),
+      className: "colophon-tile",
+    })).join("");
+
     return `<section class="page page--ink colophon" id="colofao">
-      <div class="colophon-grid">
-        <div class="rise">
-          ${sub ? `<p class="colophon-lead">${escapeHtml(sub)}</p>` : ""}
-          ${intro ? `<p class="t-body colophon-body">${escapeHtml(intro)}</p>` : ""}
-          ${bio ? `<p class="colophon-hand">${escapeHtml(bio)}</p>` : ""}
-          ${renderSocials(p)}
+      <div class="colophon-in">
+        <div class="section-head">
+          <span class="t-meta section-lbl">✦ ${escapeHtml(t(lang, "colophonTitle"))}</span>
+          <span class="t-meta section-sub">${escapeHtml(t(lang, "colophonSub"))}</span>
+        </div>
+
+        <div class="colophon-grid">
+          <div class="colophon-main">
+            ${lead ? `<p class="colophon-lead">${escapeHtml(lead)}</p>` : ""}
+            ${intro ? `<p class="t-body colophon-body">${escapeHtml(intro)}</p>` : ""}
+            <div class="colophon-foot">
+              ${renderSocials(p)}
+              ${credit ? `<span class="t-meta colophon-credit">${escapeHtml(credit)}</span>` : ""}
+            </div>
+          </div>
+
+          <div class="colophon-side">
+            ${tilesHtml ? `<div class="colophon-tiles">${tilesHtml}</div>` : ""}
+            ${bio ? `<p class="colophon-hand">${escapeHtml(bio)}</p>` : ""}
+          </div>
         </div>
       </div>
     </section>`;
   }
 
   /* ---------------------------------------------------------------------- */
-  /* daily band                                                             */
+  /* 03 — every single day: an intro column, then one tile per item          */
   /* ---------------------------------------------------------------------- */
 
+  // Label and name sit tight under their own photograph — one unit, one
+  // colour. Previously the label floated to the opposite edge of a full-width
+  // row, so at a glance it read as belonging to the neighbouring item.
   function renderDaily(sections, lang) {
     const items = [];
     (sections || []).forEach((sec) => (sec.items || []).forEach((it) => { if (it.dailyUse) items.push(it); }));
     if (!items.length) return "";
 
-    const rows = items.map((it) => {
-      const url = safeUrl(it.url);
+    const pool = collectPhotos({ sections });
+
+    const tiles = items.map((it, i) => {
       const name = f(it, "name", lang);
       const label = f(it, "label", lang);
-      const inner = `<span class="nm">${escapeHtml(name)}</span>${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}`;
-      return url
-        ? `<a class="daily-item" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
-        : `<div class="daily-item">${inner}</div>`;
+      const url = safeUrl(it.image) || pick(pool, i);
+      const href = safeUrl(it.url);
+
+      const inner = `${frame(url, { ratio: "1x1", alt: name, className: "daily-photo" })}
+        ${label ? `<span class="t-meta daily-label">${escapeHtml(label)}</span>` : ""}
+        <span class="daily-name">${escapeHtml(name)}</span>`;
+
+      return href
+        ? `<a class="daily-tile" href="${escapeHtml(href)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
+        : `<div class="daily-tile">${inner}</div>`;
     }).join("");
 
     return `<section class="page page--ink-deep daily" aria-label="${escapeHtml(t(lang, "daily"))}">
-      <div class="daily-head">
-        <span class="lbl">✦ ${escapeHtml(t(lang, "daily"))}</span>
-        <span class="rule" aria-hidden="true"></span>
+      <div class="daily-grid">
+        <div class="daily-intro">
+          <p class="t-meta daily-lbl">✦ ${escapeHtml(t(lang, "daily"))}</p>
+          <p class="t-body daily-desc">${escapeHtml(t(lang, "dailyDesc"))}</p>
+          ${doodleRule()}
+        </div>
+        ${tiles}
       </div>
-      <div class="daily-list rise">${rows}</div>
     </section>`;
   }
 
   /* ---------------------------------------------------------------------- */
-  /* fiches — three layouts alternating by position                         */
+  /* fiches                                                                 */
   /* ---------------------------------------------------------------------- */
 
   function ficheActions(item, lang) {
@@ -441,51 +567,76 @@
 
   function ficheLabel(item, lang, isArchive) {
     const label = f(item, "label", lang);
-    if (!label && !isArchive) return "";
+    const flag = isArchive ? t(lang, "tried") : (item.affilliate ? t(lang, "affiliate") : "");
+    if (!label && !flag) return "";
     return `<div class="fiche-label">
       ${label ? `<span>✦ ${escapeHtml(label)}</span>` : ""}
-      ${isArchive ? `<span class="fiche-flag">${escapeHtml(t(lang, "tried"))}</span>` : ""}
+      ${flag ? `<span class="fiche-flag">${escapeHtml(flag)}</span>` : ""}
     </div>`;
   }
 
-  // Unified item layout — one consistent size/weight for every product photo
-  // (4:5 frame). `imageAlign` ("left" | "right") lets Gabriel pick which side
-  // the photo sits on per item; falls back to alternating by position so a
-  // long list still reads with rhythm. When there's no photo, the text
-  // simply runs full width — no empty placeholder box.
+  // A chapter item: copy in one grid track, up to two numbered square frames
+  // in the others. The number of frames drives the track sizes, so the grid
+  // never has a hole — and with no photographs at all the copy simply runs at
+  // a reading measure instead of sitting beside an empty box.
   //
   // Hierarchy answers three questions in order: what is it (eyebrow + name),
-  // why is it here (a short personal line), what do I do now (CTA). A single
-  // optional block-level gesture (blockGesture) lives in the block's own
-  // empty space — never more than one per item.
+  // why is it here (a short line), what do I do now (CTA). Sides alternate by
+  // position so a long chapter still reads with rhythm.
   function ficheItem(item, lang, index) {
+    const name = f(item, "name", lang);
+    const label = f(item, "label", lang);
     const desc = f(item, "description", lang);
-    const media = productMedia(item, lang, pad2(null, index));
-    const sideClass = media ? "" : " fiche--no-media";
-    const gesture = blockGesture(item, lang, pad2(null, index));
+    const num = pad2(null, index);
 
-    const body_ = `<div class="fiche-body rise">
+    const cover = safeUrl(item.image);
+    const extra = (item.gallery || []).map(safeUrl).filter(Boolean);
+
+    const overlay = editorialOverlay(item, lang, num);
+    const gesture = blockGesture(item, lang, num);
+    const style = mediaStyle(item);
+
+    const f1 = frame(cover, {
+      ratio: "1x1",
+      alt: name,
+      num: `${t(lang, "frame")} 01${label ? ` — ${label}` : ""}`,
+      overlay,
+      style,
+      className: "fiche-frame",
+    });
+
+    let f2 = "";
+    if (extra.length === 1) {
+      f2 = frame(extra[0], {
+        ratio: "1x1",
+        alt: `${name} — 2`,
+        num: `${t(lang, "frame")} 02`,
+        className: "fiche-frame",
+      });
+    } else if (extra.length > 1) {
+      f2 = carouselFrame(extra, name, lang, `${t(lang, "frame")} 02`);
+    }
+
+    const frames = (f1 ? 1 : 0) + (f2 ? 1 : 0);
+    const flip = index % 2 === 1 && frames > 0 ? " fiche--flip" : "";
+
+    return `<article class="fiche fiche--item frames-${frames}${flip}">
+      <div class="fiche-body">
         ${ficheLabel(item, lang, false)}
-        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
+        <h3 class="fiche-name">${escapeHtml(name)}</h3>
         ${desc ? `<p class="fiche-desc">${escapeHtml(desc)}</p>` : ""}
         ${ficheActions(item, lang)}
         ${gesture}
-      </div>`;
-    const mediaHtml = media ? `<div class="fiche-media rise rise--delay">${media}</div>` : "";
-    // The plain down-arrow is its own gesture — only show it when the item
-    // isn't already using a block gesture or a photo overlay treatment.
-    const arrow = media && !item.editorialTreatment && !gesture
-      ? `<span class="item-arrow-wrap" aria-hidden="true">${doodleDownArrow()}</span>` : "";
-
-    return `<article class="fiche fiche--item${sideClass}">
-      ${body_}${arrow}${mediaHtml}
+      </div>
+      ${f1}${f2}
     </article>`;
   }
 
-  // C — archive line. Dense and fast, after two large fiches.
+  // Archive line. Dense and fast — used for the "already tried" section only,
+  // never mixed into a chapter's primary list.
   function ficheC(item, lang, isArchive) {
     const desc = f(item, "description", lang);
-    return `<article class="fiche fiche--c rise">
+    return `<article class="fiche fiche--c">
       ${ficheLabel(item, lang, isArchive)}
       <div class="fiche-row">
         <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
@@ -495,43 +646,32 @@
     </article>`;
   }
 
-  // Every main-list item uses the same unified layout now — ficheC is kept
-  // only for the "+N mais" overflow and the archive section, never mixed
-  // into the primary alternation (that's what was silently hiding photos).
-  function renderFiche(item, index, lang) {
-    return ficheItem(item, lang, index);
-  }
-
   /* ---------------------------------------------------------------------- */
   /* chapters                                                               */
   /* ---------------------------------------------------------------------- */
 
+  // Every item renders open, in the server HTML. The chapter used to be a
+  // click-to-reveal accordion, which meant the page shipped with its content
+  // hidden, cost a click to read anything, and reflowed the whole document on
+  // every toggle. The outlined numeral now sits BESIDE the solid title rather
+  // than behind it, so it can never clip a letter.
   function renderChapter(sec, lang, meta) {
     const items = sec.items || [];
     const title = f(sec, "title", lang);
-
-    // Every item renders in full — no "+N mais" collapse. The chapter
-    // itself is already click-to-reveal (renderChapter's own toggle), so
-    // a second layer of hiding on top of that just added an extra click.
-    const headHtml = items.map((it, i) => renderFiche(it, i, lang)).join("");
-
     const countTxt = `${items.length} ${items.length === 1 ? t(lang, "item") : t(lang, "items")}`;
+    const metaTxt = [`${t(lang, "chapter")} ${meta.num}`, sec.category, countTxt].filter(Boolean).join(" · ");
 
     return `<section class="page ${meta.palette} chapter" id="${escapeHtml(meta.anchor)}"
              data-chapter="${escapeHtml(meta.num)}" data-chapter-title="${escapeHtml(title)}" data-palette="${escapeHtml(meta.palette)}">
-      <div class="chapter-open" data-chapter-toggle role="button" tabindex="0"
-           aria-expanded="false" aria-controls="items-${escapeHtml(meta.anchor)}">
-        <div class="chapter-mark rise">
+      <div class="chapter-in">
+        <div class="chapter-head">
           <span class="chapter-num" aria-hidden="true">${escapeHtml(meta.num)}</span>
           <h2 class="chapter-title">${escapeHtml(title)}</h2>
-          ${doodleUnderline()}
+          <span class="t-meta chapter-meta">${escapeHtml(metaTxt)}</span>
         </div>
-        <div class="chapter-intro rise">
-          <span class="chapter-count">${escapeHtml(t(lang, "chapter"))} ${escapeHtml(meta.num)} — ${escapeHtml(countTxt)}</span>
-          <span class="chapter-toggle-hint"><span class="chapter-toggle-arr" aria-hidden="true">↓</span></span>
-        </div>
+        ${doodleUnderline()}
+        <div class="chapter-items">${items.map((it, i) => ficheItem(it, lang, i)).join("")}</div>
       </div>
-      <div class="chapter-items" id="items-${escapeHtml(meta.anchor)}" hidden>${headHtml}</div>
     </section>`;
   }
 
@@ -546,12 +686,14 @@
     if (!items.length) return "";
 
     return `<section class="page page--ink-deep archive" id="arquivo">
-      <div class="archive-head rise">
-        <h2 class="archive-title">${escapeHtml(t(lang, "archiveTitle"))}</h2>
-        <p class="archive-sub">${escapeHtml(t(lang, "archiveDesc"))}</p>
-      </div>
-      <div class="chapter-items">
-        ${items.map((it) => ficheC(it, lang, true)).join("")}
+      <div class="archive-in">
+        <div class="section-head">
+          <span class="t-meta section-lbl">✦ ${escapeHtml(t(lang, "archiveTitle"))}</span>
+          <span class="t-meta section-sub">${escapeHtml(t(lang, "archiveDesc"))}</span>
+        </div>
+        <div class="chapter-items">
+          ${items.map((it) => ficheC(it, lang, true)).join("")}
+        </div>
       </div>
     </section>`;
   }
@@ -569,12 +711,16 @@
     return links ? `<div class="socials">${links}</div>` : "";
   }
 
+  // The disclosure a reader is legally entitled to read, so it's set at body
+  // size in --muted — not the 10.5px/30%-opacity whisper it used to be.
   function renderFootnote(site, lang) {
     const note = f(site, "affiliateNote", lang);
     if (!site.showAffiliateNote || !note) return "";
     return `<aside class="page page--ink footnote">
-      <span class="star" aria-hidden="true">✦</span>
-      <p>${escapeHtml(note)}</p>
+      <div class="footnote-grid">
+        <p class="t-meta footnote-lbl">✦ ${escapeHtml(t(lang, "affiliateTitle"))}</p>
+        <p class="t-body footnote-body">${escapeHtml(note)}</p>
+      </div>
     </aside>`;
   }
 
@@ -605,7 +751,7 @@
 
     // The cover's headline comes back one last time, oversized — the same
     // sentence the publication opened with now closes it.
-    const signoff = f(s, "headline", lang) || (lang === "en" ? "what i use." : "o que eu uso.");
+    const signoff = f(s, "headline", lang) || (lang === "en" ? "it's just an espresso." : "é só um café.");
 
     const gearRows = gear.map((g) => `<div class="gear-row">
       ${g.label ? `<span class="gear-label">${escapeHtml(g.label)}</span>` : ""}
@@ -613,14 +759,14 @@
     </div>`).join("");
 
     return `<footer class="page page--ink-deep backcover">
-      <div class="backcover-in rise">
+      <div class="backcover-in">
         <div class="backcover-masthead">
-          <span class="backcover-issue">${escapeHtml(t(lang, "thisIssue"))} — ${year}</span>
+          <span class="t-meta backcover-issue">${escapeHtml(t(lang, "thisIssue"))} — ${year}</span>
           <p class="backcover-credits">${escapeHtml(t(lang, "creditsBy"))} ${escapeHtml(p.name || "")}${credits ? ` — ${escapeHtml(credits)}` : ""}</p>
         </div>
 
         ${gearRows ? `<div class="backcover-gear">
-          <span class="gear-heading">✦ ${escapeHtml(t(lang, "gearHeading"))}</span>
+          <span class="t-meta gear-heading">✦ ${escapeHtml(t(lang, "gearHeading"))}</span>
           <div class="gear-list">${gearRows}</div>
         </div>` : ""}
 
@@ -642,7 +788,7 @@
   }
 
   /* ---------------------------------------------------------------------- */
-  /* chapter planning — shared by the page, the contents list and the index */
+  /* chapter planning — shared by the page, the contents list and the index  */
   /* ---------------------------------------------------------------------- */
 
   // Assigns numbering, anchors and palettes. Palettes cycle so a cream page
@@ -664,9 +810,57 @@
       }));
   }
 
+  /* ---------------------------------------------------------------------- */
+  /* masthead — the publication header                                       */
+  /* ---------------------------------------------------------------------- */
+
+  // Lives here, in the isomorphic module, rather than as a template literal
+  // inside api/index.js: the masthead carries five pieces of translatable
+  // copy (the chapter list, the edition line, "contents", the nav's own
+  // accessible name, the wordmark) and it used to be server-rendered PT-only,
+  // so switching to EN left the one bar the reader looks at still in
+  // Portuguese. Now the client repaints it from the same function.
+  //
+  // Every interactive element in here (#btn-pt, #btn-en, #index-btn) is driven
+  // by delegated listeners on document in site-client.js — nothing may bind
+  // directly to these nodes, because this whole subtree is replaced on a
+  // language switch.
+  function renderMasthead(data, lang) {
+    const p = data.profile || {};
+    const chapters = planChapters(data.sections || [], lang);
+    const year = new Date().getFullYear();
+
+    const navItems = chapters.map((c, i) =>
+      `<a href="#${escapeHtml(c.anchor)}" data-nav-link data-anchor="${escapeHtml(c.anchor)}"><span class="n">${escapeHtml(String(i + 1).padStart(2, "0"))}</span>${escapeHtml(c.title)}</a>`
+    ).join("");
+
+    return `<header class="masthead" id="masthead">
+  <div class="masthead-in">
+    <a class="mast-brand" href="#capa">
+      <span class="star" aria-hidden="true">✦</span>${escapeHtml(f(p, "name", lang) || "gabriel no café")}
+    </a>
+    <nav class="mast-nav" aria-label="${escapeHtml(t(lang, "chapters"))}">
+      ${navItems}
+    </nav>
+    <div class="mast-folio" id="folio" aria-live="polite"></div>
+    <div class="mast-right">
+      <span class="mast-edition">${escapeHtml(t(lang, "thisIssue"))} — ${year}</span>
+      <button class="mast-index-btn" id="index-btn" type="button" aria-expanded="false" aria-controls="index-overlay">
+        <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        ${escapeHtml(t(lang, "contents"))}
+      </button>
+      <div class="lang">
+        <button id="btn-pt" class="${lang === "pt" ? "active" : ""}" type="button" aria-label="Português" aria-pressed="${lang === "pt" ? "true" : "false"}">pt</button>
+        <span class="sep" aria-hidden="true">·</span>
+        <button id="btn-en" class="${lang === "en" ? "active" : ""}" type="button" aria-label="English" aria-pressed="${lang === "en" ? "true" : "false"}">en</button>
+      </div>
+    </div>
+  </div>
+</header>`;
+  }
+
   // The contents overlay: a real magazine index. Groups by category when there
-  // are enough distinct ones to be worth grouping — this is what scales when
-  // the catalogue grows.
+  // are enough distinct ones to be worth grouping.
   function renderIndexOverlay(data, lang) {
     const chapters = planChapters(data.sections || [], lang);
     const cats = [...new Set(chapters.map((c) => c.category).filter(Boolean))];
@@ -716,12 +910,10 @@
 
   function renderApp(data, lang) {
     const d = data || {};
-    const p = d.profile || {};
     const s = d.site || {};
     const sections = d.sections || [];
 
     const chapters = planChapters(sections, lang);
-
     const chapterHtml = chapters.map((meta) => renderChapter(meta.sec, lang, meta)).join("");
 
     return [
@@ -737,7 +929,7 @@
   }
 
   return {
-    t, I18N, escapeHtml, f, safeUrl, slug, planChapters,
-    renderApp, renderIndexOverlay, renderSocials,
+    t, tf, I18N, escapeHtml, f, safeUrl, slug, planChapters,
+    renderApp, renderMasthead, renderIndexOverlay, renderSocials,
   };
 });

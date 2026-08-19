@@ -4,7 +4,7 @@
 // and motion — reusing the same render functions from public/render-shared.js.
 
 const { getData } = require("../lib/store.js");
-const { renderApp, renderIndexOverlay, escapeHtml, f, t, planChapters } = require("../public/render-shared.js");
+const { renderApp, renderMasthead, escapeHtml, f, t } = require("../public/render-shared.js");
 
 const SITE_URL_FALLBACK = "gabrielnocafe.vercel.app";
 const FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23e8a856' d='M10 0 11.5 8 20 10 11.5 12 10 20 8.5 12 0 10 8.5 8Z'/%3E%3C/svg%3E";
@@ -28,35 +28,10 @@ module.exports = async function handler(req, res) {
 
   // The masthead reads as a publication header: wordmark, a numbered contents
   // list distributed across the bar (desktop), and a running folio that fills
-  // in with the current chapter as you scroll.
-  const chapters = planChapters(data.sections || [], lang);
-  const navItems = chapters.map((c, i) =>
-    `<a href="#${escapeHtml(c.anchor)}" data-nav-link data-anchor="${escapeHtml(c.anchor)}"><span class="n">${escapeHtml(String(i + 1).padStart(2, "0"))}</span>${escapeHtml(c.title)}</a>`
-  ).join("");
-
-  const mastheadHtml = `
-<header class="masthead" id="masthead">
-  <div class="masthead-in">
-    <a class="mast-brand" href="#capa">
-      <span class="star" aria-hidden="true">✦</span>${escapeHtml(f(p, "name", lang) || "gabriel no café")}
-    </a>
-    <nav class="mast-nav" aria-label="capítulos">
-      ${navItems}
-    </nav>
-    <div class="mast-folio" id="folio" aria-live="polite"></div>
-    <div class="mast-right">
-      <button class="mast-index-btn" id="index-btn" type="button" aria-expanded="false" aria-controls="index-overlay">
-        <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
-        ${escapeHtml(t(lang, "contents"))}
-      </button>
-      <div class="lang">
-        <button id="btn-pt" class="active" type="button" aria-label="Português">pt</button>
-        <span class="sep" aria-hidden="true">·</span>
-        <button id="btn-en" type="button" aria-label="English">en</button>
-      </div>
-    </div>
-  </div>
-</header>`;
+  // in with the current chapter as you scroll. It's built by the same
+  // isomorphic module as the body, so a language switch on the client can
+  // repaint it instead of leaving it stuck in Portuguese.
+  const mastheadHtml = renderMasthead(data, lang);
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   // Browsers always revalidate (max-age=0), but the CDN can serve a
@@ -91,7 +66,7 @@ module.exports = async function handler(req, res) {
   <link rel="stylesheet" href="/site.css" />
 </head>
 <body>
-<a class="skip-link" href="#app">${escapeHtml(t(lang, "skipToContent"))}</a>
+<a class="skip-link" id="skip-link" href="#app">${escapeHtml(t(lang, "skipToContent"))}</a>
 ${mastheadHtml}
 <main id="app">${bodyHtml}</main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
