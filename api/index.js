@@ -59,7 +59,10 @@ module.exports = async function handler(req, res) {
 </header>`;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+  // Browsers always revalidate (max-age=0), but the CDN can serve a
+  // cached copy for a short window — most requests then skip the KV
+  // round-trip entirely instead of paying for it on every single visit.
+  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
   res.status(200).send(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -88,6 +91,7 @@ module.exports = async function handler(req, res) {
   <link rel="stylesheet" href="/site.css" />
 </head>
 <body>
+<a class="skip-link" href="#app">${escapeHtml(t(lang, "skipToContent"))}</a>
 ${mastheadHtml}
 <main id="app">${bodyHtml}</main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

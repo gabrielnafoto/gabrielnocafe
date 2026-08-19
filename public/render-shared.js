@@ -30,6 +30,7 @@
       readOn: "role pra ver",
       thisIssue: "esta edição", creditsBy: "fotografado, filmado e editado por",
       gearHeading: "equipamento de gravação",
+      skipToContent: "pular para o conteúdo",
     },
     en: {
       buy: "view product", copyLink: "copy link", copied: "link copied",
@@ -43,6 +44,7 @@
       readOn: "scroll on",
       thisIssue: "this issue", creditsBy: "photographed, filmed and edited by",
       gearHeading: "recording gear",
+      skipToContent: "skip to content",
     },
   };
 
@@ -681,7 +683,7 @@
       body = cats.map((cat) => {
         const inCat = chapters.filter((c) => c.category === cat);
         if (!inCat.length) return "";
-        return `<div class="index-group-label">${escapeHtml(cat)}</div>${inCat.map(rowFor).join("")}`;
+        return `<div class="index-group-label" role="heading" aria-level="3">${escapeHtml(cat)}</div>${inCat.map(rowFor).join("")}`;
       }).join("");
       const uncat = chapters.filter((c) => !c.category);
       if (uncat.length) body += uncat.map(rowFor).join("");
