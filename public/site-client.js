@@ -169,7 +169,7 @@
 
   // Only one chapter open at a time — opening one collapses whichever
   // other chapter was open, so the page never stacks up several long lists.
-  function toggleChapter(toggle, forceOpen) {
+  function toggleChapter(toggle, forceOpen, keepScroll) {
     const panel = document.getElementById(toggle.getAttribute("aria-controls"));
     if (!panel) return;
     const isOpen = toggle.getAttribute("aria-expanded") === "true";
@@ -182,6 +182,15 @@
       });
       panel.removeAttribute("hidden");
       panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+      // Collapsing an earlier chapter shrinks everything above this one,
+      // so the page jumps and the chapter you just opened can land
+      // mid-viewport instead of at the top. Pin its own header back to the
+      // top of the screen once the collapse has actually happened.
+      if (!keepScroll) {
+        requestAnimationFrame(() => {
+          toggle.closest(".chapter")?.scrollIntoView({ block: "start", behavior: "smooth" });
+        });
+      }
     } else {
       panel.setAttribute("hidden", "");
     }
@@ -196,7 +205,9 @@
     if (!id) return;
     const section = document.getElementById(id);
     const toggle = section?.querySelector("[data-chapter-toggle]");
-    if (toggle) toggleChapter(toggle, true);
+    // The browser's own anchor jump already scrolls here — don't fight it
+    // with a second, competing scrollIntoView.
+    if (toggle) toggleChapter(toggle, true, true);
   }
 
   window.addEventListener("hashchange", openChapterFromHash);
