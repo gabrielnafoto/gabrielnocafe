@@ -1533,7 +1533,13 @@ body.index-open { overflow: hidden; }
   .cover-kicker { max-width: calc(100% - 92px); }
   .cover-meta { margin-top: 30px; gap: 16px; }
 
-  .fiche--item .fiche-media { max-width: 100%; }
+  /* photo bleeds edge-to-edge, breaking out of the gutter that boxes the text */
+  .fiche--item .fiche-media {
+    max-width: none;
+    width: 100vw;
+    margin-inline: calc(var(--gutter) * -1);
+  }
+  .fiche--item .ph { border-left: none; border-right: none; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
 
