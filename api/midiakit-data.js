@@ -1,7 +1,10 @@
 // api/midiakit-data.js — Vercel Serverless Function (CommonJS)
 // GET is public (used by api/midiakit.js at render time and for debugging).
-// POST is protected by the same ADMIN_PASSWORD as api/data.js, and is called
-// weekly by an automated job that refreshes Instagram Insights.
+// POST is protected by the same ADMIN_PASSWORD as api/data.js. Two different
+// writers hit this: the weekly job that refreshes Instagram Insights (sends
+// stats fields) and the /admin "Mídia Kit" tab (sends editorial fields like
+// brands). POST merges shallowly into the existing record so neither writer
+// wipes out fields the other owns.
 
 const { getMidiaKitData, saveMidiaKitData } = require("../lib/store.js");
 
@@ -28,7 +31,8 @@ module.exports = async function handler(req, res) {
     if (!req.body) return res.status(400).json({ error: "Corpo vazio." });
 
     try {
-      const payload = { ...req.body, updatedAt: new Date().toISOString() };
+      const current = await getMidiaKitData();
+      const payload = { ...current, ...req.body, updatedAt: new Date().toISOString() };
       const persisted = await saveMidiaKitData(payload);
       return res.status(200).json({ ok: true, persisted });
     } catch (err) {

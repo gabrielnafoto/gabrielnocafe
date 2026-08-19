@@ -173,6 +173,7 @@
       <button class="tab active" onclick="switchTab('conteudo', this)">Conteúdo</button>
       <button class="tab" onclick="switchTab('perfil', this)">Perfil & Site</button>
       <button class="tab" onclick="switchTab('stats', this)">📊 Estatísticas</button>
+      <button class="tab" onclick="switchTab('midiakit', this)">☕ Mídia Kit</button>
     </div>
 
     <!-- CONTEÚDO -->
@@ -328,6 +329,31 @@
         <button class="btn btn-ghost btn-sm" onclick="loadStats()">↻ atualizar</button>
       </div>
       <div id="stats-list" style="font-size:13px;color:var(--muted)">Carregando…</div>
+    </div>
+
+    <!-- MÍDIA KIT -->
+    <div id="tab-midiakit" style="display:none">
+      <div class="block-card">
+        <div class="block-header">
+          <div class="block-header-left">
+            <div class="block-icon">☕</div>
+            <div class="block-title-wrap">
+              <div class="block-title">Marcas &amp; parcerias</div>
+              <div class="block-desc">Aparece na seção "Marcas &amp; formatos" de /midiakit. Uma marca por linha — edite, adicione ou remova livremente.</div>
+            </div>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>marcas (uma por linha)</label>
+          <textarea id="mk-brands" rows="8" placeholder="Gaggia Brasil&#10;Timemore&#10;..."></textarea>
+          <p class="hint">Os números (seguidores, alcance, audiência) continuam vindo do Instagram automaticamente — só esta lista é editada manualmente.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+        <div id="mk-updated" style="font-size:12px;color:var(--muted)"></div>
+        <button class="btn btn-primary" id="mk-save-btn" onclick="saveMidiaKit()">Salvar mídia kit</button>
+      </div>
     </div>
   </div>
 </div>
@@ -782,7 +808,46 @@ function switchTab(name, btn) {
   document.getElementById('tab-conteudo').style.display = name === 'conteudo' ? 'block' : 'none';
   document.getElementById('tab-perfil').style.display = name === 'perfil' ? 'block' : 'none';
   document.getElementById('tab-stats').style.display = name === 'stats' ? 'block' : 'none';
+  document.getElementById('tab-midiakit').style.display = name === 'midiakit' ? 'block' : 'none';
   if (name === 'stats') loadStats();
+  if (name === 'midiakit') loadMidiaKit();
+}
+
+const MIDIAKIT_API = '/api/midiakit-data';
+
+async function loadMidiaKit() {
+  const el = document.getElementById('mk-updated');
+  el.textContent = 'Carregando…';
+  try {
+    const res = await fetch(MIDIAKIT_API);
+    const mk = await res.json();
+    document.getElementById('mk-brands').value = (mk.brands || []).join('\n');
+    el.textContent = mk.updatedAt ? `Última atualização: ${new Date(mk.updatedAt).toLocaleString('pt-BR')}` : '';
+  } catch {
+    el.textContent = 'Não consegui carregar os dados do mídia kit.';
+  }
+}
+
+async function saveMidiaKit() {
+  const btn = document.getElementById('mk-save-btn');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  const brands = document.getElementById('mk-brands').value
+    .split('\n').map(s => s.trim()).filter(Boolean);
+  try {
+    const res = await fetch(MIDIAKIT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${password}` },
+      body: JSON.stringify({ brands }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      showToast('Mídia kit salvo ✓', false);
+      loadMidiaKit();
+    } else {
+      showToast(json.error || 'Erro ao salvar', true);
+    }
+  } catch { showToast('Erro de rede', true); }
+  btn.disabled = false; btn.textContent = 'Salvar mídia kit';
 }
 
 async function loadStats() {
