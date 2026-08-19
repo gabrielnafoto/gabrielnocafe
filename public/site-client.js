@@ -213,6 +213,13 @@
       const el = top.target;
       folio.innerHTML = `<span class="n">${el.dataset.chapter}</span> ${el.dataset.chapterTitle}`;
       masthead.dataset.currentAnchor = el.id;
+      // The desktop nav and the (possibly open) contents overlay both double
+      // as "you are here" markers — keep them live as the reader scrolls,
+      // not just at the moment the overlay happens to open.
+      document.querySelectorAll("[data-nav-link]").forEach((a) => {
+        a.classList.toggle("current", a.dataset.anchor === el.id);
+      });
+      markCurrentInIndex();
     }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
 
     chapters.forEach((c) => folioObserver.observe(c));

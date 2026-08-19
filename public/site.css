@@ -262,6 +262,7 @@ body::before {
 }
 .mast-nav a .n { color: var(--amber); margin-right: 7px; }
 .mast-nav a:hover, .mast-nav a:focus-visible { color: var(--paper); border-bottom-color: var(--amber); }
+.mast-nav a.current { color: var(--paper); border-bottom-color: var(--amber); }
 
 /* running folio — tells you which chapter you're in, like a magazine footer */
 .mast-folio {
