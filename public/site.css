@@ -652,7 +652,7 @@ body.index-open { overflow: hidden; }
   position: absolute;
   left: 4%;
   right: 4%;
-  bottom: 3%;
+  bottom: -4%;
   z-index: 2;
   text-align: right;
   pointer-events: none;
@@ -1655,7 +1655,7 @@ body.index-open { overflow: hidden; }
     opacity: .42;
     filter: grayscale(.3) contrast(1.1);
   }
-  .cover-role { bottom: 4%; }
+  .cover-role { bottom: -3%; }
   .cover-role span { font-size: clamp(24px, 10vw, 40px); }
   .cover-title { position: relative; z-index: 2; }
   .cover-in { padding-bottom: 0; }
