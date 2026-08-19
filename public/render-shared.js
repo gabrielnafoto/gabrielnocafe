@@ -133,6 +133,90 @@
     </svg>`;
   }
 
+  // Small arrow, for the handwritten-note treatment.
+  function doodleArrow() {
+    return `<svg class="note-arrow" viewBox="0 0 40 32" aria-hidden="true" focusable="false">
+      <path d="M3,26 C14,28 27,22 35,7 M26,5 L35,7 L31,16" />
+    </svg>`;
+  }
+
+  // Single loose mark, for the minimal-doodle treatment — one gesture, nothing more.
+  function doodleMark() {
+    return `<svg class="mini-doodle" viewBox="0 0 60 60" aria-hidden="true" focusable="false">
+      <path d="M13,31 C10,17 27,8 41,11 C54,14 55,29 46,38 C38,47 19,45 14,37 C11,32 13,31 13,31" />
+    </svg>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* product image — one fixed frame, five reusable editorial treatments   */
+  /* ---------------------------------------------------------------------- */
+
+  // Sensible default corner per treatment when the admin hasn't set one.
+  const TREATMENT_DEFAULT_POS = {
+    "oversized-type": "bl",
+    "handwritten-note": "tr",
+    "editorial-number": "br",
+    "minimal-doodle": "tr",
+  };
+
+  // Everything here draws ON TOP of the photo (typography over image, per the
+  // brief) rather than attempting any cutout/mask — .ph already clips
+  // overflow, so a treatment can bleed toward an edge without ever risking
+  // page-level overflow.
+  function editorialOverlay(item, lang, fallbackNumber) {
+    const kind = item.editorialTreatment;
+    if (!kind) return "";
+    const pos = item.annotationPosition || TREATMENT_DEFAULT_POS[kind] || "br";
+    const text = f(item, "editorialText", lang);
+
+    if (kind === "oversized-type") {
+      if (!text) return "";
+      return `<span class="ph-treat ph-treat--type pos-${escapeHtml(pos)}" aria-hidden="true">${escapeHtml(text)}</span>`;
+    }
+    if (kind === "handwritten-note") {
+      if (!text) return "";
+      return `<span class="ph-treat ph-treat--note pos-${escapeHtml(pos)}" aria-hidden="true">${doodleArrow()}<em>${escapeHtml(text)}</em></span>`;
+    }
+    if (kind === "editorial-number") {
+      const num = String(item.editorialNumber || fallbackNumber || "").trim();
+      if (!num) return "";
+      return `<span class="ph-treat ph-treat--number pos-${escapeHtml(pos)}" aria-hidden="true">${escapeHtml(num)}</span>`;
+    }
+    if (kind === "type-across") {
+      if (!text) return "";
+      return `<span class="ph-treat ph-treat--across" aria-hidden="true">${escapeHtml(text)}</span>`;
+    }
+    if (kind === "minimal-doodle") {
+      return `<span class="ph-treat ph-treat--doodle pos-${escapeHtml(pos)}" aria-hidden="true">${doodleMark()}</span>`;
+    }
+    return "";
+  }
+
+  // The one frame every product photo uses: fixed 4:5 ratio, same width,
+  // same weight. `imagePosition` (object-position) and `imageScale` (a light
+  // zoom) let Gabriel reframe a specific photo without ever resizing the
+  // frame itself.
+  function productMedia(item, lang, fallbackNumber) {
+    const url = safeUrl(item.image);
+    const styleParts = [];
+    if (item.imagePosition) styleParts.push(`object-position:${item.imagePosition}`);
+    const scale = Number(item.imageScale);
+    if (scale && scale !== 1 && scale > 0 && scale <= 2) styleParts.push(`transform:scale(${scale})`);
+    const styleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
+    const overlay = editorialOverlay(item, lang, fallbackNumber);
+
+    if (url) {
+      return `<div class="ph ph--4x5">
+        <img src="${escapeHtml(url)}" alt="${escapeHtml(f(item, "name", lang))}" loading="lazy"${styleAttr} />
+        ${overlay}
+      </div>`;
+    }
+    return `<div class="ph ph--4x5 ph--empty" role="img" aria-label="${escapeHtml(t(lang, "photoProduct"))}">
+      <span>✦<br/>${escapeHtml(t(lang, "photoProduct"))}<br/>4:5</span>
+      ${overlay}
+    </div>`;
+  }
+
   /* ---------------------------------------------------------------------- */
   /* cover                                                                  */
   /* ---------------------------------------------------------------------- */
@@ -275,11 +359,11 @@
     </div>`;
   }
 
-  // A — portrait. The chapter's opening statement: big photo, big name.
-  function ficheA(item, lang) {
+  // A — photo first, text after. Same frame as B; only the order differs.
+  function ficheA(item, lang, index) {
     const { body, note } = splitNote(f(item, "description", lang));
     return `<article class="fiche fiche--a rise">
-      <div class="fiche-media">${photo(item.image, "4x5", t(lang, "photoProduct"), f(item, "name", lang))}</div>
+      <div class="fiche-media">${productMedia(item, lang, pad2(null, index))}</div>
       <div class="fiche-body">
         ${ficheLabel(item, lang, false)}
         <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
@@ -290,8 +374,9 @@
     </article>`;
   }
 
-  // B — text-dominant, small photo. Mirrors A so the rhythm alternates.
-  function ficheB(item, lang) {
+  // B — text first, photo after. Mirrors A on desktop (photo swaps to the
+  // other side) — same aspect-ratio, same width, same visual weight as A.
+  function ficheB(item, lang, index) {
     const { body, note } = splitNote(f(item, "description", lang));
     return `<article class="fiche fiche--b rise">
       <div class="fiche-body">
@@ -301,7 +386,7 @@
         ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : ""}
         ${ficheActions(item, lang)}
       </div>
-      <div class="fiche-media">${photo(item.image, "1x1", t(lang, "photoProduct"), f(item, "name", lang))}</div>
+      <div class="fiche-media">${productMedia(item, lang, pad2(null, index))}</div>
     </article>`;
   }
 
@@ -323,7 +408,9 @@
 
   function renderFiche(item, index, lang) {
     const fn = FICHE_ORDER[index % FICHE_ORDER.length];
-    return fn(item, lang);
+    // ficheC's third param is `isArchive`, not an index — never confuse the two.
+    if (fn === ficheC) return fn(item, lang, false);
+    return fn(item, lang, index);
   }
 
   /* ---------------------------------------------------------------------- */

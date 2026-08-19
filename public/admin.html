@@ -624,7 +624,44 @@ function buildItemRow(item) {
         </div>
       </div>
     </div>
-    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px">
+
+    <div class="field" style="margin-top:12px;padding:14px;border:1px solid var(--border);background:var(--card)">
+      <label style="margin-bottom:10px">🎨 Tratamento editorial da foto (opcional)</label>
+      <div class="row">
+        <div class="field">
+          <label>Estilo</label>
+          <select class="i-treatment">
+            <option value="" ${!item.editorialTreatment?'selected':''}>Nenhum — foto limpa</option>
+            <option value="oversized-type" ${item.editorialTreatment==='oversized-type'?'selected':''}>Palavra gigante (ex: GRIND)</option>
+            <option value="handwritten-note" ${item.editorialTreatment==='handwritten-note'?'selected':''}>Anotação manuscrita + seta</option>
+            <option value="editorial-number" ${item.editorialTreatment==='editorial-number'?'selected':''}>Número editorial grande</option>
+            <option value="type-across" ${item.editorialTreatment==='type-across'?'selected':''}>Faixa de texto atravessando a foto</option>
+            <option value="minimal-doodle" ${item.editorialTreatment==='minimal-doodle'?'selected':''}>Só um rabisco (círculo)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Posição na foto</label>
+          <select class="i-annot-pos">
+            <option value="tl" ${item.annotationPosition==='tl'?'selected':''}>Superior esquerda</option>
+            <option value="tr" ${(!item.annotationPosition||item.annotationPosition==='tr')?'selected':''}>Superior direita</option>
+            <option value="bl" ${item.annotationPosition==='bl'?'selected':''}>Inferior esquerda</option>
+            <option value="br" ${item.annotationPosition==='br'?'selected':''}>Inferior direita</option>
+            <option value="center" ${item.annotationPosition==='center'?'selected':''}>Centro</option>
+          </select>
+          <p class="hint">Não se aplica à faixa de texto (sempre atravessa o centro).</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Texto (palavra/anotação/frase)</label><input type="text" class="i-e-text" value="${item.editorialText||''}" placeholder="ex: GRIND, uso todo dia, FOR ESPRESSO" /></div>
+        <div class="field"><label>Número (só p/ "número editorial")</label><input type="text" class="i-e-number" value="${item.editorialNumber||''}" placeholder="deixe vazio p/ usar 01, 02..." /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Enquadramento (object-position)</label><input type="text" class="i-img-pos" value="${item.imagePosition||''}" placeholder="ex: center, top, 60% 40%" /></div>
+        <div class="field"><label>Zoom da imagem</label><input type="number" class="i-img-scale" value="${item.imageScale||''}" placeholder="1.0" step="0.05" min="1" max="1.6" /></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px">
       <div class="toggle-wrap">
         <div class="toggle ${item.affilliate?'on':''}" onclick="this.classList.toggle('on')"></div>
         <span class="toggle-label">Link de afiliado</span>
@@ -659,7 +696,7 @@ function addSection() {
 }
 
 function addItem(btn) {
-  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', image:'', affilliate:false, dailyUse:false, seenInVideos:false };
+  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', image:'', affilliate:false, dailyUse:false, seenInVideos:false, editorialTreatment:'', editorialText:'', editorialNumber:'', annotationPosition:'', imagePosition:'', imageScale:'' };
   const container = btn.closest('.section-body').querySelector('.items-container');
   container.appendChild(buildItemRow(item));
   const card = btn.closest('.section-card');
@@ -688,6 +725,12 @@ function collectSections() {
       affilliate: row.querySelector('.toggle:not(.i-daily):not(.i-videos)').classList.contains('on'),
       dailyUse: row.querySelector('.i-daily').classList.contains('on'),
       seenInVideos: row.querySelector('.i-videos').classList.contains('on'),
+      editorialTreatment: row.querySelector('.i-treatment').value,
+      editorialText: row.querySelector('.i-e-text').value,
+      editorialNumber: row.querySelector('.i-e-number').value,
+      annotationPosition: row.querySelector('.i-annot-pos').value,
+      imagePosition: row.querySelector('.i-img-pos').value,
+      imageScale: row.querySelector('.i-img-scale').value,
     })),
   }));
 }
