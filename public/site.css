@@ -1111,8 +1111,11 @@ body.index-open { overflow: hidden; }
 /* --- unified item layout: one small square frame, text does the talking.
    `imageAlign` picks which side the photo sits on; items with no photo just
    run text full-width (.fiche--no-media). --- */
-.fiche--item { display: grid; gap: clamp(16px, 2.4vw, 28px); align-items: center; }
-.fiche--item .fiche-media { position: relative; width: 100%; max-width: 220px; }
+.fiche--item { display: grid; grid-template-columns: auto 1fr; gap: clamp(16px, 2.4vw, 28px); align-items: center; }
+.fiche--item.fiche--media-right { grid-template-columns: 1fr auto; }
+.fiche--item.fiche--media-right .fiche-media { order: 2; }
+.fiche--item.fiche--media-right .fiche-body  { order: 1; }
+.fiche--item .fiche-media { position: relative; width: 100%; max-width: 286px; }
 .fiche--item.fiche--no-media { display: block; }
 
 /* --- fiche C: archive line, dense and fast -------------------------------- */
@@ -1480,13 +1483,6 @@ body.index-open { overflow: hidden; }
     font-size: clamp(120px, 15vw, 230px);
   }
 
-  /* item: small square photo on whichever side imageAlign picks, text takes
-     the rest of the row. */
-  .fiche--item { grid-template-columns: auto 1fr; }
-  .fiche--item.fiche--media-right { grid-template-columns: 1fr auto; }
-  .fiche--item.fiche--media-right .fiche-media { order: 2; }
-  .fiche--item.fiche--media-right .fiche-body  { order: 1; }
-
   /* FICHE C stays a line, but pushes the CTA to the right edge */
   .fiche--c .fiche-row { flex-wrap: nowrap; align-items: baseline; }
   .fiche--c .fiche-actions { margin-top: 0; margin-left: auto; flex-shrink: 0; }
@@ -1532,11 +1528,9 @@ body.index-open { overflow: hidden; }
   .cover-kicker { max-width: calc(100% - 92px); }
   .cover-meta { margin-top: 30px; gap: 16px; }
 
-  /* small square photo, text stacked below — alignment choice only matters
-     on wider screens where there's room for a side-by-side row. */
-  .fiche--item { grid-template-columns: 1fr; gap: 16px; }
-  .fiche--item .fiche-media { max-width: 132px; order: -1 !important; }
-  .fiche--item .fiche-body { order: 0 !important; }
+  /* photo stays beside the text, just smaller — imageAlign keeps working */
+  .fiche--item { gap: 14px; }
+  .fiche--item .fiche-media { max-width: 34vw; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
 

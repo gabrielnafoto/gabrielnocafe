@@ -218,7 +218,7 @@
     return "";
   }
 
-  // The one frame every product photo uses: fixed 1:1 ratio, same width,
+  // The one frame every product photo uses: fixed 4:5 ratio, same width,
   // same weight. `imagePosition` (object-position) and `imageScale` (a light
   // zoom) let Gabriel reframe a specific photo without ever resizing the
   // frame itself.
@@ -232,7 +232,7 @@
     const styleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
     const overlay = editorialOverlay(item, lang, fallbackNumber);
 
-    return `<div class="ph ph--1x1">
+    return `<div class="ph ph--4x5">
       <img src="${escapeHtml(url)}" alt="${escapeHtml(f(item, "name", lang))}" loading="lazy"${styleAttr} />
       ${overlay}
     </div>`;
