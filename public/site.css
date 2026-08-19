@@ -1,21 +1,16 @@
 /* ============================================================================
-   gabriel no café — a coffee zine, laid out as a photographer's contact sheet
+   gabriel no café — a coffee zine
    ----------------------------------------------------------------------------
-   The page is a sequence of "pages" (.page), each carrying its own
+   The page is built as a sequence of "pages" (.page), each one carrying its own
    background/ink/accent palette. Rhythm comes from those palettes alternating —
    dark, dark, CREAM, dark, dark, CREAM — not from dividers. The cream page is
-   rare on purpose: it lands like a printed sheet flashing through a dark reel.
+   rare on purpose: it lands like a printed page flashing through a dark reel.
 
    Type has four jobs and never mixes them:
      Anton      → zine structure (chapter numbers, chapter titles, back cover)
      Fredoka    → Gabriel's voice (wordmark, product names)
      Space Mono → metadata (labels, notes, CTAs, folio)
      Caveat     → handwriting (margin notes)
-
-   No border-radius, no shadows, no entrance animation that moves layout —
-   everything is present at first paint, which is what keeps CLS at zero. The
-   only motion left is hand-drawn ink drawing itself in (stroke-dashoffset,
-   which affects nothing around it).
    ========================================================================== */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,16 +31,13 @@
   --lime:       #dfe2a8;
   --coffee:     #6b4a2f;
 
-  /* --- per-page tokens: every .page overrides these -----------------------
-     --muted and --faint were .58/.30 — the second failed contrast outright and
-     the first was borderline on --ink. Metadata is the entire voice of this
-     layout, so it now has to be readable at .72/.50. */
+  /* --- per-page tokens: every .page overrides these ----------------------- */
   --bg:      var(--ink);
   --fg:      var(--paper);
   --accent:  var(--amber);
-  --muted:   rgba(244, 236, 224, .72);
-  --faint:   rgba(244, 236, 224, .50);
-  --rule:    rgba(244, 236, 224, .16);
+  --muted:   rgba(244, 236, 224, .58);
+  --faint:   rgba(244, 236, 224, .30);
+  --rule:    rgba(244, 236, 224, .14);
 
   /* --- editorial widths --------------------------------------------------- */
   --gutter:  20px;
@@ -53,7 +45,11 @@
   --column:  1080px;   /* standard chapter column */
   --narrow:  640px;    /* reading measure */
 
-  /* --- spacing scale ------------------------------------------------------ */
+  /* --- spacing scale -------------------------------------------------------
+     Small, fixed steps for anything relating two adjacent pieces of the same
+     idea (a label to its title, a button to its neighbour). Section-level
+     rhythm (the gap BETWEEN ideas) stays on its own clamp()s below — that's
+     deliberately larger and viewport-aware, not on this scale. --------------- */
   --sp-1:  4px;
   --sp-2:  8px;
   --sp-3:  12px;
@@ -68,16 +64,12 @@
      product   → a product's name, the protagonist of its fiche
      body      → reading copy
      meta      → labels, folio, CTAs — always Space Mono, always quiet
-     hand      → Caveat annotations — the one handwritten voice, one size
-
-     --fs-meta was frozen at 10.5px, which is below the floor at which a
-     0.16em-tracked uppercase mono is legible on a dark ground; it now has a
-     real floor and scales with the viewport like every other tier. */
+     hand      → Caveat annotations — the one handwritten voice, one size ---- */
   --fs-hero:    clamp(72px, 19vw, 250px);
   --fs-display: clamp(46px, 12vw, 130px);
   --fs-product: clamp(30px, 6.4vw, 56px);
-  --fs-body:    clamp(14px, 1.4vw, 15px);
-  --fs-meta:    clamp(12px, 1vw, 13px);
+  --fs-body:    clamp(13px, 1.4vw, 14px);
+  --fs-meta:    10.5px;
   --fs-hand:    clamp(19px, 2.8vw, 26px);
 }
 
@@ -102,7 +94,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* the actual horizontal-scroll guard lives here instead of on body —
+/* the actual horizontal-scroll guard now lives here instead of on body —
    #app holds every full-bleed photo/section, .masthead is a sibling so its
    sticky positioning is never affected by this element's own overflow */
 #app { overflow-x: hidden; }
@@ -111,7 +103,8 @@ img { max-width: 100%; display: block; }
 a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* visually hidden but still reachable by screen readers */
+/* visually hidden but still reachable by screen readers — for content
+   that has a decorative, aria-hidden twin elsewhere on the page */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -124,7 +117,8 @@ a { -webkit-tap-highlight-color: transparent; }
   border: 0;
 }
 
-/* invisible until a keyboard user tabs to it */
+/* invisible until a keyboard user tabs to it — then jumps straight past
+   the masthead to the main content */
 .skip-link {
   position: absolute;
   top: -100px;
@@ -164,6 +158,7 @@ body::before {
   position: relative;
   background: var(--bg);
   color: var(--fg);
+  /* isolate so a page's own blend/absolute children never leak upward */
   isolation: isolate;
 }
 
@@ -176,9 +171,9 @@ body::before {
   --bg: var(--paper);
   --fg: var(--ink);
   --accent: var(--burnt);
-  --muted: rgba(20, 16, 12, .75);
-  --faint: rgba(20, 16, 12, .55);
-  --rule:  rgba(20, 16, 12, .20);
+  --muted: rgba(20, 16, 12, .62);
+  --faint: rgba(20, 16, 12, .34);
+  --rule:  rgba(20, 16, 12, .16);
 }
 /* paper pages get a whisper of vignette — scanner, not vignette-filter */
 .page--paper::after {
@@ -217,10 +212,9 @@ body::before {
 .t-meta {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .16em;
   text-transform: uppercase;
-  line-height: 1.5;
 }
 
 .t-hand {
@@ -235,22 +229,18 @@ body::before {
   font-size: var(--fs-body);
   line-height: 1.72;
   color: var(--muted);
-  text-transform: none;
-  letter-spacing: normal;
 }
 
-/* --- section header: one label, one aside, one hairline ------------------- */
-.section-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  padding-bottom: var(--sp-4);
-  margin-bottom: clamp(26px, 3.4vw, 42px);
-  border-bottom: 1px solid var(--rule);
+/* margin note: a rule on the left, like an annotation in a magazine gutter */
+.note-side {
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 34ch;
 }
-.section-lbl { color: var(--accent); }
-.section-sub { color: var(--faint); }
 
 /* ============================================================================
    MASTHEAD — a publication header, not a navbar
@@ -262,11 +252,13 @@ body::before {
   z-index: 40;
   background: color-mix(in srgb, var(--ink) 92%, transparent);
   backdrop-filter: saturate(140%) blur(8px);
-  border-bottom: 1px solid var(--rule);
-  transition: background-color .4s ease;
+  border-bottom: 1px solid rgba(244, 236, 224, .1);
+  transition: padding .25s ease, background-color .4s ease;
 }
 /* the sticky header borrows the current chapter's own ink tint — one more
-   quiet confirmation of "you're in a different chapter now" */
+   quiet confirmation of "you're in a different chapter now," right where
+   the eye already lands to check position. Text stays --paper regardless
+   (every ink-* palette is dark), so contrast never suffers. */
 .masthead[data-palette="page--ink-warm"] { background: color-mix(in srgb, var(--ink-warm) 92%, transparent); }
 .masthead[data-palette="page--ink-deep"] { background: color-mix(in srgb, var(--ink-deep) 92%, transparent); }
 
@@ -277,7 +269,7 @@ body::before {
   padding-top: max(14px, calc(env(safe-area-inset-top) + 8px));
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: 14px;
   min-height: 56px;
 }
 
@@ -289,20 +281,21 @@ body::before {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 8px;
   flex-shrink: 0;
   letter-spacing: -.01em;
 }
 .mast-brand .star { color: var(--amber); font-size: 13px; }
 
 /* desktop: navigation distributed across the bar, numbered like a contents
-   list. Scrolls horizontally on its own, invisibly, if the list ever
-   outgrows the bar instead of wrapping or overflowing the page. */
+   list. Every chapter renders here now (not just the first 3) — scrolls
+   horizontally on its own, invisibly, if the list ever outgrows the bar
+   instead of wrapping or overflowing the page. */
 .mast-nav {
   display: none;
-  gap: var(--sp-5);
+  gap: 22px;
   align-items: center;
-  margin-left: var(--sp-6);
+  margin-left: 30px;
   overflow-x: auto;
   scrollbar-width: none;
   min-width: 0;
@@ -311,13 +304,12 @@ body::before {
 .mast-nav a {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(244, 236, 224, .62);
+  color: rgba(244, 236, 224, .55);
   text-decoration: none;
   padding: 6px 0;
-  white-space: nowrap;
   border-bottom: 1px solid transparent;
   transition: color .18s, border-color .18s;
 }
@@ -327,14 +319,16 @@ body::before {
 
 /* running folio — tells you which chapter you're in, like a magazine footer.
    On mobile there's no room beside the brand, so the folio REPLACES it once
-   you've scrolled into a chapter. */
+   you've scrolled into a chapter — the one place you most need to know
+   where you are, since the desktop mast-nav's .current highlight doesn't
+   exist there either. */
 .mast-folio {
   display: none;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: rgba(244, 236, 224, .4);
   margin-left: auto;
   white-space: nowrap;
   overflow: hidden;
@@ -347,6 +341,7 @@ body::before {
   .masthead[data-current-anchor] .mast-brand { display: none; }
   .masthead[data-current-anchor] .mast-folio {
     display: block;
+    font-size: 11px;
     color: var(--paper);
     max-width: 62vw;
   }
@@ -356,27 +351,15 @@ body::before {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: 14px;
   flex-shrink: 0;
 }
 .mast-folio + .mast-right { margin-left: 20px; }
 
-/* the edition line: a publication states which issue you're holding */
-.mast-edition {
-  display: none;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-meta);
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--faint);
-  white-space: nowrap;
-}
-
 .mast-index-btn {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--paper);
@@ -387,7 +370,7 @@ body::before {
   min-height: 40px;
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 8px;
 }
 .mast-index-btn .bars {
   display: inline-flex;
@@ -409,7 +392,7 @@ body::before {
   align-items: center;
   gap: 5px;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .1em;
 }
 .lang button {
@@ -417,7 +400,7 @@ body::before {
   border: none;
   font: inherit;
   letter-spacing: inherit;
-  color: rgba(244, 236, 224, .55);
+  color: rgba(244, 236, 224, .45);
   cursor: pointer;
   padding: 10px 2px;
   min-height: 40px;
@@ -425,7 +408,7 @@ body::before {
   font-weight: 700;
 }
 .lang button.active { color: var(--amber); }
-.lang .sep { color: rgba(244, 236, 224, .3); }
+.lang .sep { color: rgba(244, 236, 224, .22); }
 
 /* ============================================================================
    INDEX OVERLAY — the contents page of the zine
@@ -442,9 +425,10 @@ body::before {
   padding: 0 0 60px;
   opacity: 0;
   visibility: hidden;
-  transition: opacity .22s ease, visibility .22s;
+  transform: translateY(-8px);
+  transition: opacity .28s ease, transform .28s ease, visibility .28s;
 }
-.index-overlay.open { opacity: 1; visibility: visible; }
+.index-overlay.open { opacity: 1; visibility: visible; transform: none; }
 
 .index-top {
   display: flex;
@@ -452,7 +436,7 @@ body::before {
   justify-content: space-between;
   padding: 18px var(--gutter);
   padding-top: max(18px, calc(env(safe-area-inset-top) + 12px));
-  border-bottom: 1.5px solid rgba(20, 16, 12, .2);
+  border-bottom: 1.5px solid rgba(20, 16, 12, .18);
   position: sticky;
   top: 0;
   background: var(--paper);
@@ -461,7 +445,7 @@ body::before {
 .index-top .lbl {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--coffee);
@@ -471,7 +455,7 @@ body::before {
   border: none;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 12px;
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--ink);
@@ -480,7 +464,7 @@ body::before {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 8px;
 }
 .index-close:hover { color: var(--burnt); }
 
@@ -489,7 +473,7 @@ body::before {
 .index-group-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10px;
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--burnt);
@@ -499,9 +483,9 @@ body::before {
 .index-item {
   display: flex;
   align-items: baseline;
-  gap: var(--sp-4);
+  gap: 16px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(20, 16, 12, .14);
+  border-bottom: 1px solid rgba(20, 16, 12, .12);
   text-decoration: none;
   color: var(--ink);
   transition: color .18s;
@@ -510,7 +494,7 @@ body::before {
 .index-item .num {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 11px;
   letter-spacing: .1em;
   color: var(--burnt);
   flex-shrink: 0;
@@ -529,8 +513,8 @@ body::before {
 }
 .index-item .count {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-meta);
-  color: rgba(20, 16, 12, .55);
+  font-size: 10.5px;
+  color: rgba(20, 16, 12, .45);
   flex-shrink: 0;
 }
 .index-item.current .name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
@@ -546,15 +530,15 @@ body::before {
 }
 .index-foot .soon {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(20, 16, 12, .5);
+  color: rgba(20, 16, 12, .38);
 }
 .index-foot a {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 11px;
   letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--ink);
@@ -567,62 +551,13 @@ body::before {
 body.index-open { overflow: hidden; }
 
 /* ============================================================================
-   PHOTOGRAPHIC FRAMES — one primitive, numbered like a contact sheet
-   Every photo on the page is a <figure class="ph ph--RATIO"> with an optional
-   <figcaption class="frame-no">. A frame is only ever rendered when there IS
-   a photograph — no hatched "drop your photo here" box ships to a visitor.
-   ========================================================================== */
-
-.ph {
-  position: relative;
-  width: 100%;
-  background: color-mix(in srgb, var(--fg) 5%, transparent);
-  border: 1px solid var(--rule);
-  overflow: hidden;
-}
-.ph img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform-origin: center;
-}
-.ph--4x5  { aspect-ratio: 4 / 5; }
-.ph--3x4  { aspect-ratio: 3 / 4; }
-.ph--1x1  { aspect-ratio: 1 / 1; }
-.ph--16x9 { aspect-ratio: 16 / 9; }
-.ph--3x2  { aspect-ratio: 3 / 2; }
-
-/* the frame counter — printed on the photograph, bottom-left, like a sheet
-   of contacts. Always light: it sits on a photograph, not on the page. */
-.frame-no {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  z-index: 2;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(244, 236, 224, .85);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, .55);
-  pointer-events: none;
-  max-width: calc(100% - 24px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ============================================================================
-   01 — THE COVER: two registers
-   TOP: a typographic spread inside the gutter.
-   BOTTOM: a full-bleed strip of numbered frames.
+   01 — THE COVER
    ========================================================================== */
 
 .cover {
   --bg: var(--ink);
   position: relative;
-  padding: clamp(28px, 5vw, 60px) 0 0;
+  padding: clamp(28px, 6vw, 70px) 0 clamp(40px, 7vw, 90px);
   overflow: hidden;
 }
 
@@ -633,63 +568,42 @@ body.index-open { overflow: hidden; }
   position: relative;
 }
 
-/* the top hairline row: what this is, and whose it is */
-.cover-rule {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  padding-bottom: var(--sp-4);
-  border-bottom: 1px solid var(--rule);
-}
-.cover-kicker { color: var(--amber); }
-.cover-handle { color: var(--faint); }
-
-/* headline and lede are SIBLINGS in one row — nothing is absolutely
-   positioned over anything else here, which is what used to let the
-   handwritten line and the scroll cue collide across a whole viewport. */
-.cover-head {
-  margin-top: clamp(30px, 4.4vw, 54px);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--sp-6) clamp(24px, 3vw, 40px);
+.cover-kicker {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: clamp(20px, 4vw, 42px);
+  display: block;
 }
 
+/* the headline: type as the composition, breaking the margin on purpose */
 .cover-title {
   font-family: 'Anton', 'Fredoka', sans-serif;
   font-weight: 400;
   text-transform: uppercase;
   font-size: var(--fs-hero);
-  line-height: .86;
+  line-height: .82;
   letter-spacing: -.015em;
   color: var(--paper);
-  /* real clearance for the acute accents on É / Ó, which are drawn ABOVE
-     Anton's cap height and were landing on the kicker line above */
-  padding-top: .2em;
-  overflow: visible;
-  overflow-wrap: break-word;
-  min-width: 0;
-}
-.cover-title .l1 { display: block; }
-.cover-title .l2 {
-  display: inline-block;
   position: relative;
-  width: fit-content;
-  margin-top: .34em;
+  z-index: 2;
+  overflow-wrap: break-word;
 }
+.cover-title .l1 { display: block; margin-left: -.02em; }
+.cover-title .l2 { display: block; }
+.cover-title .l3 { display: block; position: relative; width: fit-content; }
 .cover-title .dot { color: var(--burnt); }
 
-/* the one big doodle on the page: a scribble that fully ENCLOSES the last
-   word and loops back past its final letter, the way a pen would */
+/* the one big doodle on the page — a circle drawn around the last word */
 .cover-circle {
   position: absolute;
-  left: -11%;
-  top: -16%;
-  width: 126%;
-  height: 136%;
+  left: -6%;
+  top: -14%;
+  width: 112%;
+  height: 128%;
   pointer-events: none;
   overflow: visible;
 }
@@ -698,267 +612,290 @@ body.index-open { overflow: hidden; }
   stroke: var(--amber);
   stroke-width: 2.5;
   stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: var(--len, 3200);
-  stroke-dashoffset: var(--len, 3200);
+  stroke-dasharray: var(--len, 1200);
+  stroke-dashoffset: var(--len, 1200);
 }
 .cover-circle.drawn path { animation: draw 900ms cubic-bezier(.6, .05, .3, 1) forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 
-.cover-lede {
-  max-width: 28ch;
-  flex-shrink: 0;
-  padding-bottom: .9em;
-  /* stays pinned to the right even when a long headline (EN: "it's just an
-     ESPRESSO.") forces it to wrap onto its own line instead of sitting
-     beside the type */
+/* photo overlaps the type — layered, not a neighbouring column */
+.cover-photo {
+  position: relative;
+  z-index: 1;
+  margin-top: -6%;
   margin-left: auto;
-  text-align: right;
+  width: min(62%, 340px);
+  aspect-ratio: 4 / 5;
 }
+.cover-photo .ph { height: 100%; }
+.cover-photo .ph img { object-position: center var(--photo-y, 68%); }
 
-/* the scroll cue: alone on its own hairline row, nothing crossing it */
-.cover-cue {
-  margin-top: clamp(50px, 5.6vw, 84px);
-  padding: var(--sp-4) 0;
-  border-top: 1px solid var(--rule);
+.cover-meta {
+  margin-top: clamp(26px, 4vw, 48px);
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  gap: 24px 40px;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: var(--sp-4);
-}
-.cover-scroll {
-  color: var(--muted);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  transition: color .18s;
-}
-.cover-scroll:hover { color: var(--amber); }
-.cover-scroll .arr { animation: nudge 2.4s ease-in-out infinite; display: inline-block; }
-@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
-.cover-strip-meta { color: var(--faint); }
-
-/* --- the contact strip: full bleed, hairline-gapped, numbered ------------- */
-.strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  /* the gap IS the hairline — no per-cell borders to double up on wrap */
-  background: var(--rule);
   border-top: 1px solid var(--rule);
-  margin-top: 0;
+  padding-top: 20px;
 }
-.strip > * { border: none; }
-
-/* the typographic frame: the handwritten role line lives here now, on its own
-   burnt ground, instead of scrawled across a photograph it used to collide
-   with. Same 4:5 as its neighbours, so the strip stays a strip. */
-.strip-tile {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  background: var(--burnt);
-  padding: clamp(18px, 2vw, 24px);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  min-width: 0;
+/* a handwritten note scrawled across almost the whole cover photo, bleeding
+   past its edges into the page — positioned against .cover-in (which is
+   already position:relative and never has an ambiguous/auto height, unlike
+   .cover-photo at mobile widths, which is what made an earlier version of
+   this invisible on iOS Safari). Sits low, clear of the face. Every
+   character is its own span (typeChars() in render-shared.js) so it can be
+   revealed one letter at a time, like it's being written in real time —
+   triggered by the same "drawn" IntersectionObserver the doodle SVGs use. */
+.cover-role {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -4%;
+  z-index: 2;
+  text-align: right;
+  pointer-events: none;
 }
-.strip-tile-label { color: rgba(244, 236, 224, .88); }
-.strip-tile-hand {
+.cover-role > span {
+  display: inline-block;
   font-family: 'Caveat', cursive;
   font-weight: 600;
-  font-size: clamp(24px, 3.4vw, 42px);
-  line-height: 1.12;
+  font-size: clamp(26px, 8vw, 68px);
+  line-height: 1.15;
   color: var(--paper);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .6);
   transform: rotate(-2deg);
-  overflow-wrap: break-word;
 }
-/* inside the tile the counter is a real flow item, not printed on a photo */
-.strip-tile .frame-no {
-  position: static;
-  text-shadow: none;
-  color: rgba(244, 236, 224, .8);
+.cover-role > span > span { opacity: 0; }
+.cover-role.drawn > span > span {
+  animation: cover-role-letter .01s linear forwards;
+  animation-delay: calc(.2s + var(--i) * 28ms);
 }
+@keyframes cover-role-letter { to { opacity: 1; } }
+.cover-scroll {
+  font-family: 'Space Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.cover-scroll:hover { color: var(--amber); }
+.cover-scroll .arr { animation: nudge 2.4s ease-in-out infinite; }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
 
 /* ============================================================================
-   02 — COLOPHON: copy in one track, two square frames + the handwriting
+   02 — COLOPHON (who Gabriel is + contents)
    ========================================================================== */
 
-.colophon { padding: clamp(48px, 6.5vw, 92px) 0; }
-.colophon-in {
+.colophon { padding: clamp(44px, 7vw, 96px) 0; }
+.colophon-grid {
   max-width: var(--wide);
   margin-inline: auto;
   padding-inline: var(--gutter);
-}
-.colophon-grid {
   display: grid;
-  gap: clamp(30px, 4vw, 44px) clamp(24px, 3vw, 40px);
+  gap: clamp(32px, 5vw, 70px);
 }
 
 .colophon-lead {
   font-family: 'Fredoka', sans-serif;
   font-weight: 700;
-  font-size: clamp(23px, 3.2vw, 38px);
-  line-height: 1.26;
+  font-size: clamp(21px, 3.2vw, 36px);
+  line-height: 1.28;
   letter-spacing: -.01em;
   color: var(--fg);
-  max-width: 24ch;
+  max-width: 20ch;
 }
-.colophon-body { margin-top: var(--sp-5); max-width: 52ch; }
-.colophon-foot {
-  margin-top: var(--sp-6);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3) var(--sp-6);
-}
-.colophon-credit { color: var(--faint); }
-
-.colophon-side {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-5);
-}
-.colophon-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--rule);
-}
-.colophon-tiles > * { border: none; }
+.colophon-body { margin-top: 20px; max-width: 46ch; }
 .colophon-hand {
   font-family: 'Caveat', cursive;
   font-weight: 600;
   font-size: var(--fs-hand);
-  line-height: 1.35;
   color: var(--amber);
-}
-
-/* ============================================================================
-   03 — EVERY SINGLE DAY: an intro column, then one tile per item
-   Label and name now sit tight UNDER their own photograph, as one unit in one
-   colour. They used to sit at opposite ends of a full-width row, which read
-   as the label belonging to the neighbouring item.
-   ========================================================================== */
-
-.daily { padding: clamp(44px, 6vw, 86px) 0; }
-.daily-grid {
-  max-width: var(--wide);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-  display: grid;
-  gap: clamp(26px, 3.4vw, 40px);
-}
-.daily-intro { min-width: 0; }
-.daily-lbl { color: var(--accent); }
-.daily-desc { margin-top: var(--sp-4); max-width: 26ch; }
-.mini-rule {
-  display: block;
-  width: 70%;
-  height: 12px;
   margin-top: var(--sp-5);
-  overflow: visible;
+  line-height: 1.35;
 }
-.mini-rule path {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: var(--len, 340);
-  stroke-dashoffset: var(--len, 340);
-}
-.mini-rule.drawn path { animation: draw 700ms cubic-bezier(.6, .05, .3, 1) forwards; }
 
-.daily-tile {
-  display: block;
-  text-decoration: none;
+.socials { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 26px; }
+.social-a {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
   color: var(--fg);
-  min-width: 0;
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--accent);
+  padding: 8px 0 3px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
   transition: color .18s;
 }
-.daily-tile:hover { color: var(--accent); }
-.daily-label {
-  display: block;
-  margin-top: var(--sp-3);
-  margin-bottom: var(--sp-1);
-  color: var(--accent);
-}
-.daily-name {
-  display: block;
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  font-size: clamp(20px, 2.2vw, 27px);
-  line-height: 1.1;
-  letter-spacing: -.01em;
-  overflow-wrap: break-word;
-}
-/* no photo in the pool at all — the tile becomes a clean typographic row */
-.daily-tile .daily-label:first-child { margin-top: 0; }
+.social-a:hover, .social-a:focus-visible { color: var(--accent); }
 
 /* ============================================================================
-   CHAPTERS — an opener, then every item, always open
-   The chapter used to be a click-to-reveal accordion: the page shipped with
-   its content hidden, cost a click to read anything, and reflowed the whole
-   document on every toggle. It's all in the HTML now.
+   03 — EVERY SINGLE DAY (dailyUse, as a typographic band)
    ========================================================================== */
 
-.chapter { padding: clamp(44px, 6vw, 84px) 0; }
-.chapter-in {
+.daily { padding: clamp(40px, 6vw, 84px) 0; overflow: hidden; }
+.daily-head {
+  max-width: var(--wide);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: clamp(20px, 3vw, 34px);
+}
+.daily-head .lbl {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.daily-head .rule { flex: 1; height: 1px; background: var(--rule); }
+
+.daily-list {
   max-width: var(--wide);
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
-
-/* the numeral sits BESIDE the title, outlined — as a deliberate graphic mark,
-   not a ghost sliding around behind the letters and clipping them */
-.chapter-head {
+.daily-item {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--sp-2) clamp(18px, 2.2vw, 28px);
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--fg);
+  transition: color .2s;
 }
+.daily-item:first-child { border-top: 1px solid var(--rule); }
+.daily-item .nm {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(24px, 5.2vw, 52px);
+  line-height: 1;
+  letter-spacing: -.005em;
+  transition: transform .2s ease;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.daily-item .lb {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.daily-item:hover { color: var(--accent); }
+.daily-item:hover .nm { transform: translateX(6px); }
+
+/* ============================================================================
+   CHAPTERS — opener + fiches
+   ========================================================================== */
+
+/* no padding-bottom here on purpose — the last product's photo runs right
+   into the next chapter's own opening (which already carries a big
+   padding-top). A gap here read as a stray empty beat between two
+   chapters, especially when the one in between is short. */
+
+/* a small step of luminosity separates the chapter's own opening beat from
+   the product list beneath it — same palette, no new colour, just enough
+   of a plane change that "header" and "list" stop reading as one wash of
+   the same background. The tint is a full-bleed ::before (chapter-open
+   itself stays a centred/padded container, so the tint can't just live on
+   its own background without being clipped to --wide). */
+.chapter-open {
+  max-width: var(--wide);
+  margin-inline: auto;
+  padding: clamp(46px, 8vw, 110px) var(--gutter) clamp(34px, 5vw, 60px);
+  position: relative;
+  display: grid;
+  gap: clamp(22px, 3vw, 44px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.chapter-open::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  border-bottom: 1px solid var(--rule);
+  z-index: -1;
+  transition: background-color .2s ease;
+}
+.chapter-open:hover::before { background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.chapter-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+/* the little "reveal the products" cue, beside the item count */
+.chapter-toggle-hint {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+}
+.chapter-toggle-arr {
+  display: inline-block;
+  color: var(--faint);
+  transition: transform .25s cubic-bezier(.6, .05, .3, 1);
+}
+.chapter-open[aria-expanded="true"] .chapter-toggle-arr { transform: rotate(180deg); }
+
+.chapter-mark { position: relative; }
+
+/* the giant number sits behind the word on mobile, beside it on desktop */
 .chapter-num {
   font-family: 'Anton', sans-serif;
   font-weight: 400;
-  font-size: clamp(56px, 9vw, 116px);
-  line-height: .8;
-  letter-spacing: .01em;
-  color: transparent;
-  -webkit-text-stroke: 2px var(--accent);
-  flex-shrink: 0;
+  font-size: clamp(120px, 34vw, 250px);
+  line-height: .74;
+  letter-spacing: -.03em;
+  color: var(--accent);
+  opacity: .16;
+  position: absolute;
+  top: -.12em;
+  left: -.04em;
+  pointer-events: none;
   user-select: none;
+  z-index: 0;
 }
-/* if text-stroke is unavailable the numeral would be invisible — fall back
-   to a low-opacity solid instead of nothing */
-@supports not (-webkit-text-stroke: 2px red) {
-  .chapter-num { color: var(--accent); opacity: .22; }
-}
+
 .chapter-title {
   font-family: 'Anton', 'Fredoka', sans-serif;
   font-weight: 400;
   text-transform: uppercase;
   font-size: var(--fs-display);
-  line-height: .84;
+  line-height: .86;
   letter-spacing: -.015em;
   color: var(--fg);
+  position: relative;
+  z-index: 1;
   overflow-wrap: break-word;
-  min-width: 0;
-}
-.chapter-meta {
-  color: var(--faint);
-  margin-left: auto;
-  padding-bottom: var(--sp-3);
+  width: fit-content;
+  max-width: 100%;
 }
 
-/* hand-drawn rule across the full measure, under the header */
+/* hand-drawn underline under the chapter word */
 .chapter-underline {
   display: block;
   width: 100%;
-  height: 14px;
-  margin-top: var(--sp-4);
+  height: 12px;
+  margin-top: 4px;
   overflow: visible;
 }
 .chapter-underline path {
@@ -966,91 +903,74 @@ body.index-open { overflow: hidden; }
   stroke: var(--accent);
   stroke-width: 2.5;
   stroke-linecap: round;
-  stroke-dasharray: var(--len, 1300);
-  stroke-dashoffset: var(--len, 1300);
+  stroke-dasharray: var(--len, 400);
+  stroke-dashoffset: var(--len, 400);
 }
-.chapter-underline.drawn path { animation: draw 900ms cubic-bezier(.6, .05, .3, 1) forwards; }
+.chapter-underline.drawn path { animation: draw 700ms cubic-bezier(.6, .05, .3, 1) forwards; }
 
-.chapter-items { margin-top: clamp(30px, 4vw, 52px); }
-
-/* ============================================================================
-   FICHES — copy beside numbered square frames
-   ========================================================================== */
-
-.fiche { position: relative; }
-.fiche + .fiche {
-  margin-top: clamp(30px, 4vw, 52px);
-  padding-top: clamp(30px, 4vw, 52px);
-  border-top: 1px solid var(--rule);
-}
-
-.fiche-label {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--sp-4);
+.chapter-intro { display: flex; align-items: center; gap: 18px; }
+.chapter-count {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10.5px;
   letter-spacing: .16em;
   text-transform: uppercase;
-  color: var(--accent);
-}
-/* the affiliate/tried flag is a stamped chip, not a whisper */
-.fiche-flag {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  padding: 3px 8px;
+  color: var(--faint);
 }
 
-.fiche-name {
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  font-size: var(--fs-product);
-  line-height: 1.04;
-  letter-spacing: -.02em;
-  color: var(--fg);
-  overflow-wrap: break-word;
+.chapter-items {
+  max-width: var(--wide);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
-
-.fiche-desc {
-  font-family: 'Space Mono', monospace;
-  font-size: var(--fs-body);
-  line-height: 1.72;
-  color: var(--muted);
-  max-width: 44ch;
-  margin-top: var(--sp-4);
-}
-
-.fiche-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3) clamp(20px, 2.4vw, 28px);
-  flex-wrap: wrap;
-  margin-top: clamp(20px, 2.6vw, 28px);
-}
-
-/* --- the item grid ------------------------------------------------------- */
-.fiche--item {
-  display: grid;
-  gap: clamp(20px, 2.6vw, 32px);
-}
-.fiche-body { min-width: 0; }
-.fiche-frame { min-width: 0; }
-/* nothing to sit beside — the copy runs at a reading measure instead of
-   next to an empty box */
-.fiche--item.frames-0 .fiche-desc { max-width: 60ch; }
 
 /* ============================================================================
-   PRODUCT PHOTO CAROUSEL — same frame, 2+ gallery photos. Native horizontal
-   scroll-snap does the swiping for free; arrows + dots call scrollTo on the
-   same track — no external library.
+   PHOTO SLOTS + PLACEHOLDERS
+   Real images render as-is. Empty slots render a clearly-marked placeholder
+   so the composition holds its shape until Gabriel drops the photo in.
+   ========================================================================== */
+
+.ph {
+  position: relative;
+  width: 100%;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.ph img { width: 100%; height: 100%; object-fit: cover; }
+.ph--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 11px,
+      color-mix(in srgb, var(--fg) 4%, transparent) 11px 12px
+    );
+}
+.ph--empty span {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: center;
+  padding: 10px;
+  line-height: 1.8;
+}
+.ph--4x5  { aspect-ratio: 4 / 5; }
+.ph--3x4  { aspect-ratio: 3 / 4; }
+.ph--1x1  { aspect-ratio: 1 / 1; }
+.ph--16x9 { aspect-ratio: 16 / 9; }
+.ph--3x2  { aspect-ratio: 3 / 2; }
+.ph img { transform-origin: center; }
+
+/* ============================================================================
+   PRODUCT PHOTO CAROUSEL — same frame, 2+ photos. Native horizontal
+   scroll-snap does the swiping (mobile) for free; arrows + dots (desktop,
+   also touch-usable) call scrollTo on the same track — no external library.
    ========================================================================== */
 .ph--carousel { overflow: visible; border: none; background: none; }
 .ph--carousel .ph-track {
@@ -1063,6 +983,7 @@ body.index-open { overflow: hidden; }
   scroll-behavior: smooth;
   border: 1px solid var(--rule);
   background: color-mix(in srgb, var(--fg) 5%, transparent);
+  /* hide the native scrollbar — the dots are the real affordance */
   scrollbar-width: none;
 }
 .ph--carousel .ph-track::-webkit-scrollbar { display: none; }
@@ -1076,7 +997,7 @@ body.index-open { overflow: hidden; }
 }
 .ph-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* arrows: pointer devices only — touch already has native swipe */
+/* arrows: desktop/pointer only — touch already has native swipe */
 .ph-nav {
   display: none;
   position: absolute;
@@ -1084,20 +1005,21 @@ body.index-open { overflow: hidden; }
   transform: translateY(-50%);
   width: 34px;
   height: 34px;
+  border-radius: 50%;
   border: none;
-  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
   color: var(--paper);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  z-index: 3;
+  z-index: 2;
   transition: background-color .15s ease;
 }
-.ph-nav:hover { background: color-mix(in srgb, var(--ink) 82%, transparent); }
-.ph-nav--prev { left: 0; }
-.ph-nav--next { right: 0; }
+.ph-nav:hover { background: color-mix(in srgb, var(--ink) 75%, transparent); }
+.ph-nav--prev { left: 10px; }
+.ph-nav--next { right: 10px; }
 @media (hover: hover) and (pointer: fine) {
   .ph-nav { display: flex; }
 }
@@ -1106,31 +1028,32 @@ body.index-open { overflow: hidden; }
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 12px;
-  z-index: 3;
+  bottom: 10px;
+  z-index: 2;
   display: flex;
-  justify-content: flex-end;
-  padding-right: 12px;
+  justify-content: center;
   gap: 6px;
   pointer-events: none;
 }
 .ph-dot {
   pointer-events: auto;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   border: none;
   padding: 0;
-  background: rgba(244, 236, 224, .45);
+  background: rgba(255, 255, 255, .4);
   cursor: pointer;
-  transition: background-color .15s ease;
+  transition: background-color .15s ease, transform .15s ease;
 }
-.ph-dot.is-active { background: var(--paper); }
+.ph-dot.is-active { background: var(--paper); transform: scale(1.3); }
 
 /* ============================================================================
-   PRODUCT PHOTO TREATMENTS — the frame never changes size; the art direction
-   happens inside it. Five reusable interventions, one per photo, chosen in
-   admin (item.editorialTreatment). .ph already clips overflow, so anything
-   bleeding toward an edge is cropped by the frame — never the page.
+   PRODUCT PHOTO TREATMENTS — the frame never changes size; the art
+   direction happens inside it. Five reusable interventions, one per photo,
+   chosen in admin (item.editorialTreatment). .ph already clips overflow, so
+   anything bleeding toward an edge is safely cropped by the frame — never
+   the page.
    ========================================================================== */
 
 .ph-treat {
@@ -1141,11 +1064,12 @@ body.index-open { overflow: hidden; }
 }
 .ph-treat.pos-tl { top: 10px; left: 10px; }
 .ph-treat.pos-tr { top: 10px; right: 10px; text-align: right; }
-.ph-treat.pos-bl { bottom: 34px; left: 10px; }
-.ph-treat.pos-br { bottom: 34px; right: 10px; text-align: right; }
+.ph-treat.pos-bl { bottom: 10px; left: 10px; }
+.ph-treat.pos-br { bottom: 10px; right: 10px; text-align: right; }
 .ph-treat.pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
 
-/* A — oversized type: one big word, printed onto the photo */
+/* A — oversized type: one big word, printed onto the photo, low contrast so
+   the photograph still reads underneath. */
 .ph-treat--type {
   font-family: 'Fredoka', sans-serif;
   font-weight: 700;
@@ -1158,8 +1082,9 @@ body.index-open { overflow: hidden; }
   mix-blend-mode: overlay;
   overflow-wrap: break-word;
 }
+.ph-treat--type.pos-bl, .ph-treat--type.pos-br { margin: 0 -6px; }
 
-/* B — handwritten note: a short aside with a small drawn arrow, taped on */
+/* B — handwritten note: a short aside with a small drawn arrow, taped on. */
 .ph-treat--note {
   display: inline-flex;
   align-items: center;
@@ -1168,14 +1093,14 @@ body.index-open { overflow: hidden; }
   font-weight: 600;
   font-size: clamp(18px, 3vw, 23px);
   color: var(--paper);
-  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  background: color-mix(in srgb, var(--ink) 60%, transparent);
   padding: 5px 12px 6px;
   transform: rotate(-2deg);
 }
 .ph-treat--note .note-arrow { width: 26px; height: 22px; flex-shrink: 0; overflow: visible; }
 .ph-treat--note .note-arrow path { fill: none; stroke: var(--paper); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
-/* C — editorial number: big outlined numeral, a graphic mark, not a label */
+/* C — editorial number: big outlined numeral, a graphic mark, not a label. */
 .ph-treat--number {
   font-family: 'Fredoka', sans-serif;
   font-weight: 700;
@@ -1187,7 +1112,7 @@ body.index-open { overflow: hidden; }
   opacity: .65;
 }
 
-/* D — type across: a sash of text crossing the frame at a slight tilt */
+/* D — type across: a sash of text crossing the frame at a slight tilt. */
 .ph-treat--across {
   position: absolute;
   left: -6%;
@@ -1206,7 +1131,8 @@ body.index-open { overflow: hidden; }
   max-width: none;
 }
 
-/* E — minimal doodle: a single loose mark */
+/* E — minimal doodle: a single loose mark, for breathing room between
+   stronger compositions. */
 .ph-treat--doodle svg { width: 34px; height: 34px; overflow: visible; }
 .ph-treat--doodle path { fill: none; stroke: var(--paper); stroke-width: 2.2; stroke-linecap: round; }
 
@@ -1216,23 +1142,116 @@ body.index-open { overflow: hidden; }
 }
 
 /* ============================================================================
+   FICHES — three editorial layouts, alternating by position
+   ========================================================================== */
+
+.fiche {
+  padding: clamp(30px, 4.5vw, 60px) 0;
+  border-top: 1px solid var(--rule);
+  position: relative;
+}
+.fiche:first-child { border-top: none; }
+
+.fiche-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.fiche-flag {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  border: 1px solid var(--rule);
+  padding: 3px 8px;
+}
+
+.fiche-name {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  font-size: var(--fs-product);
+  line-height: 1.02;
+  letter-spacing: -.02em;
+  /* a shade quieter than the chapter title's full-strength --fg — products
+     read calmer than the opener that introduces them, weight not just size */
+  color: color-mix(in srgb, var(--fg) 92%, transparent);
+  margin-bottom: var(--sp-3);
+  overflow-wrap: break-word;
+}
+
+.fiche-desc {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-body);
+  line-height: 1.72;
+  color: var(--muted);
+  max-width: 52ch;
+}
+
+/* the personal aside, pulled from the last sentence of the description */
+.fiche-note {
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: var(--fs-hand);
+  line-height: 1.3;
+  color: var(--accent);
+  margin-top: var(--sp-4);
+  padding-left: var(--sp-5);
+  position: relative;
+  max-width: 32ch;
+}
+.fiche-note::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: .32em;
+  bottom: .28em;
+  width: 2px;
+  background: var(--accent);
+  opacity: .55;
+}
+
+.fiche-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  margin-top: var(--sp-5);
+}
+
+/* ============================================================================
    BLOCK GESTURE — one optional graphic move living in the block's own empty
    space (not on the photo). item.editorialStyle picks at most one of these;
    "clean" (the default for most items) renders nothing.
    ========================================================================== */
 
+/* personal-note: a short aside in the writer's own voice, just past the CTA.
+   annotationPosition ("tr"/"br"/etc, reused from the photo-overlay system)
+   only ever nudges text-align here — there's no absolute positioning inside
+   a block that's still in normal document flow. */
 .block-note {
   font-family: 'Caveat', cursive;
   font-weight: 600;
   font-size: var(--fs-hand);
-  line-height: 1.35;
   color: var(--accent);
-  margin-top: var(--sp-6);
+  margin-top: var(--sp-5);
   transform: rotate(-1.5deg);
   max-width: 28ch;
 }
 .block-note.pos-tr, .block-note.pos-br { margin-left: auto; text-align: right; }
 
+/* oversized-word: a big word as pure shape, low-contrast, never competing
+   with the product name above it. Sits in flow so it can never overlap text
+   or bleed past the block on narrow screens. */
 .block-word {
   display: block;
   font-family: 'Anton', sans-serif;
@@ -1242,34 +1261,36 @@ body.index-open { overflow: hidden; }
   line-height: .85;
   letter-spacing: -.01em;
   color: var(--accent);
-  opacity: .18;
-  margin-top: var(--sp-5);
+  opacity: .16;
+  margin-top: var(--sp-4);
   pointer-events: none;
   user-select: none;
   overflow-wrap: break-word;
 }
 .block-word.pos-tr, .block-word.pos-br { text-align: right; }
 
+/* editorial-number: a big number as pure graphic — never reads as an index */
 .block-number {
   display: block;
   font-family: 'Anton', sans-serif;
   font-weight: 400;
   font-size: clamp(56px, 14vw, 110px);
   line-height: .8;
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--accent);
-  opacity: .5;
-  margin-top: var(--sp-5);
+  color: var(--accent);
+  opacity: .18;
+  margin-top: var(--sp-4);
   pointer-events: none;
   user-select: none;
 }
 .block-number.pos-tr, .block-number.pos-br { text-align: right; }
 
+/* arrow-note: a short hand-drawn arrow leading into a personal aside —
+   the transition device between this block and the photo/next block */
 .block-arrow-note {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-3);
-  margin-top: var(--sp-6);
+  margin-top: var(--sp-5);
 }
 .block-arrow-note .item-arrow { width: 22px; height: 40px; flex-shrink: 0; }
 .block-arrow-note .item-arrow path {
@@ -1287,16 +1308,12 @@ body.index-open { overflow: hidden; }
   padding-top: 2px;
 }
 
-/* ============================================================================
-   ACTIONS — a CTA is a word with a rule under it, never a pill
-   ========================================================================== */
-
+/* CTA is a word, not a button: underline grows from the left on hover */
 .cta {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-meta);
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  letter-spacing: .06em;
   color: var(--fg);
   text-decoration: none;
   position: relative;
@@ -1321,88 +1338,143 @@ body.index-open { overflow: hidden; }
 .cta .arr { transition: transform .28s cubic-bezier(.6, .05, .3, 1); display: inline-block; }
 .cta:hover { color: var(--accent); }
 .cta:hover .arr { transform: translate(2px, -2px); }
+@media (hover: hover) {
+  .cta::after { transform: scaleX(0); }
+  .cta:hover::after, .cta:focus-visible::after { transform: scaleX(1); }
+}
 
-/* the secondary action is quiet, but it still has to be readable */
+/* secondary action, almost invisible — as specified */
 .copy-link {
   font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-meta);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--faint);
   background: none;
   border: none;
-  border-bottom: 1px solid var(--rule);
   cursor: pointer;
-  padding: 10px 0 4px;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  transition: color .18s, border-color .18s;
-}
-.copy-link:hover, .copy-link:focus-visible { color: var(--fg); border-bottom-color: var(--accent); }
-
-.socials { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); }
-.social-a {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-meta);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--fg);
-  text-decoration: none;
-  border-bottom: 1.5px solid var(--accent);
-  padding: 6px 0 3px;
-  min-height: 34px;
+  padding: 10px 0;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   transition: color .18s;
 }
-.social-a:hover, .social-a:focus-visible { color: var(--accent); }
+.copy-link:hover, .copy-link:focus-visible { color: var(--muted); }
+
+/* --- unified item layout: text first, photo below — same order everywhere.
+   Items with no photo just run text full-width (.fiche--no-media). --- */
+.fiche--item { display: flex; flex-direction: column; gap: clamp(16px, 2.4vw, 24px); }
+.fiche--item .fiche-media { position: relative; width: 100%; max-width: 340px; }
+
+/* hand pointing from the copy to its photo — a gesture, not a UI control */
+.item-arrow-wrap { align-self: center; flex-shrink: 0; }
+.item-arrow { display: block; width: 30px; height: 68px; overflow: visible; }
+.item-arrow path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- fiche C: archive line, dense and fast -------------------------------- */
+.fiche--c { padding: 16px 0; }
+.fiche--c .fiche-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.fiche--c .fiche-label { margin-bottom: 6px; }
+.fiche--c .fiche-name {
+  font-size: clamp(19px, 3.4vw, 28px);
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+.fiche--c .fiche-desc { font-size: 12px; margin-top: 8px; max-width: 60ch; }
+.fiche--c .fiche-actions { margin-top: 10px; }
+.fiche--c .cta { font-size: 11.5px; }
+
+/* --- collapsed archive: keeps long chapters from running forever ---------- */
+.more-toggle {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--rule);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  padding: 20px 0;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: color .18s;
+}
+.more-toggle .arr { transition: transform .24s ease; display: inline-block; }
+.more-toggle[aria-expanded="true"] .arr { transform: rotate(180deg); }
+.more-toggle:hover { color: var(--fg); }
+.fiche-rest[hidden] { display: none; }
 
 /* ============================================================================
    ARCHIVE — "already tried", the back of the zine
    ========================================================================== */
 
-.archive { padding: clamp(46px, 6.5vw, 92px) 0; }
-.archive-in {
+.archive { padding: clamp(46px, 7vw, 96px) 0; }
+.archive-head {
   max-width: var(--wide);
   margin-inline: auto;
   padding-inline: var(--gutter);
-}
-
-/* archive line: dense and fast, one row per thing */
-.fiche--c { padding: 0; }
-.fiche--c .fiche-row {
+  margin-bottom: clamp(20px, 3vw, 36px);
   display: flex;
   align-items: baseline;
-  gap: var(--sp-4);
+  gap: 16px;
   flex-wrap: wrap;
 }
-.fiche--c .fiche-label { margin-bottom: var(--sp-2); }
-.fiche--c .fiche-name {
-  font-size: clamp(21px, 3.4vw, 30px);
-  flex: 1;
-  min-width: 0;
+.archive-title {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(30px, 7vw, 68px);
+  line-height: .92;
+  letter-spacing: -.01em;
+  color: var(--fg);
 }
-.fiche--c .fiche-desc { max-width: 62ch; margin-top: var(--sp-3); }
-.fiche--c .fiche-actions { margin-top: var(--sp-3); }
+.archive-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 40ch;
+}
 
 /* ============================================================================
-   AFFILIATE NOTE — a disclosure a reader is entitled to actually read
+   AFFILIATE NOTE — an editorial footnote
    ========================================================================== */
 
-.footnote { padding: clamp(34px, 4.5vw, 60px) 0; }
-.footnote-grid {
+.footnote {
   max-width: var(--wide);
   margin-inline: auto;
-  padding: clamp(24px, 3vw, 32px) var(--gutter) 0;
+  padding: clamp(28px, 4vw, 44px) var(--gutter);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
   border-top: 1px solid var(--rule);
-  display: grid;
-  gap: var(--sp-5) clamp(24px, 3vw, 40px);
 }
-.footnote-lbl { color: var(--accent); }
-.footnote-body { max-width: 80ch; }
+.footnote .star { color: var(--accent); font-size: 11px; flex-shrink: 0; line-height: 1.9; }
+.footnote p {
+  font-family: 'Space Mono', monospace;
+  font-size: 10.5px;
+  line-height: 1.85;
+  color: var(--faint);
+  max-width: 68ch;
+}
 
 /* ============================================================================
    BACK COVER
@@ -1422,15 +1494,23 @@ body.index-open { overflow: hidden; }
   padding-inline: var(--gutter);
   width: 100%;
 }
+/* colophon — the zine's own masthead, instead of repeating the cover line */
 .backcover-masthead { margin-bottom: clamp(28px, 4vw, 44px); }
-.backcover-issue { color: var(--accent); }
+.backcover-issue {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
 .backcover-credits {
   font-family: 'Fredoka', sans-serif;
   font-weight: 600;
   font-size: clamp(22px, 3.6vw, 34px);
   line-height: 1.25;
   color: var(--paper);
-  margin-top: var(--sp-2);
+  margin-top: 8px;
   max-width: 22ch;
 }
 
@@ -1438,26 +1518,34 @@ body.index-open { overflow: hidden; }
   margin-bottom: clamp(24px, 3.5vw, 36px);
   padding-top: clamp(20px, 3vw, 28px);
   border-top: 1px dashed var(--rule);
-  max-width: 380px;
+  max-width: 360px;
 }
-.gear-heading { display: block; color: var(--accent); margin-bottom: var(--sp-3); }
-.gear-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.gear-heading {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.gear-list { display: flex; flex-direction: column; gap: 8px; }
 .gear-row {
   display: flex;
-  gap: var(--sp-4);
+  gap: 14px;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-body);
+  font-size: 13px;
   line-height: 1.5;
 }
 .gear-label {
   flex: 0 0 auto;
-  min-width: 96px;
+  min-width: 90px;
   color: var(--faint);
   text-transform: uppercase;
-  letter-spacing: .06em;
-  font-size: var(--fs-meta);
-  font-weight: 700;
-  padding-top: .15em;
+  letter-spacing: .04em;
+  font-size: 10.5px;
+  padding-top: .2em;
 }
 .gear-value { color: var(--muted); }
 
@@ -1473,10 +1561,10 @@ body.index-open { overflow: hidden; }
 }
 .note-rest {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-body);
+  font-size: 12.5px;
   line-height: 1.75;
   color: var(--muted);
-  margin-top: var(--sp-3);
+  margin-top: 12px;
 }
 
 /* the cover's headline returns, oversized, as the publication's last page —
@@ -1490,7 +1578,6 @@ body.index-open { overflow: hidden; }
   letter-spacing: -.015em;
   color: var(--paper);
   max-width: 16ch;
-  padding-top: .16em;
   overflow-wrap: break-word;
 }
 
@@ -1508,10 +1595,10 @@ body.index-open { overflow: hidden; }
   border-top: 1px solid var(--rule);
   padding-top: 22px;
 }
+.backcover-foot .socials { margin-top: 0; }
 .backcover-copy {
   font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-meta);
+  font-size: 10px;
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--faint);
@@ -1519,29 +1606,37 @@ body.index-open { overflow: hidden; }
 }
 
 /* ============================================================================
-   TOAST — opacity/transform only, never affects layout
+   TOAST
    ========================================================================== */
 
 .toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: var(--ink);
-  color: var(--paper);
-  border: 1px solid var(--amber);
+  transform: translateX(-50%) translateY(14px);
+  background: var(--amber);
+  color: var(--ink);
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-meta);
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
-  padding: 12px 22px;
+  padding: 11px 22px;
   opacity: 0;
-  transition: opacity .18s ease, transform .18s ease;
+  transition: opacity .25s, transform .25s;
   pointer-events: none;
   z-index: 70;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================================
+   ENTRANCE — content settles in a few pixels, nothing more
+   ========================================================================== */
+
+.rise { opacity: 0; transform: translateY(14px); }
+.rise.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s cubic-bezier(.4, 0, .2, 1); }
+/* a beat behind the text it follows — reading order, not two things at once */
+.rise--delay.in { transition-delay: .15s; }
 
 /* ============================================================================
    DESKTOP — real use of the width, asymmetric grids
@@ -1550,44 +1645,77 @@ body.index-open { overflow: hidden; }
 @media (min-width: 760px) {
   :root { --gutter: 40px; }
 
+  /* the nav now lists every chapter (its own .current class marks position),
+     so the folio would just be a second, redundant "you are here" — and it
+     used to visually collide with the nav, looking like a stray orphaned
+     item floating on the opposite side of the bar. Folio stays mobile-only,
+     where there's no room for the full nav list. */
   .mast-nav { display: flex; }
-  .mast-edition { display: block; }
 
-  /* the strip runs as many columns as it has frames */
-  .strip { grid-template-columns: repeat(var(--strip-cols, 4), minmax(0, 1fr)); }
+  /* COVER: type left, photo right, overlapping */
+  .cover-in {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "kick  kick"
+      "title title"
+      "meta  meta";
+    align-items: start;
+  }
+  .cover-kicker { grid-area: kick; }
+  .cover-title  { grid-area: title; }
+  .cover-meta   { grid-area: meta; }
 
-  /* COLOPHON: copy in seven columns, frames + handwriting in five */
-  .colophon-grid { grid-template-columns: 7fr 5fr; }
+  .cover-photo {
+    position: absolute;
+    right: var(--gutter);
+    bottom: clamp(70px, 10vw, 150px);
+    width: min(34%, 380px);
+    margin: 0;
+    z-index: 3;
+  }
+  .cover-title { max-width: 78%; }
 
-  /* DAILY: intro column, then items three across */
-  .daily-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .daily-intro {
-    border-right: 1px solid var(--rule);
-    padding-right: clamp(20px, 2.6vw, 32px);
+  /* COLOPHON: single column, capped to a comfortable reading measure — the
+     contents nav that used to fill the second column was removed */
+  .colophon-grid { max-width: var(--narrow); }
+
+  /* ITEM: text left, photo right — the wide desktop column has room for
+     both side by side instead of a photo stranded under the copy. */
+  .fiche--item {
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(20px, 3vw, 40px);
+  }
+  /* the arrow turns to point sideways, from copy to photo */
+  .item-arrow { width: 68px; height: 44px; transform: rotate(-90deg); }
+  .fiche--item .fiche-body  { flex: 1.2; min-width: 0; }
+  .fiche--item .fiche-media { flex: 1; max-width: 380px; }
+
+  /* the number moves out beside the word instead of sitting behind it.
+     Chapters now run directly into one another (no gap between them), so
+     it can no longer rise a full 100% of its own (huge) height above the
+     title without bleeding into the previous chapter's space — nudged up
+     by a fixed, modest amount instead. */
+  .chapter-num {
+    opacity: .2;
+    top: auto;
+    bottom: 100%;
+    margin-bottom: -.5em;
+    left: -.02em;
+    font-size: clamp(120px, 15vw, 230px);
   }
 
-  /* ITEM: copy beside its frames. Track sizes follow the number of frames so
-     the grid never has a hole, and sides alternate by position. */
-  .fiche--item.frames-2 { grid-template-columns: 5fr 4fr 3fr; align-items: start; }
-  .fiche--item.frames-1 { grid-template-columns: 7fr 5fr; align-items: start; }
-  .fiche--item.frames-0 { grid-template-columns: minmax(0, 1fr); }
-  /* a lone frame gets the same printed size as the lead frame of a two-frame
-     item (~4 of 12 columns) rather than ballooning to half the spread and
-     leaving the copy stranded beside a wall of photograph */
-  .fiche--item.frames-1 .fiche-frame { max-width: 420px; }
+  /* FICHE C stays a line, but pushes the CTA to the right edge */
+  .fiche--c .fiche-row { flex-wrap: nowrap; align-items: baseline; }
+  .fiche--c .fiche-actions { margin-top: 0; margin-left: auto; flex-shrink: 0; }
 
-  .fiche--flip.frames-2 { grid-template-columns: 4fr 5fr 3fr; }
-  .fiche--flip.frames-2 > figure:first-of-type { order: -1; }
-  .fiche--flip.frames-1 > figure { order: -1; }
-
-  /* FOOTNOTE: label in three columns, the disclosure in nine */
-  .footnote-grid { grid-template-columns: 3fr 9fr; }
+  .index-list { padding-top: 20px; }
 }
 
 @media (min-width: 1100px) {
   /* the cover headline breaks the left margin — deliberate, desktop only */
-  .cover-title .l1 { margin-left: -.045em; }
-  .cover-title .l2 { margin-left: -.045em; }
+  .cover-title .l1 { margin-left: -.055em; }
 }
 
 /* ============================================================================
@@ -1596,34 +1724,53 @@ body.index-open { overflow: hidden; }
 
 @media (max-width: 759px) {
   .cover { padding-top: 26px; }
-  .cover-head { align-items: flex-start; }
-  .cover-lede { text-align: left; margin-left: 0; padding-bottom: 0; max-width: 40ch; }
-  .cover-cue { margin-top: clamp(32px, 8vw, 50px); }
-  .cover-strip-meta { display: none; }
 
-  /* two frames across instead of four — a 4:5 frame at quarter-width on a
-     phone is a stamp, not a photograph */
-  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .strip-tile-hand { font-size: clamp(22px, 6.4vw, 32px); }
-
-  .chapter-meta { margin-left: 0; padding-bottom: 0; flex-basis: 100%; }
-  .chapter-head { align-items: baseline; }
-
-  /* the LEAD frame bleeds edge-to-edge, breaking out of the gutter that boxes
-     the text. The second frame deliberately does not: two full-bleed squares
-     stacked turn one product into a wall of photograph, and a smaller inset
-     frame reads correctly as the secondary shot on a contact sheet. */
-  .fiche--item > figure:first-of-type {
-    width: 100vw;
-    max-width: 100vw;
-    margin-inline: calc(var(--gutter) * -1);
-    border-left: none;
-    border-right: none;
+  /* photo sits behind the type, multiplied into the dark — a real cover.
+     The fade/filter goes on the <img> itself, not .cover-photo, so it
+     never affects anything else layered above the photo. */
+  .cover-photo {
+    position: absolute;
+    top: 16%;
+    right: -8%;
+    width: 74%;
+    aspect-ratio: 4 / 5;
+    margin: 0;
+    z-index: 0;
   }
-  .fiche--item > figure:first-of-type.ph--carousel .ph-track { border-left: none; border-right: none; }
-  .fiche--item.frames-2 > figure:last-of-type { max-width: 62%; }
+  .cover-photo .ph img {
+    opacity: .42;
+    filter: grayscale(.3) contrast(1.1);
+  }
+  .cover-role { bottom: -13%; }
+  .cover-role span { font-size: clamp(24px, 10vw, 40px); }
+  .cover-title { position: relative; z-index: 2; }
+  .cover-in { padding-bottom: 0; }
+  /* stays above the handwritten caption, which can bleed low enough to
+     otherwise sit right under "role pra ver ↓" */
+  .cover-meta { margin-top: 30px; gap: 16px; position: relative; z-index: 3; }
+
+  /* photo bleeds edge-to-edge, breaking out of the gutter that boxes the text */
+  .fiche--item .fiche-media {
+    max-width: none;
+    width: 100vw;
+    margin-inline: calc(var(--gutter) * -1);
+  }
+  .fiche--item .ph { border-left: none; border-right: none; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
+
+  /* chapter number moves to the empty top-right corner instead of sitting
+     behind/under the title, where it clipped letters like a layout bug */
+  .chapter-num {
+    position: absolute;
+    top: 0;
+    left: auto;
+    right: 0;
+    font-size: clamp(48px, 13vw, 80px);
+    opacity: .3;
+  }
+  .chapter-mark { padding-right: 25vw; }
+  .chapter-open { padding-top: 54px; }
 
   .backcover { min-height: 68vh; }
   .backcover-foot { flex-direction: column; align-items: flex-start; }
@@ -1631,6 +1778,7 @@ body.index-open { overflow: hidden; }
 
 @media (max-width: 400px) {
   :root { --gutter: 18px; }
+  .daily-item .lb { display: none; }
 }
 
 @media (max-width: 340px) {
@@ -1644,14 +1792,12 @@ body.index-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
-  .cover-circle path,
-  .chapter-underline path,
-  .mini-rule path { stroke-dashoffset: 0; }
+  .rise { opacity: 1; transform: none; }
+  .cover-circle path, .chapter-underline path { stroke-dashoffset: 0; }
+  .cover-role > span > span { opacity: 1; }
 }
 
 @media print {
-  body::before, .masthead, .index-overlay, .toast, .ph-nav, .ph-dots { display: none !important; }
+  body::before, .masthead, .index-overlay, .toast { display: none !important; }
   .page { background: #fff !important; color: #000 !important; }
-  .strip-tile { background: #eee !important; }
-  .strip-tile-hand, .frame-no { color: #000 !important; text-shadow: none !important; }
 }

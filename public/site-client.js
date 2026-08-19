@@ -2,15 +2,7 @@
 //
 // The server already rendered the whole publication (see api/index.js), so this
 // script only adds behaviour: language switching, the contents overlay, the
-// running folio, copy-link, photo carousels, and the drawn-ink motion.
-//
-// Deliberately NOT here any more:
-//   * the chapter accordion — every chapter's items ship open in the HTML, so
-//     there's nothing to toggle, nothing to reflow, and nothing hidden from a
-//     reader (or a crawler) behind a click.
-//   * the .rise entrance observer — it held content at opacity:0 with a 14px
-//     translate until it scrolled into view, which is what produced the page's
-//     layout shift. Content is simply present now.
+// running folio, "+ more" toggles, copy-link, and the entrance/doodle motion.
 (function () {
   const DATA = window.__SITE_DATA__ || {};
   const SERVER_LANG = window.__SITE_LANG__ || "pt";
@@ -20,9 +12,6 @@
   let lang = SERVER_LANG;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  // Every hand-drawn mark that draws itself in when it first scrolls into view.
-  const INK = ".cover-circle, .chapter-underline, .mini-rule";
 
   /* ------------------------------------------------------------------ */
   /* language                                                           */
@@ -36,108 +25,23 @@
   }
 
   function setLang(next, persist) {
-    // Clicking the language you're already reading shouldn't rebuild the page.
-    if (persist && next === lang) return;
-
     lang = next;
     if (persist) localStorage.setItem("lang", next);
     document.documentElement.lang = next === "en" ? "en" : "pt-BR";
 
+    document.getElementById("btn-pt")?.classList.toggle("active", next === "pt");
+    document.getElementById("btn-en")?.classList.toggle("active", next === "en");
+
     // Only re-render when the language actually differs from what the server
     // painted — otherwise we'd throw away perfectly good server markup.
     if (next !== SERVER_LANG || persist) {
-      keepingScrollPlace(() => {
-        app.innerHTML = window.SiteRender.renderApp(DATA, next);
-        // paintMasthead reads the outgoing bar's folio state, so it has to run
-        // while that element is still in the document.
-        paintMasthead(next);
-        wirePage();
-      });
+      app.innerHTML = window.SiteRender.renderApp(DATA, next);
+      wirePage();
     }
-
-    document.getElementById("btn-pt")?.classList.toggle("active", next === "pt");
-    document.getElementById("btn-en")?.classList.toggle("active", next === "en");
-    const skip = document.getElementById("skip-link");
-    if (skip) skip.textContent = window.SiteRender.t(next, "skipToContent");
   }
 
-  // Rebuilding #app drops the reader wherever the new document height happens
-  // to put them — switching language halfway down the page used to teleport
-  // you. Pin the chapter you were reading to the same spot on screen instead;
-  // fall back to the raw offset when no chapter is in view (cover, back cover).
-  // scroll-behavior is forced to auto for the restore, or the smooth-scroll on
-  // html would animate the correction as a visible jump.
-  function keepingScrollPlace(mutate) {
-    const anchor = document.querySelector(".masthead")?.dataset.currentAnchor;
-    const offsetBefore = anchor
-      ? document.getElementById(anchor)?.getBoundingClientRect().top
-      : null;
-    const yBefore = window.scrollY;
-
-    mutate();
-
-    const html = document.documentElement;
-    const previous = html.style.scrollBehavior;
-    html.style.scrollBehavior = "auto";
-
-    const target = anchor && offsetBefore != null ? document.getElementById(anchor) : null;
-    if (target) {
-      window.scrollTo(0, target.getBoundingClientRect().top + window.scrollY - offsetBefore);
-    } else {
-      window.scrollTo(0, yBefore);
-    }
-
-    html.style.scrollBehavior = previous;
-  }
-
-  // The masthead is replaced wholesale from the same render function the server
-  // used — one definition of that bar, no patching of individual labels. It
-  // holds five pieces of translatable copy (wordmark, chapter list, edition
-  // line, "contents", the nav's accessible name) and used to stay in
-  // Portuguese forever, since api/index.js built it outside the module.
-  //
-  // The folio's "you are here" state is carried across: without it, switching
-  // language mid-scroll flashes the wordmark back in on mobile (where the
-  // folio replaces the brand) and drops the nav's current-chapter marker until
-  // the next scroll event.
-  function paintMasthead(next) {
-    const old = document.getElementById("masthead");
-    if (!old) return;
-
-    const anchor = old.dataset.currentAnchor;
-    const palette = old.dataset.palette;
-
-    const tpl = document.createElement("template");
-    tpl.innerHTML = window.SiteRender.renderMasthead(DATA, next).trim();
-    const fresh = tpl.content.firstElementChild;
-    if (!fresh) return;
-
-    if (anchor) fresh.dataset.currentAnchor = anchor;
-    if (palette) fresh.dataset.palette = palette;
-    old.replaceWith(fresh);
-
-    if (!anchor) return;
-    // #app was re-rendered just above, so the section already carries its
-    // title in the new language — read it back rather than waiting for a
-    // scroll to correct the folio.
-    const section = document.getElementById(anchor);
-    if (section?.dataset.chapter) setFolio(section);
-    document.querySelectorAll("[data-nav-link]").forEach((a) => {
-      a.classList.toggle("current", a.dataset.anchor === anchor);
-    });
-  }
-
-  // Chapter titles are admin-authored, so the folio is built with textContent
-  // rather than an innerHTML template.
-  function setFolio(section) {
-    const folio = document.getElementById("folio");
-    if (!folio) return;
-    const n = document.createElement("span");
-    n.className = "n";
-    n.textContent = section.dataset.chapter || "";
-    folio.textContent = "";
-    folio.append(n, ` ${section.dataset.chapterTitle || ""}`);
-  }
+  document.getElementById("btn-pt")?.addEventListener("click", () => setLang("pt", true));
+  document.getElementById("btn-en")?.addEventListener("click", () => setLang("en", true));
 
   /* ------------------------------------------------------------------ */
   /* contents overlay                                                   */
@@ -176,13 +80,9 @@
     });
   }
 
-  // All masthead controls are delegated from document, never bound to the
-  // nodes themselves: paintMasthead() replaces that whole subtree on a
-  // language switch, which would silently kill any direct listener.
+  document.getElementById("index-btn")?.addEventListener("click", openIndex);
+
   document.addEventListener("click", (e) => {
-    if (e.target.closest("#btn-pt")) { setLang("pt", true); return; }
-    if (e.target.closest("#btn-en")) { setLang("en", true); return; }
-    if (e.target.closest("#index-btn")) { openIndex(); return; }
     if (e.target.closest("#index-close")) { closeIndex(); return; }
     const link = e.target.closest("[data-index-link]");
     if (link) closeIndex(); // let the browser handle the anchor jump
@@ -206,7 +106,7 @@
   });
 
   /* ------------------------------------------------------------------ */
-  /* click tracking, copy link, carousels                               */
+  /* copy link + "+ more" toggles                                       */
   /* ------------------------------------------------------------------ */
 
   app.addEventListener("click", (e) => {
@@ -238,6 +138,22 @@
       return;
     }
 
+    const more = e.target.closest("[data-more]");
+    if (more) {
+      const panel = document.getElementById(more.getAttribute("aria-controls"));
+      if (!panel) return;
+      const open = panel.hasAttribute("hidden");
+      if (open) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
+      more.setAttribute("aria-expanded", open ? "true" : "false");
+      const txt = more.querySelector(".more-txt");
+      if (txt) txt.textContent = open ? more.dataset.labelLess : more.dataset.labelMore;
+      // Newly revealed fiches should settle in like the rest of the page.
+      if (open) panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+    }
+
+    const chapterToggle = e.target.closest("[data-chapter-toggle]");
+    if (chapterToggle) toggleChapter(chapterToggle);
+
     const carouselNav = e.target.closest("[data-nav]");
     if (carouselNav) {
       const track = carouselNav.closest("[data-carousel]")?.querySelector("[data-track]");
@@ -245,7 +161,6 @@
         const dir = Number(carouselNav.dataset.nav);
         track.scrollBy({ left: track.clientWidth * dir, behavior: "smooth" });
       }
-      return;
     }
 
     const dot = e.target.closest("[data-goto]");
@@ -258,23 +173,96 @@
     }
   });
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const chapterToggle = e.target.closest("[data-chapter-toggle]");
+    if (!chapterToggle) return;
+    e.preventDefault();
+    toggleChapter(chapterToggle);
+  });
+
   /* ------------------------------------------------------------------ */
-  /* motion: drawn ink + the running folio                              */
+  /* chapters: click a chapter's own opener to reveal/hide its products  */
   /* ------------------------------------------------------------------ */
 
+  // Only one chapter open at a time — opening one collapses whichever
+  // other chapter was open, so the page never stacks up several long lists.
+  function toggleChapter(toggle, forceOpen, keepScroll) {
+    const panel = document.getElementById(toggle.getAttribute("aria-controls"));
+    if (!panel) return;
+    const isOpen = toggle.getAttribute("aria-expanded") === "true";
+    const willOpen = forceOpen !== undefined ? forceOpen : !isOpen;
+    if (willOpen === isOpen) return;
+
+    if (willOpen) {
+      document.querySelectorAll("[data-chapter-toggle][aria-expanded='true']").forEach((other) => {
+        if (other !== toggle) toggleChapter(other, false);
+      });
+      panel.removeAttribute("hidden");
+      panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+      // Carousels inside a chapter that was hidden had a zero-size root
+      // when wireCarousels() first ran — re-observe now that it's visible.
+      wireCarousels();
+      // Collapsing an earlier chapter shrinks everything above this one,
+      // so the page jumps and the chapter you just opened can land
+      // mid-viewport instead of at the top. Pin its own header back to the
+      // top of the screen once the collapse has actually happened.
+      if (!keepScroll) {
+        requestAnimationFrame(() => {
+          toggle.closest(".chapter")?.scrollIntoView({ block: "start", behavior: "smooth" });
+        });
+      }
+    } else {
+      panel.setAttribute("hidden", "");
+    }
+    toggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  }
+
+  // Arriving via a chapter link (index overlay, masthead nav, a direct
+  // #cap-... URL) should open that chapter instead of scrolling to a
+  // closed, empty-looking header.
+  function openChapterFromHash() {
+    const id = location.hash.slice(1);
+    if (!id) return;
+    const section = document.getElementById(id);
+    const toggle = section?.querySelector("[data-chapter-toggle]");
+    // The browser's own anchor jump already scrolls here — don't fight it
+    // with a second, competing scrollIntoView.
+    if (toggle) toggleChapter(toggle, true, true);
+  }
+
+  window.addEventListener("hashchange", openChapterFromHash);
+
+  /* ------------------------------------------------------------------ */
+  /* motion: entrances, drawn doodles, running folio                    */
+  /* ------------------------------------------------------------------ */
+
+  let riseObserver = null;
   let drawObserver = null;
   let folioObserver = null;
 
-  // The only entrance left is ink drawing itself in — a stroke-dashoffset
-  // animation on an SVG path, which cannot move anything around it.
   function wireMotion() {
+    riseObserver?.disconnect();
     drawObserver?.disconnect();
 
     if (reduceMotion) {
-      document.querySelectorAll(INK).forEach((el) => el.classList.add("drawn"));
+      document.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+      document.querySelectorAll(".cover-circle, .chapter-underline, .cover-role").forEach((el) => el.classList.add("drawn"));
       return;
     }
 
+    // Content settles in a few pixels — nothing more theatrical than that.
+    riseObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("in");
+        riseObserver.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+
+    document.querySelectorAll(".rise").forEach((el) => riseObserver.observe(el));
+
+    // Doodles draw themselves once, when they come into view.
     drawObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
@@ -283,7 +271,7 @@
       });
     }, { threshold: 0.5 });
 
-    document.querySelectorAll(INK).forEach((el) => drawObserver.observe(el));
+    document.querySelectorAll(".cover-circle, .chapter-underline, .cover-role").forEach((el) => drawObserver.observe(el));
   }
 
   // The masthead shows which chapter you're reading, like a magazine folio.
@@ -302,9 +290,12 @@
       const visible = entries.filter((e) => e.isIntersecting);
       if (!visible.length) {
         // Nothing crossing the detection band right now doesn't necessarily
-        // mean nothing is current — right at a chapter boundary, a chapter can
-        // flicker in/out of that band across consecutive frames. Only clear
-        // once we're above the very first chapter or below the very last one.
+        // mean nothing is current — right at a chapter boundary, a chapter
+        // can flicker in/out of that band across consecutive frames (scroll
+        // jitter, the mobile browser's own toolbar resizing the viewport).
+        // Only actually clear once we're above the very first chapter or
+        // below the very last one; otherwise keep showing the last chapter
+        // we were confidently in, rather than flashing the brand on and off.
         const firstTop = chapters[0].getBoundingClientRect().top;
         const lastRect = chapters[chapters.length - 1].getBoundingClientRect();
         const aboveAll = firstTop > window.innerHeight * .3;
@@ -318,12 +309,15 @@
       const top = visible.reduce((a, b) =>
         Math.abs(a.boundingClientRect.top) < Math.abs(b.boundingClientRect.top) ? a : b);
       const el = top.target;
-      setFolio(el);
+      folio.innerHTML = `<span class="n">${el.dataset.chapter}</span> ${el.dataset.chapterTitle}`;
       masthead.dataset.currentAnchor = el.id;
-      // Tint the sticky header with the current chapter's own palette.
+      // Tint the sticky header with the current chapter's own palette —
+      // reinforces "you're in a different chapter now" right where the eye
+      // already lands to check position.
       masthead.dataset.palette = el.dataset.palette || "";
       // The desktop nav and the (possibly open) contents overlay both double
-      // as "you are here" markers — keep them live as the reader scrolls.
+      // as "you are here" markers — keep them live as the reader scrolls,
+      // not just at the moment the overlay happens to open.
       document.querySelectorAll("[data-nav-link]").forEach((a) => {
         a.classList.toggle("current", a.dataset.anchor === el.id);
       });
@@ -368,6 +362,7 @@
     wireMotion();
     wireFolio();
     wireCarousels();
+    openChapterFromHash();
   }
 
   // Hydrate to the visitor's preferred language, then wire everything up.
