@@ -1033,7 +1033,9 @@ body.index-open { overflow: hidden; }
   font-size: var(--fs-product);
   line-height: 1.02;
   letter-spacing: -.02em;
-  color: var(--fg);
+  /* a shade quieter than the chapter title's full-strength --fg — products
+     read calmer than the opener that introduces them, weight not just size */
+  color: color-mix(in srgb, var(--fg) 92%, transparent);
   margin-bottom: var(--sp-3);
   overflow-wrap: break-word;
 }
