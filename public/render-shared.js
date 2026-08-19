@@ -400,20 +400,23 @@
 
     // Hierarchy: product name leads, then the personal phrase, then the CTA —
     // the label (category metadata) trails last, deliberately quiet.
-    const body_ = `<div class="fiche-body">
+    // .rise on both body and media (instead of the whole article) lets the
+    // text settle in first and the photo follow a beat behind — a small
+    // reading-order stagger rather than everything landing at once.
+    const body_ = `<div class="fiche-body rise">
         <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
         ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : (body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : "")}
         ${note && body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
         ${ficheActions(item, lang)}
         ${ficheLabel(item, lang, false)}
       </div>`;
-    const mediaHtml = media ? `<div class="fiche-media">${media}</div>` : "";
+    const mediaHtml = media ? `<div class="fiche-media rise rise--delay">${media}</div>` : "";
     // Skip the arrow when the photo already carries its own editorial mark
     // (a handwritten note draws its own arrow) — one graphic gesture per item.
     const arrow = media && !item.editorialTreatment
       ? `<span class="item-arrow-wrap" aria-hidden="true">${doodleDownArrow()}</span>` : "";
 
-    return `<article class="fiche fiche--item${sideClass} rise">
+    return `<article class="fiche fiche--item${sideClass}">
       ${body_}${arrow}${mediaHtml}
     </article>`;
   }

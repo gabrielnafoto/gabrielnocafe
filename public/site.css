@@ -1416,6 +1416,8 @@ body.index-open { overflow: hidden; }
 
 .rise { opacity: 0; transform: translateY(14px); }
 .rise.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s cubic-bezier(.4, 0, .2, 1); }
+/* a beat behind the text it follows — reading order, not two things at once */
+.rise--delay.in { transition-delay: .15s; }
 
 /* ============================================================================
    DESKTOP — real use of the width, asymmetric grids
