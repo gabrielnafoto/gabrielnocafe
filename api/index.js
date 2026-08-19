@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
   // list distributed across the bar (desktop), and a running folio that fills
   // in with the current chapter as you scroll.
   const chapters = planChapters(data.sections || [], lang);
-  const navItems = chapters.slice(0, 3).map((c, i) =>
+  const navItems = chapters.map((c, i) =>
     `<a href="#${escapeHtml(c.anchor)}" data-nav-link data-anchor="${escapeHtml(c.anchor)}"><span class="n">${escapeHtml(String(i + 1).padStart(2, "0"))}</span>${escapeHtml(c.title)}</a>`
   ).join("");
 

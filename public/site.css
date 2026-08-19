@@ -273,13 +273,20 @@ body::before {
 }
 .mast-brand .star { color: var(--amber); font-size: 13px; }
 
-/* desktop: navigation distributed across the bar, numbered like a contents list */
+/* desktop: navigation distributed across the bar, numbered like a contents
+   list. Every chapter renders here now (not just the first 3) — scrolls
+   horizontally on its own, invisibly, if the list ever outgrows the bar
+   instead of wrapping or overflowing the page. */
 .mast-nav {
   display: none;
   gap: 22px;
   align-items: center;
   margin-left: 30px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
 }
+.mast-nav::-webkit-scrollbar { display: none; }
 .mast-nav a {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -1542,8 +1549,12 @@ body.index-open { overflow: hidden; }
 @media (min-width: 760px) {
   :root { --gutter: 40px; }
 
+  /* the nav now lists every chapter (its own .current class marks position),
+     so the folio would just be a second, redundant "you are here" — and it
+     used to visually collide with the nav, looking like a stray orphaned
+     item floating on the opposite side of the bar. Folio stays mobile-only,
+     where there's no room for the full nav list. */
   .mast-nav { display: flex; }
-  .mast-folio { display: block; }
 
   /* COVER: type left, photo right, overlapping */
   .cover-in {
