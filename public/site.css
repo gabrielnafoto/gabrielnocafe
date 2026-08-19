@@ -1523,8 +1523,17 @@ body.index-open { overflow: hidden; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
 
-  /* chapter number sits behind the word */
-  .chapter-num { opacity: .13; }
+  /* chapter number moves to the empty top-right corner instead of sitting
+     behind/under the title, where it clipped letters like a layout bug */
+  .chapter-num {
+    position: absolute;
+    top: 0;
+    left: auto;
+    right: 0;
+    font-size: clamp(48px, 13vw, 80px);
+    opacity: .3;
+  }
+  .chapter-mark { padding-right: 25vw; }
   .chapter-open { padding-top: 54px; }
 
   .backcover { min-height: 68vh; }
