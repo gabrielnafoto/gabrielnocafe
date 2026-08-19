@@ -1359,6 +1359,7 @@ body.index-open { overflow: hidden; }
   letter-spacing: -.015em;
   color: var(--paper);
   max-width: 16ch;
+  overflow-wrap: break-word;
 }
 
 .backcover-foot {
