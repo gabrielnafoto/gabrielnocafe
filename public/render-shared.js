@@ -346,18 +346,12 @@
   /* colophon                                                               */
   /* ---------------------------------------------------------------------- */
 
-  function renderColophon(data, lang, chapters) {
+  function renderColophon(data, lang) {
     const p = data.profile || {};
     const s = data.site || {};
     const intro = f(p, "intro", lang);
     const sub = f(s, "subheadline", lang);
     const bio = f(p, "bio", lang);
-
-    const rows = chapters.map((c) => `<a class="contents-row" href="#${escapeHtml(c.anchor)}">
-      <span class="num">${escapeHtml(c.num)}</span>
-      <span class="nm">${escapeHtml(c.title)}</span>
-      <span class="ct">${c.count}</span>
-    </a>`).join("");
 
     return `<section class="page page--ink colophon" id="colofao">
       <div class="colophon-grid">
@@ -367,10 +361,6 @@
           ${bio ? `<p class="colophon-hand">${escapeHtml(bio)}</p>` : ""}
           ${renderSocials(p)}
         </div>
-        ${rows ? `<nav class="rise" aria-label="${escapeHtml(t(lang, "contentsTitle"))}">
-          <div class="contents-label">${escapeHtml(t(lang, "contentsTitle"))}</div>
-          ${rows}
-        </nav>` : ""}
       </div>
     </section>`;
   }
@@ -716,7 +706,7 @@
 
     return [
       renderCover(d, lang),
-      renderColophon(d, lang, chapters),
+      renderColophon(d, lang),
       renderDaily(sections, lang),
       chapterHtml,
       renderArchive(sections, lang),

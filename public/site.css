@@ -705,46 +705,6 @@ body.index-open { overflow: hidden; }
   line-height: 1.35;
 }
 
-.contents-label {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 10px;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-  color: var(--accent);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: 4px;
-}
-.contents-row {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--rule);
-  text-decoration: none;
-  color: var(--fg);
-  transition: color .18s;
-}
-.contents-row:hover { color: var(--accent); }
-.contents-row .num {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 10.5px;
-  color: var(--accent);
-  width: 2.5ch;
-  flex-shrink: 0;
-}
-.contents-row .nm {
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: break-word;
-}
-.contents-row .ct { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--faint); flex-shrink: 0; }
-
 .socials { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 26px; }
 .social-a {
   font-family: 'Space Mono', monospace;
@@ -1620,8 +1580,9 @@ body.index-open { overflow: hidden; }
   }
   .cover-title { max-width: 78%; }
 
-  /* COLOPHON: 7/5 split — text weighted left, contents right */
-  .colophon-grid { grid-template-columns: 1.35fr 1fr; align-items: start; }
+  /* COLOPHON: single column, capped to a comfortable reading measure — the
+     contents nav that used to fill the second column was removed */
+  .colophon-grid { max-width: var(--narrow); }
 
   /* ITEM: text left, photo right — the wide desktop column has room for
      both side by side instead of a photo stranded under the copy. */
@@ -1654,7 +1615,6 @@ body.index-open { overflow: hidden; }
 @media (min-width: 1100px) {
   /* the cover headline breaks the left margin — deliberate, desktop only */
   .cover-title .l1 { margin-left: -.055em; }
-  .colophon-grid { grid-template-columns: 1.5fr 1fr; gap: 90px; }
 }
 
 /* ============================================================================
