@@ -237,6 +237,14 @@
           <div class="field"><label>introdução — <span style="color:var(--red)">EN</span></label><textarea id="p-intro-en" placeholder="I'm Gabriel — a photographer, filmmaker..."></textarea></div>
         </div>
         <div class="row">
+          <div class="field">
+            <label>equipamento de gravação — PT</label>
+            <textarea id="p-gear" placeholder="Câmera: iPhone 15 Pro&#10;Áudio: microfone de lapela&#10;Edição: CapCut"></textarea>
+            <p class="hint">Uma linha por item, formato "Label: valor". Aparece no rodapé final, sem precisar de foto.</p>
+          </div>
+          <div class="field"><label>equipamento de gravação — <span style="color:var(--red)">EN</span></label><textarea id="p-gear-en" placeholder="Camera: iPhone 15 Pro&#10;Audio: lavalier mic&#10;Editing: CapCut"></textarea></div>
+        </div>
+        <div class="row">
           <div class="field"><label>instagram</label><input type="url" id="p-instagram" placeholder="https://instagram.com/..." /></div>
           <div class="field"><label>youtube</label><input type="url" id="p-youtube" placeholder="https://youtube.com/..." /></div>
         </div>
@@ -289,6 +297,22 @@
         <div class="row">
           <div class="field" style="margin-bottom:0"><label>texto afiliado — PT</label><textarea id="s-affiliate" placeholder="Alguns links são de afiliado..."></textarea></div>
           <div class="field" style="margin-bottom:0"><label>texto afiliado — <span style="color:var(--red)">EN</span></label><textarea id="s-affiliate-en" placeholder="Some links are affiliate links..."></textarea></div>
+        </div>
+      </div>
+
+      <div class="block-card">
+        <div class="block-header">
+          <div class="block-header-left">
+            <div class="block-icon">✎</div>
+            <div class="block-title-wrap">
+              <div class="block-title">Bilhete final</div>
+              <div class="block-desc">Anotação manuscrita no rodapé, pra quem rolar até o fim da página.</div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field" style="margin-bottom:0"><label>bilhete — PT</label><textarea id="s-thanks" placeholder="ei — obrigado por ter chegado até aqui..."></textarea></div>
+          <div class="field" style="margin-bottom:0"><label>bilhete — <span style="color:var(--red)">EN</span></label><textarea id="s-thanks-en" placeholder="hey — thanks for scrolling all the way down..."></textarea></div>
         </div>
       </div>
     </div>
@@ -441,9 +465,9 @@ async function withTranslateButton(btn, fn) {
 function translateProfileSite(btn) {
   withTranslateButton(btn, async () => {
     const pairs = [
-      ['p-role', 'p-role-en'], ['p-bio', 'p-bio-en'], ['p-intro', 'p-intro-en'],
+      ['p-role', 'p-role-en'], ['p-bio', 'p-bio-en'], ['p-intro', 'p-intro-en'], ['p-gear', 'p-gear-en'],
       ['s-title', 's-title-en'], ['s-tagline', 's-tagline-en'], ['s-headline', 's-headline-en'],
-      ['s-subheadline', 's-subheadline-en'], ['s-affiliate', 's-affiliate-en'],
+      ['s-subheadline', 's-subheadline-en'], ['s-affiliate', 's-affiliate-en'], ['s-thanks', 's-thanks-en'],
     ];
     for (const [ptId, enId] of pairs) {
       const ptVal = v(ptId);
@@ -482,12 +506,14 @@ function renderAll() {
   set('p-role', p.role); set('p-role-en', p.role_en);
   set('p-bio', p.bio); set('p-bio-en', p.bio_en);
   set('p-intro', p.intro); set('p-intro-en', p.intro_en);
+  set('p-gear', p.recordingGear); set('p-gear-en', p.recordingGear_en);
   set('p-instagram', p.instagram); set('p-youtube', p.youtube); set('p-twitter', p.twitter);
   set('s-title', s.title); set('s-title-en', s.title_en);
   set('s-tagline', s.tagline); set('s-tagline-en', s.tagline_en);
   set('s-headline', s.headline); set('s-headline-en', s.headline_en);
   set('s-subheadline', s.subheadline); set('s-subheadline-en', s.subheadline_en);
   set('s-affiliate', s.affiliateNote); set('s-affiliate-en', s.affiliateNote_en);
+  set('s-thanks', s.thanksNote); set('s-thanks-en', s.thanksNote_en);
   const tog = document.getElementById('affiliate-toggle');
   const lbl = document.getElementById('aff-label');
   if (s.showAffiliateNote) { tog.classList.add('on'); lbl.textContent = 'ativada'; }
@@ -501,6 +527,7 @@ function getFormData() {
       role: v('p-role'), role_en: v('p-role-en'),
       bio: v('p-bio'), bio_en: v('p-bio-en'),
       intro: v('p-intro'), intro_en: v('p-intro-en'),
+      recordingGear: v('p-gear'), recordingGear_en: v('p-gear-en'),
       instagram: v('p-instagram'), youtube: v('p-youtube'), twitter: v('p-twitter'),
     },
     site: {
@@ -510,6 +537,7 @@ function getFormData() {
       subheadline: v('s-subheadline'), subheadline_en: v('s-subheadline-en'),
       affiliateNote: v('s-affiliate'), affiliateNote_en: v('s-affiliate-en'),
       showAffiliateNote: document.getElementById('affiliate-toggle').classList.contains('on'),
+      thanksNote: v('s-thanks'), thanksNote_en: v('s-thanks-en'),
     },
     sections: collectSections(),
   };

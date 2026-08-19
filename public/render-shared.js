@@ -28,6 +28,8 @@
       recipes: "receitas", favorites: "favoritos", back: "voltar ao topo",
       photoCover: "foto — capa", photoChapter: "foto — capítulo", photoProduct: "foto — produto", photoFrame: "frame de vídeo",
       readOn: "role pra ver",
+      thisIssue: "esta edição", creditsBy: "fotografado, filmado e editado por",
+      gearHeading: "equipamento de gravação",
     },
     en: {
       buy: "view product", copyLink: "copy link", copied: "link copied",
@@ -39,6 +41,8 @@
       recipes: "recipes", favorites: "favorites", back: "back to top",
       photoCover: "photo — cover", photoChapter: "photo — chapter", photoProduct: "photo — product", photoFrame: "video frame",
       readOn: "scroll on",
+      thisIssue: "this issue", creditsBy: "photographed, filmed and edited by",
+      gearHeading: "recording gear",
     },
   };
 
@@ -536,25 +540,56 @@
     </aside>`;
   }
 
+  // Turns a plain textarea (one line per item, "Label: Value" or just a bare
+  // line) into notebook rows — no image, no admin repeater, just typing.
+  function parseGear(text) {
+    return String(text || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const i = line.indexOf(":");
+        return i > -1
+          ? { label: line.slice(0, i).trim(), value: line.slice(i + 1).trim() }
+          : { label: "", value: line };
+      });
+  }
+
   function renderBackCover(data, lang) {
     const p = data.profile || {};
     const s = data.site || {};
     const title = f(s, "title", lang) || "gabriel no café";
-    const headline = f(s, "headline", lang) || (lang === "en" ? "it's just a coffee." : "é só um café.");
+    const credits = f(p, "role", lang);
+    const gear = parseGear(f(p, "recordingGear", lang));
+    const thanks = f(s, "thanksNote", lang);
+    const year = new Date().getFullYear();
 
-    const m = headline.trim().match(/^(.*?)([.!?]*)$/);
-    const word = m ? m[1] : headline;
-    const dot = m ? m[2] : "";
+    const gearRows = gear.map((g) => `<div class="gear-row">
+      ${g.label ? `<span class="gear-label">${escapeHtml(g.label)}</span>` : ""}
+      <span class="gear-value">${escapeHtml(g.value)}</span>
+    </div>`).join("");
 
     return `<footer class="page page--ink-deep backcover">
       <div class="backcover-in rise">
-        <p class="backcover-title">${escapeHtml(word)}<span class="dot">${escapeHtml(dot)}</span><span class="backcover-star" aria-hidden="true">✦</span></p>
+        <div class="backcover-masthead">
+          <span class="backcover-issue">${escapeHtml(t(lang, "thisIssue"))} — ${year}</span>
+          <p class="backcover-credits">${escapeHtml(t(lang, "creditsBy"))} ${escapeHtml(p.name || "")}${credits ? ` — ${escapeHtml(credits)}` : ""}</p>
+        </div>
+
+        ${gearRows ? `<div class="backcover-gear">
+          <span class="gear-heading">✦ ${escapeHtml(t(lang, "gearHeading"))}</span>
+          <div class="gear-list">${gearRows}</div>
+        </div>` : ""}
+
+        ${thanks ? `<p class="backcover-note">${escapeHtml(thanks)}</p>` : ""}
+
+        <span class="backcover-star" aria-hidden="true">✦</span>
       </div>
       <div class="backcover-foot">
         ${renderSocials(p)}
         <div class="backcover-copy">
           ${escapeHtml(title)}<br/>
-          ${escapeHtml(p.handle || "")} · © ${new Date().getFullYear()}
+          ${escapeHtml(p.handle || "")} · © ${year}
         </div>
       </div>
     </footer>`;
