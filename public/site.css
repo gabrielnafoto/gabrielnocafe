@@ -1655,11 +1655,13 @@ body.index-open { overflow: hidden; }
     opacity: .42;
     filter: grayscale(.3) contrast(1.1);
   }
-  .cover-role { bottom: -3%; }
+  .cover-role { bottom: -13%; }
   .cover-role span { font-size: clamp(24px, 10vw, 40px); }
   .cover-title { position: relative; z-index: 2; }
   .cover-in { padding-bottom: 0; }
-  .cover-meta { margin-top: 30px; gap: 16px; }
+  /* stays above the handwritten caption, which can bleed low enough to
+     otherwise sit right under "role pra ver ↓" */
+  .cover-meta { margin-top: 30px; gap: 16px; position: relative; z-index: 3; }
 
   /* photo bleeds edge-to-edge, breaking out of the gutter that boxes the text */
   .fiche--item .fiche-media {
