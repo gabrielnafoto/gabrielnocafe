@@ -1,8 +1,16 @@
 // public/render-shared.js — isomorphic render module.
 // Runs on the server (required by api/index.js, CommonJS) AND in the browser
 // (loaded via <script src="/render-shared.js">, attaches to window.SiteRender).
-// Keeping one copy avoids the server-rendered markup and the client hydration
-// markup drifting apart.
+// One copy keeps the server-rendered markup and the client hydration identical.
+//
+// The site renders as a ZINE: a vertical sequence of "pages", each carrying its
+// own palette. Rhythm comes from those palettes alternating — dark, dark,
+// CREAM, dark, dark, CREAM — so the cream page lands like an actual printed
+// sheet flashing through a dark reel.
+//
+// The admin data contract is unchanged: every field admin.html writes
+// (label, name, description, url, image, affilliate, dailyUse, seenInVideos,
+// category, group, number, title, and every _en variant) still drives the page.
 
 (function (root, factory) {
   const mod = factory();
@@ -10,34 +18,51 @@
   if (typeof window !== "undefined") window.SiteRender = mod;
 })(this, function () {
   const I18N = {
-    pt: { buy: "ver produto ↗", copyLink: "copiar link", copied: "link copiado", inSetup: "no setup", tried: "testado", setupTitle: "My Setup", setupDesc: "Coisas que realmente fazem parte da minha rotina.", otherTitle: "Other things I like", otherDesc: "Produtos que já testei ou gostei, mas não necessariamente fazem parte do setup atual.", featuredTitle: "coisas que uso todos os dias", videosTitle: "seen in my videos", videosDesc: "algumas das coisas que vocês sempre perguntam nos vídeos.", aboutTitle: "about", navSetup: "setup", navRecipes: "recipes", navFavorites: "favorites", navAbout: "about", soon: "em breve", filterAll: "todos", menu: "menu" },
-    en: { buy: "view product ↗", copyLink: "copy link", copied: "link copied", inSetup: "in setup", tried: "tried it", setupTitle: "My Setup", setupDesc: "Things that are really part of my routine.", otherTitle: "Other things I like", otherDesc: "Products I've tried or liked, but that aren't necessarily part of my current setup.", featuredTitle: "things I use every day", videosTitle: "seen in my videos", videosDesc: "some of the things you always ask about in my videos.", aboutTitle: "about", navSetup: "setup", navRecipes: "recipes", navFavorites: "favorites", navAbout: "about", soon: "coming soon", filterAll: "all", menu: "menu" },
+    pt: {
+      buy: "ver produto", copyLink: "copiar link", copied: "link copiado",
+      tried: "testado", daily: "todo santo dia", contents: "índice",
+      contentsTitle: "índice", chapter: "capítulo", items: "itens", item: "item",
+      videosTitle: "visto nos vídeos", videosDesc: "algumas das coisas que vocês sempre perguntam nos vídeos.",
+      archiveTitle: "já testei", archiveDesc: "coisas que passaram pela bancada mas não ficaram no setup atual.",
+      more: "mais", close: "fechar", soon: "em breve",
+      recipes: "receitas", favorites: "favoritos", back: "voltar ao topo",
+      photoCover: "foto — capa", photoChapter: "foto — capítulo", photoProduct: "foto — produto", photoFrame: "frame de vídeo",
+      readOn: "role pra ver",
+    },
+    en: {
+      buy: "view product", copyLink: "copy link", copied: "link copied",
+      tried: "tried it", daily: "every single day", contents: "contents",
+      contentsTitle: "contents", chapter: "chapter", items: "items", item: "item",
+      videosTitle: "seen in my videos", videosDesc: "some of the things you always ask about in my videos.",
+      archiveTitle: "already tried", archiveDesc: "things that passed through the counter but didn't stay in the current setup.",
+      more: "more", close: "close", soon: "coming soon",
+      recipes: "recipes", favorites: "favorites", back: "back to top",
+      photoCover: "photo — cover", photoChapter: "photo — chapter", photoProduct: "photo — product", photoFrame: "video frame",
+      readOn: "scroll on",
+    },
   };
 
-  // Known slugs keep their designed color; anything else (including free-text
-  // categories typed in the admin, or legacy sections with no category at
-  // all) still gets a distinct, consistent color instead of collapsing to grey.
-  const CATEGORY_ACCENTS = { espresso: "#e8a856", filter: "#d97a4a", "latte-art": "#c9a63f", apps: "#e0916b" };
-  const CATEGORY_LABELS = {
-    pt: { espresso: "Espresso", filter: "Filter", "latte-art": "Latte Art", apps: "Apps" },
-    en: { espresso: "Espresso", filter: "Filter", "latte-art": "Latte Art", apps: "Apps" },
-  };
-  const FALLBACK_ACCENTS = ["#e8a856", "#d97a4a", "#c9a63f", "#e0916b", "#b98a52", "#cf9a5f"];
+  // Page palettes cycle so the cream page stays RARE — one in three.
+  // Index 0 is the cover (always --ink), so chapters start their own cycle.
+  const PAGE_CYCLE = ["page--ink-warm", "page--ink-deep", "page--paper"];
 
-  function hashIndex(str, len) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    return h % len;
-  }
-
-  function titleCase(str) {
-    return String(str).replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  }
+  // How many big fiches a chapter shows before the rest collapses into
+  // an archive list. Keeps a 40-item chapter from running forever.
+  const FICHE_BUDGET = 4;
 
   function t(lang, key) { return (I18N[lang] || I18N.pt)[key] || ""; }
 
   function escapeHtml(str) {
-    return String(str == null ? "" : str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    return String(str == null ? "" : str).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // Only allow URLs we're willing to put in an href — blocks javascript: etc.
+  function safeUrl(url) {
+    const s = String(url || "").trim();
+    if (!s) return "";
+    if (/^(https?:|mailto:|tel:|\/|#)/i.test(s)) return s;
+    return "";
   }
 
   function f(obj, field, lang) {
@@ -46,145 +71,482 @@
     return (lang === "en" && enVal) ? enVal : (obj[field] || "");
   }
 
-  function initials(name) {
-    return (name || "S").split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  function slug(str) {
+    return String(str || "").toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "cap";
   }
 
-  function accentFor(category) {
-    if (!category) return null;
-    return CATEGORY_ACCENTS[category] || FALLBACK_ACCENTS[hashIndex(category, FALLBACK_ACCENTS.length)];
+  function pad2(n, i) {
+    const raw = String(n || "").trim();
+    if (raw) return raw;
+    return String(i + 1).padStart(2, "0");
   }
 
-  function categoryLabel(category, lang) {
-    return (CATEGORY_LABELS[lang] || CATEGORY_LABELS.pt)[category] || titleCase(category);
+  // Splits a description into body + handwritten aside. When there's more than
+  // one sentence, the LAST one becomes the margin note in Caveat — a personal
+  // remark pulled out of prose, no new admin field required.
+  function splitNote(desc) {
+    const text = String(desc || "").trim();
+    if (!text) return { body: "", note: "" };
+    const parts = text.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g);
+    if (!parts || parts.length < 2) return { body: text, note: "" };
+    const note = parts.pop().trim();
+    const body = parts.join("").trim();
+    // Only pull it out if the remark is short enough to read as an aside.
+    if (note.length > 90 || !body) return { body: text, note: "" };
+    return { body, note };
   }
 
-  // Sections with an explicit category get a color tied to that category
-  // (stable across renders). Sections without one (legacy data, or simply
-  // not filled in yet) still get a distinct color by cycling the same warm
-  // palette based on position, so the page never looks flat.
-  function accentForSection(sec, index) {
-    return accentFor(sec.category) || FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length];
+  /* ---------------------------------------------------------------------- */
+  /* photo slots                                                            */
+  /* ---------------------------------------------------------------------- */
+
+  // Renders a real image when one is set, otherwise a clearly-marked
+  // placeholder that holds the exact composition shape. Gabriel drops photos
+  // into `image` (admin) and the layout doesn't move.
+  function photo(src, ratio, caption, alt) {
+    const url = safeUrl(src);
+    if (url) {
+      return `<div class="ph ph--${ratio}"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt || "")}" loading="lazy" /></div>`;
+    }
+    return `<div class="ph ph--${ratio} ph--empty" role="img" aria-label="${escapeHtml(caption || "")}">
+      <span>✦<br/>${escapeHtml(caption || "")}<br/>${ratio.replace("x", ":")}</span>
+    </div>`;
   }
 
-  function renderItemCard(item, lang, isOther) {
-    const label = f(item, "label", lang);
-    const name = f(item, "name", lang);
-    const desc = f(item, "description", lang);
-    const url = item.url || "";
-    const image = item.image
-      ? `<div class="item-image"><img src="${escapeHtml(item.image)}" alt="" loading="lazy" width="72" height="72" /></div>`
-      : "";
-    return `<article class="item">
-      ${image}
-      <div class="item-body">
-        <div class="item-cat">${label ? `✦ ${escapeHtml(label)}` : ""}${isOther ? `<span class="pill-tried">${escapeHtml(t(lang, "tried"))}</span>` : ""}</div>
-        <h4 class="item-name">${escapeHtml(name)}</h4>
-        ${desc ? `<p class="item-desc">${escapeHtml(desc)}</p>` : ""}
+  /* ---------------------------------------------------------------------- */
+  /* doodles — hand-drawn SVG, budgeted at two per screen                   */
+  /* ---------------------------------------------------------------------- */
+
+  // Irregular ellipse: deliberately not a perfect circle, so it reads as ink.
+  function doodleCircle() {
+    return `<svg class="cover-circle" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path d="M42,78 C28,44 96,16 198,13 C302,10 378,34 380,72 C382,110 300,140 196,139 C92,138 18,116 24,80 C28,54 74,36 140,28" style="--len:1250" />
+    </svg>`;
+  }
+
+  // Wobbly underline for chapter titles.
+  function doodleUnderline() {
+    return `<svg class="chapter-underline" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path d="M3,8 C64,3 118,10 178,6 C240,2 300,9 397,4" style="--len:420" />
+    </svg>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* cover                                                                  */
+  /* ---------------------------------------------------------------------- */
+
+  function renderCover(data, lang) {
+    const p = data.profile || {};
+    const s = data.site || {};
+
+    const headline = f(s, "headline", lang) || (lang === "en" ? "what i use." : "o que eu uso.");
+    const tagline = f(s, "tagline", lang);
+    const role = f(p, "role", lang);
+
+    // Break the headline into up to three lines so it composes like a poster.
+    // The final word carries the drawn circle and the coloured full stop.
+    const words = headline.trim().split(/\s+/);
+    const last = words.pop() || "";
+    const lead = words;
+    let l1 = "", l2 = "";
+    if (lead.length <= 1) {
+      l1 = lead.join(" ");
+    } else if (lead.length === 2) {
+      l1 = lead[0]; l2 = lead[1];
+    } else {
+      const cut = Math.ceil(lead.length / 2);
+      l1 = lead.slice(0, cut).join(" ");
+      l2 = lead.slice(cut).join(" ");
+    }
+
+    // Split the trailing punctuation so the dot can be coloured on its own.
+    const m = last.match(/^(.*?)([.!?]*)$/);
+    const lastWord = m ? m[1] : last;
+    const lastDot = m ? m[2] : "";
+
+    return `<header class="page cover" id="capa">
+      <div class="cover-in">
+        ${tagline ? `<span class="cover-kicker">${escapeHtml(tagline)}</span>` : ""}
+
+        <div class="cover-stamp" aria-hidden="true">
+          <span>★ CAFÉ<br/>ARTESANAL<br/>EST. 2026</span>
+        </div>
+
+        <h1 class="cover-title">
+          ${l1 ? `<span class="l1">${escapeHtml(l1)}</span>` : ""}
+          ${l2 ? `<span class="l2">${escapeHtml(l2)}</span>` : ""}
+          <span class="l3">${escapeHtml(lastWord)}<span class="dot">${escapeHtml(lastDot)}</span>${doodleCircle()}</span>
+        </h1>
+
+        <div class="cover-photo">
+          ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang))}
+        </div>
+
+        <div class="cover-meta">
+          ${role ? `<span class="cover-role">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
+          <a class="cover-scroll" href="#colofao">${escapeHtml(t(lang, "readOn"))} <span class="arr" aria-hidden="true">↓</span></a>
+        </div>
       </div>
-      <div class="item-actions">
-        ${url ? `<a href="${escapeHtml(url)}" class="cta-link" target="_blank" rel="noopener sponsored">${t(lang, "buy")}</a>` : ""}
-        ${url ? `<span class="action-sep" aria-hidden="true">·</span><button class="btn-copy" data-copy="${escapeHtml(url)}">${t(lang, "copyLink")}</button>` : ""}
+    </header>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* colophon                                                               */
+  /* ---------------------------------------------------------------------- */
+
+  function renderColophon(data, lang, chapters) {
+    const p = data.profile || {};
+    const s = data.site || {};
+    const intro = f(p, "intro", lang);
+    const sub = f(s, "subheadline", lang);
+    const bio = f(p, "bio", lang);
+
+    const rows = chapters.map((c) => `<a class="contents-row" href="#${escapeHtml(c.anchor)}">
+      <span class="num">${escapeHtml(c.num)}</span>
+      <span class="nm">${escapeHtml(c.title)}</span>
+      <span class="ct">${c.count}</span>
+    </a>`).join("");
+
+    return `<section class="page page--ink colophon" id="colofao">
+      <div class="colophon-grid">
+        <div class="rise">
+          ${sub ? `<p class="colophon-lead">${escapeHtml(sub)}</p>` : ""}
+          ${intro ? `<p class="t-body colophon-body">${escapeHtml(intro)}</p>` : ""}
+          ${bio ? `<p class="colophon-hand">${escapeHtml(bio)}</p>` : ""}
+          ${renderSocials(p)}
+        </div>
+        ${rows ? `<nav class="rise" aria-label="${escapeHtml(t(lang, "contentsTitle"))}">
+          <div class="contents-label">${escapeHtml(t(lang, "contentsTitle"))}</div>
+          ${rows}
+        </nav>` : ""}
+      </div>
+    </section>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* daily band                                                             */
+  /* ---------------------------------------------------------------------- */
+
+  function renderDaily(sections, lang) {
+    const items = [];
+    (sections || []).forEach((sec) => (sec.items || []).forEach((it) => { if (it.dailyUse) items.push(it); }));
+    if (!items.length) return "";
+
+    const rows = items.map((it) => {
+      const url = safeUrl(it.url);
+      const name = f(it, "name", lang);
+      const label = f(it, "label", lang);
+      const inner = `<span class="nm">${escapeHtml(name)}</span>${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}`;
+      return url
+        ? `<a class="daily-item" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored">${inner}</a>`
+        : `<div class="daily-item">${inner}</div>`;
+    }).join("");
+
+    return `<section class="page page--ink-deep daily" aria-label="${escapeHtml(t(lang, "daily"))}">
+      <div class="daily-head">
+        <span class="lbl">✦ ${escapeHtml(t(lang, "daily"))}</span>
+        <span class="rule" aria-hidden="true"></span>
+      </div>
+      <div class="daily-list rise">${rows}</div>
+    </section>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* fiches — three layouts alternating by position                         */
+  /* ---------------------------------------------------------------------- */
+
+  function ficheActions(item, lang) {
+    const url = safeUrl(item.url);
+    if (!url) return "";
+    return `<div class="fiche-actions">
+      <a class="cta" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored">${escapeHtml(t(lang, "buy"))} <span class="arr" aria-hidden="true">↗</span></a>
+      <button class="copy-link" type="button" data-copy="${escapeHtml(url)}">${escapeHtml(t(lang, "copyLink"))}</button>
+    </div>`;
+  }
+
+  function ficheLabel(item, lang, isArchive) {
+    const label = f(item, "label", lang);
+    if (!label && !isArchive) return "";
+    return `<div class="fiche-label">
+      ${label ? `<span>✦ ${escapeHtml(label)}</span>` : ""}
+      ${isArchive ? `<span class="fiche-flag">${escapeHtml(t(lang, "tried"))}</span>` : ""}
+    </div>`;
+  }
+
+  // A — portrait. The chapter's opening statement: big photo, big name.
+  function ficheA(item, lang) {
+    const { body, note } = splitNote(f(item, "description", lang));
+    return `<article class="fiche fiche--a rise">
+      <div class="fiche-media">${photo(item.image, "4x5", t(lang, "photoProduct"), f(item, "name", lang))}</div>
+      <div class="fiche-body">
+        ${ficheLabel(item, lang, false)}
+        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
+        ${body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
+        ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : ""}
+        ${ficheActions(item, lang)}
       </div>
     </article>`;
   }
 
-  function renderSection(sec, lang, isOther, index) {
-    const accent = isOther ? "var(--dim)" : accentForSection(sec, index);
-    const items = (sec.items || []).map((i) => renderItemCard(i, lang, isOther)).join("");
-    // Optional editorial photo slot — only renders when a real image is set
-    // (nothing invented, no placeholder box shown when empty).
-    const photo = sec.image
-      ? `<div class="section-photo"><img src="${escapeHtml(sec.image)}" alt="" loading="lazy" /></div>`
-      : "";
-    return `<div class="section" style="--accent:${accent}" data-category="${escapeHtml(sec.category || sec.id || "")}">
-      <div class="section-head">
-        <div class="section-num">${escapeHtml(sec.number || "")}</div>
-        <h3 class="section-title">${escapeHtml(f(sec, "title", lang))}</h3>
+  // B — text-dominant, small photo. Mirrors A so the rhythm alternates.
+  function ficheB(item, lang) {
+    const { body, note } = splitNote(f(item, "description", lang));
+    return `<article class="fiche fiche--b rise">
+      <div class="fiche-body">
+        ${ficheLabel(item, lang, false)}
+        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
+        ${body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
+        ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : ""}
+        ${ficheActions(item, lang)}
       </div>
-      ${photo}
-      ${items}
-    </div>`;
+      <div class="fiche-media">${photo(item.image, "1x1", t(lang, "photoProduct"), f(item, "name", lang))}</div>
+    </article>`;
   }
 
-  function renderFeaturedStrip(sections, lang) {
-    const items = [];
-    (sections || []).forEach((sec) => (sec.items || []).forEach((it) => { if (it.dailyUse) items.push(it); }));
-    if (!items.length) return "";
-    const cells = items.map((it) => `<a class="featured-pill" href="${escapeHtml(it.url || "#")}" target="_blank" rel="noopener sponsored">
-      <span class="featured-pill-name">${escapeHtml(f(it, "name", lang))}</span>
-      <span class="featured-pill-cat">${escapeHtml(f(it, "label", lang))}</span>
-    </a>`).join("");
-    return `<section class="featured" aria-label="${escapeHtml(t(lang, "featuredTitle"))}">
-      <div class="featured-head">${escapeHtml(t(lang, "featuredTitle"))}</div>
-      <div class="featured-strip">${cells}</div>
+  // C — archive line. Dense and fast, after two large fiches.
+  function ficheC(item, lang, isArchive) {
+    const desc = f(item, "description", lang);
+    return `<article class="fiche fiche--c rise">
+      ${ficheLabel(item, lang, isArchive)}
+      <div class="fiche-row">
+        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
+        ${ficheActions(item, lang)}
+      </div>
+      ${desc ? `<p class="fiche-desc">${escapeHtml(desc)}</p>` : ""}
+    </article>`;
+  }
+
+  // Alternation pattern: A, B, C, B, A, … never two identical in a row.
+  const FICHE_ORDER = [ficheA, ficheB, ficheC, ficheB];
+
+  function renderFiche(item, index, lang) {
+    const fn = FICHE_ORDER[index % FICHE_ORDER.length];
+    return fn(item, lang);
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* chapters                                                               */
+  /* ---------------------------------------------------------------------- */
+
+  function renderChapter(sec, lang, meta) {
+    const items = sec.items || [];
+    const title = f(sec, "title", lang);
+
+    // Long chapters: the first few get full editorial treatment, the rest
+    // collapse into an archive list behind a "+ more" toggle.
+    const head = items.slice(0, FICHE_BUDGET);
+    const rest = items.slice(FICHE_BUDGET);
+
+    const headHtml = head.map((it, i) => renderFiche(it, i, lang)).join("");
+    const restHtml = rest.length
+      ? `<div class="fiche-rest" id="rest-${escapeHtml(meta.anchor)}" hidden>
+           ${rest.map((it) => ficheC(it, lang, false)).join("")}
+         </div>
+         <button class="more-toggle" type="button" aria-expanded="false" aria-controls="rest-${escapeHtml(meta.anchor)}"
+                 data-more data-label-more="+ ${escapeHtml(String(rest.length))} ${escapeHtml(t(lang, "more"))}"
+                 data-label-less="− ${escapeHtml(t(lang, "close"))}">
+           <span class="more-txt">+ ${escapeHtml(String(rest.length))} ${escapeHtml(t(lang, "more"))}</span>
+           <span class="arr" aria-hidden="true">↓</span>
+         </button>`
+      : "";
+
+    const countTxt = `${items.length} ${items.length === 1 ? t(lang, "item") : t(lang, "items")}`;
+
+    return `<section class="page ${meta.palette} chapter" id="${escapeHtml(meta.anchor)}"
+             data-chapter="${escapeHtml(meta.num)}" data-chapter-title="${escapeHtml(title)}">
+      <div class="chapter-open">
+        <div class="chapter-mark rise">
+          <span class="chapter-num" aria-hidden="true">${escapeHtml(meta.num)}</span>
+          <h2 class="chapter-title">${escapeHtml(title)}</h2>
+          ${doodleUnderline()}
+        </div>
+        <div class="chapter-intro rise">
+          <span class="chapter-count">${escapeHtml(t(lang, "chapter"))} ${escapeHtml(meta.num)} — ${escapeHtml(countTxt)}</span>
+        </div>
+        <figure class="chapter-photo rise">
+          ${photo(sec.image, "3x4", t(lang, "photoChapter"), title)}
+          <figcaption class="cap">✦ ${escapeHtml(title)}</figcaption>
+        </figure>
+      </div>
+      <div class="chapter-items">${headHtml}${restHtml}</div>
     </section>`;
   }
 
-  function renderSeenInVideos(sections, lang) {
+  /* ---------------------------------------------------------------------- */
+  /* interlude — seen in my videos                                          */
+  /* ---------------------------------------------------------------------- */
+
+  function renderInterlude(sections, lang, palette) {
     const items = [];
     (sections || []).forEach((sec) => (sec.items || []).forEach((it) => { if (it.seenInVideos) items.push(it); }));
     if (!items.length) return "";
-    const cells = items.map((it) => `<a class="video-card" href="${escapeHtml(it.url || "#")}" target="_blank" rel="noopener sponsored">
-      <span class="video-card-tag">🎥</span>
-      <span class="video-card-name">${escapeHtml(f(it, "name", lang))}</span>
-      <span class="video-card-cat">${escapeHtml(f(it, "label", lang))}</span>
-    </a>`).join("");
-    return `<section class="seen-videos" id="videos">
-      <div class="alt-head"><h2>${escapeHtml(t(lang, "videosTitle"))}</h2><p>${escapeHtml(t(lang, "videosDesc"))}</p></div>
-      <div class="videos-strip">${cells}</div>
-    </section>`;
-  }
 
-  function renderFilters(sections, lang) {
-    const setupSections = (sections || []).filter((s) => (s.group || "setup") === "setup");
-    const cats = [...new Set(setupSections.map((s) => s.category).filter(Boolean))];
-    if (cats.length < 2) return "";
-    const chips = [`<button class="chip active" data-filter="all">${escapeHtml(t(lang, "filterAll"))}</button>`]
-      .concat(cats.map((c) => `<button class="chip" data-filter="${escapeHtml(c)}"><span class="chip-dot" style="background:${accentFor(c)}"></span>${escapeHtml(categoryLabel(c, lang))}</button>`));
-    return `<div class="filters" role="tablist" aria-label="filtrar equipamentos">${chips.join("")}</div>`;
-  }
+    const frames = items.map((it) => {
+      const url = safeUrl(it.url);
+      const name = f(it, "name", lang);
+      const label = f(it, "label", lang);
+      const inner = `${photo(it.image, "3x4", t(lang, "photoFrame"), name)}
+        <div class="frame-cap">
+          <span class="nm">${escapeHtml(name)}</span>
+          ${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}
+        </div>`;
+      return url
+        ? `<a class="frame rise" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored">${inner}</a>`
+        : `<div class="frame rise">${inner}</div>`;
+    }).join("");
 
-  function renderSetup(sections, lang) {
-    const setupSections = (sections || []).filter((s) => (s.group || "setup") === "setup");
-    if (!setupSections.length) return "";
-    return `<section class="setup" id="setup">
-      <div class="setup-head">
-        <h2>${escapeHtml(t(lang, "setupTitle"))}</h2>
-        <p>${escapeHtml(t(lang, "setupDesc"))}</p>
+    return `<section class="page ${palette} interlude" id="videos">
+      <div class="interlude-head rise">
+        <h2 class="interlude-title">${escapeHtml(t(lang, "videosTitle"))}</h2>
+        <p class="interlude-sub">${escapeHtml(t(lang, "videosDesc"))}</p>
       </div>
-      ${renderFilters(sections, lang)}
-      ${setupSections.map((s, i) => renderSection(s, lang, false, i)).join("")}
+      <div class="interlude-grid">${frames}</div>
     </section>`;
   }
 
-  function renderOtherThings(sections, lang) {
+  /* ---------------------------------------------------------------------- */
+  /* archive — "already tried"                                              */
+  /* ---------------------------------------------------------------------- */
+
+  function renderArchive(sections, lang) {
     const otherSections = (sections || []).filter((s) => s.group === "other");
-    if (!otherSections.length) return "";
-    return `<section class="other-things" id="other">
-      <div class="alt-head"><h2>${escapeHtml(t(lang, "otherTitle"))}</h2><p>${escapeHtml(t(lang, "otherDesc"))}</p></div>
-      ${otherSections.map((s) => renderSection(s, lang, true)).join("")}
-    </section>`;
-  }
+    const items = [];
+    otherSections.forEach((sec) => (sec.items || []).forEach((it) => items.push(it)));
+    if (!items.length) return "";
 
-  function renderAbout(profile, lang) {
-    const intro = f(profile, "intro", lang);
-    if (!intro) return "";
-    return `<section class="about" id="about">
-      <div class="about-inner">
-        <h2>${escapeHtml(t(lang, "aboutTitle"))}</h2>
-        <p>${escapeHtml(intro)}</p>
+    return `<section class="page page--ink-deep archive" id="arquivo">
+      <div class="archive-head rise">
+        <h2 class="archive-title">${escapeHtml(t(lang, "archiveTitle"))}</h2>
+        <p class="archive-sub">${escapeHtml(t(lang, "archiveDesc"))}</p>
+      </div>
+      <div class="chapter-items">
+        ${items.map((it) => ficheC(it, lang, true)).join("")}
       </div>
     </section>`;
   }
+
+  /* ---------------------------------------------------------------------- */
+  /* socials / footnote / back cover                                        */
+  /* ---------------------------------------------------------------------- */
 
   function renderSocials(profile) {
-    return [
-      profile.instagram && `<a href="${escapeHtml(profile.instagram)}" class="social-a" target="_blank" rel="noopener">instagram ↗</a>`,
-      profile.youtube && `<a href="${escapeHtml(profile.youtube)}" class="social-a" target="_blank" rel="noopener">youtube ↗</a>`,
-      profile.twitter && `<a href="${escapeHtml(profile.twitter)}" class="social-a" target="_blank" rel="noopener">twitter ↗</a>`,
+    const links = [
+      profile.instagram && `<a href="${escapeHtml(safeUrl(profile.instagram))}" class="social-a" target="_blank" rel="noopener">instagram ↗</a>`,
+      profile.youtube && `<a href="${escapeHtml(safeUrl(profile.youtube))}" class="social-a" target="_blank" rel="noopener">youtube ↗</a>`,
+      profile.twitter && `<a href="${escapeHtml(safeUrl(profile.twitter))}" class="social-a" target="_blank" rel="noopener">twitter ↗</a>`,
     ].filter(Boolean).join("");
+    return links ? `<div class="socials">${links}</div>` : "";
   }
+
+  function renderFootnote(site, lang) {
+    const note = f(site, "affiliateNote", lang);
+    if (!site.showAffiliateNote || !note) return "";
+    return `<aside class="page page--ink footnote">
+      <span class="star" aria-hidden="true">✦</span>
+      <p>${escapeHtml(note)}</p>
+    </aside>`;
+  }
+
+  function renderBackCover(data, lang) {
+    const p = data.profile || {};
+    const s = data.site || {};
+    const title = f(s, "title", lang) || "gabriel no café";
+    const headline = f(s, "headline", lang) || (lang === "en" ? "it's just a coffee." : "é só um café.");
+
+    const m = headline.trim().match(/^(.*?)([.!?]*)$/);
+    const word = m ? m[1] : headline;
+    const dot = m ? m[2] : "";
+
+    return `<footer class="page page--ink-deep backcover">
+      <div class="backcover-in rise">
+        <p class="backcover-title">${escapeHtml(word)}<span class="dot">${escapeHtml(dot)}</span><span class="backcover-star" aria-hidden="true">✦</span></p>
+      </div>
+      <div class="backcover-foot">
+        ${renderSocials(p)}
+        <div class="backcover-copy">
+          ${escapeHtml(title)}<br/>
+          ${escapeHtml(p.handle || "")} · © ${new Date().getFullYear()}
+        </div>
+      </div>
+    </footer>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* chapter planning — shared by the page, the contents list and the index */
+  /* ---------------------------------------------------------------------- */
+
+  // Assigns numbering, anchors and palettes. Palettes cycle so a cream page
+  // shows up once every three chapters, never twice in a row.
+  function planChapters(sections, lang) {
+    return (sections || [])
+      .filter((s) => (s.group || "setup") === "setup")
+      .map((sec, i) => ({
+        sec,
+        num: pad2(sec.number, i),
+        title: f(sec, "title", lang),
+        // Anchor on the stable id, never on the title: titles differ between
+        // PT and EN, and a language switch must not invalidate every #link
+        // already rendered in the masthead and the contents overlay.
+        anchor: `cap-${slug(sec.id || f(sec, "title", "pt") || i)}`,
+        count: (sec.items || []).length,
+        category: sec.category || "",
+        palette: PAGE_CYCLE[i % PAGE_CYCLE.length],
+      }));
+  }
+
+  // The contents overlay: a real magazine index. Groups by category when there
+  // are enough distinct ones to be worth grouping — this is what scales when
+  // the catalogue grows.
+  function renderIndexOverlay(data, lang) {
+    const chapters = planChapters(data.sections || [], lang);
+    const cats = [...new Set(chapters.map((c) => c.category).filter(Boolean))];
+    const shouldGroup = cats.length >= 3;
+
+    const rowFor = (c) => `<a class="index-item" href="#${escapeHtml(c.anchor)}" data-index-link data-anchor="${escapeHtml(c.anchor)}">
+      <span class="num">${escapeHtml(c.num)}</span>
+      <span class="name">${escapeHtml(c.title)}</span>
+      <span class="count">${c.count}</span>
+    </a>`;
+
+    let body;
+    if (shouldGroup) {
+      body = cats.map((cat) => {
+        const inCat = chapters.filter((c) => c.category === cat);
+        if (!inCat.length) return "";
+        return `<div class="index-group-label">${escapeHtml(cat)}</div>${inCat.map(rowFor).join("")}`;
+      }).join("");
+      const uncat = chapters.filter((c) => !c.category);
+      if (uncat.length) body += uncat.map(rowFor).join("");
+    } else {
+      body = chapters.map(rowFor).join("");
+    }
+
+    const hasArchive = (data.sections || []).some((s) => s.group === "other" && (s.items || []).length);
+    const hasVideos = (data.sections || []).some((s) => (s.items || []).some((i) => i.seenInVideos));
+
+    return `<div class="index-overlay" id="index-overlay" role="dialog" aria-modal="true" aria-label="${escapeHtml(t(lang, "contentsTitle"))}">
+      <div class="index-top">
+        <span class="lbl">✦ ${escapeHtml(t(lang, "contentsTitle"))}</span>
+        <button class="index-close" type="button" id="index-close">${escapeHtml(t(lang, "close"))} ✕</button>
+      </div>
+      <nav class="index-list">
+        ${body}
+        ${hasVideos ? `<a class="index-item" href="#videos" data-index-link data-anchor="videos"><span class="num">✦</span><span class="name">${escapeHtml(t(lang, "videosTitle"))}</span><span class="count"></span></a>` : ""}
+        ${hasArchive ? `<a class="index-item" href="#arquivo" data-index-link data-anchor="arquivo"><span class="num">✦</span><span class="name">${escapeHtml(t(lang, "archiveTitle"))}</span><span class="count"></span></a>` : ""}
+      </nav>
+      <div class="index-foot">
+        <a href="#capa" data-index-link data-anchor="capa">${escapeHtml(t(lang, "back"))}</a>
+        <span class="soon">${escapeHtml(t(lang, "recipes"))} — ${escapeHtml(t(lang, "soon"))}</span>
+        <span class="soon">${escapeHtml(t(lang, "favorites"))} — ${escapeHtml(t(lang, "soon"))}</span>
+      </div>
+    </div>`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* the zine                                                               */
+  /* ---------------------------------------------------------------------- */
 
   function renderApp(data, lang) {
     const d = data || {};
@@ -192,55 +554,36 @@
     const s = d.site || {};
     const sections = d.sections || [];
 
-    const tagline = f(s, "tagline", lang);
-    const headline = f(s, "headline", lang) || "o que eu uso.";
-    const sub = f(s, "subheadline", lang);
-    const role = f(p, "role", lang);
-    const intro = f(p, "intro", lang);
-    const bio = f(p, "bio", lang);
-    const affiliate = f(s, "affiliateNote", lang);
+    const chapters = planChapters(sections, lang);
 
-    const words = headline.split(" ");
-    const last = words.pop();
-    const rest = words.join(" ");
+    // The interlude drops in after the second chapter so the reel breaks up;
+    // with fewer chapters it goes at the end of the run.
+    const interludeAfter = chapters.length >= 3 ? 1 : chapters.length - 1;
 
-    const avatar = p.photo ? `<img src="${escapeHtml(p.photo)}" alt="${escapeHtml(p.name || "")}" />` : escapeHtml(initials(p.name));
-    const socialLinks = renderSocials(p);
+    // Give the interlude a palette that doesn't repeat its neighbour's.
+    const interludePalette = PAGE_CYCLE[(interludeAfter + 1) % PAGE_CYCLE.length] === "page--paper"
+      ? "page--ink" : "page--paper";
 
-    return `
-      <section class="hero">
-        <div class="stamp" aria-hidden="true"><div class="stamp-text">CAFÉ<br/>ARTESANAL<br/>★ EST. 2026</div></div>
-        ${tagline ? `<div class="hero-kicker-badge"><span class="dot"></span><span>${escapeHtml(tagline)}</span></div>` : ""}
-        <h1 class="hero-h1">${escapeHtml(rest)} <span class="accent">${escapeHtml(last)}<span class="circle-mark"></span></span></h1>
-        ${sub ? `<p class="hero-sub">${escapeHtml(sub)}</p>` : ""}
+    const chapterHtml = chapters.map((meta, i) => {
+      let html = renderChapter(meta.sec, lang, meta);
+      if (i === interludeAfter) html += renderInterlude(sections, lang, interludePalette);
+      return html;
+    }).join("");
 
-        <div class="hero-person">
-          <div class="photo-frame">${avatar}</div>
-          <div class="hero-person-body">
-            <div class="hero-person-name">${escapeHtml(p.name || "")}${role ? `<span class="hero-person-role"> — ${escapeHtml(role)}</span>` : ""}</div>
-            ${intro ? `<p class="hero-person-intro">${escapeHtml(intro)}</p>` : (bio ? `<p class="hero-person-intro">${escapeHtml(bio)}</p>` : "")}
-            ${socialLinks ? `<div class="socials">${socialLinks}</div>` : ""}
-          </div>
-        </div>
-      </section>
-
-      ${renderFeaturedStrip(sections, lang)}
-      ${renderSetup(sections, lang)}
-      ${renderSeenInVideos(sections, lang)}
-      ${renderOtherThings(sections, lang)}
-      ${renderAbout(p, lang)}
-
-      ${s.showAffiliateNote && affiliate ? `<div class="affiliate-note">☕ ${escapeHtml(affiliate)}</div>` : ""}
-
-      <footer class="footer">
-        <div class="footer-poster">
-          <span class="footer-poster-text">${escapeHtml(f(s, "title", lang) || "gabriel no café")}</span>
-          <span class="footer-mark" aria-hidden="true">✦</span>
-        </div>
-        ${socialLinks ? `<div class="socials">${socialLinks}</div>` : ""}
-      </footer>
-    `;
+    return [
+      renderCover(d, lang),
+      renderColophon(d, lang, chapters),
+      renderDaily(sections, lang),
+      chapterHtml,
+      renderArchive(sections, lang),
+      renderFootnote(s, lang),
+      renderBackCover(d, lang),
+      renderIndexOverlay(d, lang),
+    ].join("\n");
   }
 
-  return { t, I18N, escapeHtml, f, initials, accentFor, CATEGORY_ACCENTS, renderApp };
+  return {
+    t, I18N, escapeHtml, f, safeUrl, slug, planChapters,
+    renderApp, renderIndexOverlay, renderSocials,
+  };
 });

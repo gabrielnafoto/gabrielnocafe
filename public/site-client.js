@@ -1,12 +1,21 @@
-// public/site-client.js — hydration + interactivity.
-// The server already rendered real content (see api/index.js), so this script
-// only needs to: wire up language switching, category filters and "copy link".
+// public/site-client.js — hydration + interactivity for the zine.
+//
+// The server already rendered the whole publication (see api/index.js), so this
+// script only adds behaviour: language switching, the contents overlay, the
+// running folio, "+ more" toggles, copy-link, and the entrance/doodle motion.
 (function () {
-  const DATA = window.__SITE_DATA__;
+  const DATA = window.__SITE_DATA__ || {};
   const SERVER_LANG = window.__SITE_LANG__ || "pt";
   const app = document.getElementById("app");
   const toast = document.getElementById("toast");
-  let currentFilter = "all";
+
+  let lang = SERVER_LANG;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ------------------------------------------------------------------ */
+  /* language                                                           */
+  /* ------------------------------------------------------------------ */
 
   function detectLang() {
     const stored = localStorage.getItem("lang");
@@ -15,70 +24,195 @@
     return nav.startsWith("pt") ? "pt" : "en";
   }
 
-  function applyFilter(filter) {
-    currentFilter = filter;
-    app.querySelectorAll(".section[data-category]").forEach((sec) => {
-      const inSetup = sec.closest(".setup") != null;
-      if (!inSetup) return; // filters only affect "My Setup" sections
-      sec.style.display = filter === "all" || sec.dataset.category === filter ? "" : "none";
-    });
-    app.querySelectorAll(".chip").forEach((chip) => {
-      chip.classList.toggle("active", chip.dataset.filter === filter);
-    });
-  }
+  function setLang(next, persist) {
+    lang = next;
+    if (persist) localStorage.setItem("lang", next);
+    document.documentElement.lang = next === "en" ? "en" : "pt-BR";
 
-  function setLang(lang, persist) {
-    if (persist) localStorage.setItem("lang", lang);
-    document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
-    const btnPt = document.getElementById("btn-pt");
-    const btnEn = document.getElementById("btn-en");
-    if (btnPt) btnPt.classList.toggle("active", lang === "pt");
-    if (btnEn) btnEn.classList.toggle("active", lang === "en");
-    if (lang !== SERVER_LANG || persist) {
-      app.innerHTML = window.SiteRender.renderApp(DATA, lang);
+    document.getElementById("btn-pt")?.classList.toggle("active", next === "pt");
+    document.getElementById("btn-en")?.classList.toggle("active", next === "en");
+
+    // Only re-render when the language actually differs from what the server
+    // painted — otherwise we'd throw away perfectly good server markup.
+    if (next !== SERVER_LANG || persist) {
+      app.innerHTML = window.SiteRender.renderApp(DATA, next);
+      wirePage();
     }
-    applyFilter(currentFilter);
   }
 
   document.getElementById("btn-pt")?.addEventListener("click", () => setLang("pt", true));
   document.getElementById("btn-en")?.addEventListener("click", () => setLang("en", true));
 
-  // Mobile menu (hamburger) — dropdown panel reusing the same nav-links markup.
-  const navEl = document.getElementById("site-nav");
-  const menuBtn = document.getElementById("menu-btn");
-  const navLinks = document.getElementById("nav-links");
+  /* ------------------------------------------------------------------ */
+  /* contents overlay                                                   */
+  /* ------------------------------------------------------------------ */
 
-  function closeMenu() {
-    navEl?.classList.remove("menu-open");
-    menuBtn?.setAttribute("aria-expanded", "false");
-  }
-  function toggleMenu() {
-    const open = navEl?.classList.toggle("menu-open");
-    menuBtn?.setAttribute("aria-expanded", open ? "true" : "false");
+  let lastFocus = null;
+
+  function overlay() { return document.getElementById("index-overlay"); }
+
+  function openIndex() {
+    const ov = overlay();
+    if (!ov) return;
+    lastFocus = document.activeElement;
+    markCurrentInIndex();
+    ov.classList.add("open");
+    document.body.classList.add("index-open");
+    document.getElementById("index-btn")?.setAttribute("aria-expanded", "true");
+    ov.querySelector(".index-close")?.focus();
   }
 
-  menuBtn?.addEventListener("click", (e) => { e.stopPropagation(); toggleMenu(); });
-  navLinks?.addEventListener("click", (e) => { if (e.target.closest("a")) closeMenu(); });
+  function closeIndex() {
+    const ov = overlay();
+    if (!ov) return;
+    ov.classList.remove("open");
+    document.body.classList.remove("index-open");
+    document.getElementById("index-btn")?.setAttribute("aria-expanded", "false");
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  }
+
+  // Highlight the chapter the reader is currently in, so the contents page
+  // doubles as a "you are here" marker.
+  function markCurrentInIndex() {
+    const current = document.querySelector(".masthead")?.dataset.currentAnchor;
+    document.querySelectorAll("[data-index-link]").forEach((a) => {
+      a.classList.toggle("current", !!current && a.dataset.anchor === current);
+    });
+  }
+
+  document.getElementById("index-btn")?.addEventListener("click", openIndex);
+
   document.addEventListener("click", (e) => {
-    if (navEl?.classList.contains("menu-open") && !navEl.contains(e.target)) closeMenu();
+    if (e.target.closest("#index-close")) { closeIndex(); return; }
+    const link = e.target.closest("[data-index-link]");
+    if (link) closeIndex(); // let the browser handle the anchor jump
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (overlay()?.classList.contains("open")) closeIndex();
+  });
+
+  // Keep focus inside the overlay while it's open.
+  document.addEventListener("keydown", (e) => {
+    const ov = overlay();
+    if (e.key !== "Tab" || !ov || !ov.classList.contains("open")) return;
+    const focusables = ov.querySelectorAll("a[href], button:not([disabled])");
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* copy link + "+ more" toggles                                       */
+  /* ------------------------------------------------------------------ */
 
   app.addEventListener("click", (e) => {
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {
-      navigator.clipboard.writeText(copyBtn.dataset.copy).then(() => {
-        toast.textContent = SERVER_LANG === "en" ? "link copied" : "link copiado";
+      const url = copyBtn.dataset.copy;
+      const done = () => {
+        toast.textContent = window.SiteRender.t(lang, "copied");
         toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 1800);
-      });
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove("show"), 1800);
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => {});
+      }
       return;
     }
-    const chip = e.target.closest("[data-filter]");
-    if (chip) applyFilter(chip.dataset.filter);
+
+    const more = e.target.closest("[data-more]");
+    if (more) {
+      const panel = document.getElementById(more.getAttribute("aria-controls"));
+      if (!panel) return;
+      const open = panel.hasAttribute("hidden");
+      if (open) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
+      more.setAttribute("aria-expanded", open ? "true" : "false");
+      const txt = more.querySelector(".more-txt");
+      if (txt) txt.textContent = open ? more.dataset.labelLess : more.dataset.labelMore;
+      // Newly revealed fiches should settle in like the rest of the page.
+      if (open) panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+    }
   });
 
-  // Hydrate to the visitor's preferred language without a visible reflow —
-  // this runs synchronously right after the server-rendered content.
+  /* ------------------------------------------------------------------ */
+  /* motion: entrances, drawn doodles, running folio                    */
+  /* ------------------------------------------------------------------ */
+
+  let riseObserver = null;
+  let drawObserver = null;
+  let folioObserver = null;
+
+  function wireMotion() {
+    riseObserver?.disconnect();
+    drawObserver?.disconnect();
+
+    if (reduceMotion) {
+      document.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+      document.querySelectorAll(".cover-circle, .chapter-underline").forEach((el) => el.classList.add("drawn"));
+      return;
+    }
+
+    // Content settles in a few pixels — nothing more theatrical than that.
+    riseObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("in");
+        riseObserver.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+
+    document.querySelectorAll(".rise").forEach((el) => riseObserver.observe(el));
+
+    // Doodles draw themselves once, when they come into view.
+    drawObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("drawn");
+        drawObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll(".cover-circle, .chapter-underline").forEach((el) => drawObserver.observe(el));
+  }
+
+  // The masthead shows which chapter you're reading, like a magazine folio.
+  function wireFolio() {
+    folioObserver?.disconnect();
+
+    const folio = document.getElementById("folio");
+    const masthead = document.querySelector(".masthead");
+    if (!folio || !masthead) return;
+
+    const chapters = [...document.querySelectorAll("[data-chapter]")];
+    if (!chapters.length) return;
+
+    folioObserver = new IntersectionObserver((entries) => {
+      // Pick the chapter closest to the top of the viewport among those visible.
+      const visible = entries.filter((e) => e.isIntersecting);
+      if (!visible.length) return;
+      const top = visible.reduce((a, b) =>
+        Math.abs(a.boundingClientRect.top) < Math.abs(b.boundingClientRect.top) ? a : b);
+      const el = top.target;
+      folio.innerHTML = `<span class="n">${el.dataset.chapter}</span> ${el.dataset.chapterTitle}`;
+      masthead.dataset.currentAnchor = el.id;
+    }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+
+    chapters.forEach((c) => folioObserver.observe(c));
+  }
+
+  /* ------------------------------------------------------------------ */
+
+  function wirePage() {
+    wireMotion();
+    wireFolio();
+  }
+
+  // Hydrate to the visitor's preferred language, then wire everything up.
   setLang(detectLang(), false);
+  wirePage();
 })();
