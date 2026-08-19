@@ -94,10 +94,16 @@
     .section-body { display: none; padding: 20px; }
     .section-card.open .section-body { display: block; }
 
-    /* ITEM ROW */
-    .item-row { background: var(--card); border: 1px solid var(--border); padding: 16px; margin-bottom: 10px; }
-    .item-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .item-row-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+    /* ITEM ROW — collapsible, same pattern as .section-card */
+    .item-row { background: var(--card); border: 1px solid var(--border); margin-bottom: 10px; }
+    .item-row-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; user-select: none; }
+    .item-row-header:hover { background: var(--surface); }
+    .item-row-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .item-reorder { display: flex; gap: 4px; }
+    .item-reorder .btn { padding: 4px 10px; }
+    .item-row.open .collapse-icon { transform: rotate(180deg); }
+    .item-row-body { display: none; padding: 16px; border-top: 1px solid var(--border); }
+    .item-row.open .item-row-body { display: block; }
 
     /* TOGGLE */
     .toggle-wrap { display: flex; align-items: center; gap: 10px; }
@@ -661,10 +667,16 @@ function buildItemRow(item) {
   row.className = 'item-row';
   row.dataset.id = item.id || uid();
   row.innerHTML = `
-    <div class="item-row-header">
+    <div class="item-row-header" onclick="this.closest('.item-row').classList.toggle('open')">
       <div class="item-row-name">${item.name || 'Novo item'}</div>
-      <button class="btn btn-danger btn-sm" onclick="if(confirm('Remover?')){const c=this.closest('.section-card');this.closest('.item-row').remove();c.querySelector('.section-card-meta').textContent=c.querySelectorAll('.item-row').length+' item(s)'}">Remover</button>
+      <span class="item-reorder" onclick="event.stopPropagation()">
+        <button type="button" class="btn btn-ghost btn-sm" title="Mover para cima" onclick="moveItem(this, -1)">↑</button>
+        <button type="button" class="btn btn-ghost btn-sm" title="Mover para baixo" onclick="moveItem(this, 1)">↓</button>
+      </span>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();if(confirm('Remover?')){const c=this.closest('.section-card');this.closest('.item-row').remove();c.querySelector('.section-card-meta').textContent=c.querySelectorAll('.item-row').length+' item(s)'}">Remover</button>
+      <span class="collapse-icon">▾</span>
     </div>
+    <div class="item-row-body">
     <div class="lang-tabs" style="justify-content:space-between;align-items:center">
       <div style="display:flex">
         <button class="lang-tab active" onclick="switchLangTab(this,'pt')">🇧🇷 Português</button>
@@ -769,8 +781,17 @@ function buildItemRow(item) {
         <div class="toggle i-videos ${item.seenInVideos?'on':''}" onclick="this.classList.toggle('on')"></div>
         <span class="toggle-label">Aparece em "seen in my videos"</span>
       </div>
+    </div>
     </div>`;
   return row;
+}
+
+function moveItem(btn, dir) {
+  const row = btn.closest('.item-row');
+  const sibling = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+  if (!sibling) return;
+  if (dir < 0) row.parentNode.insertBefore(row, sibling);
+  else row.parentNode.insertBefore(sibling, row);
 }
 
 function switchLangTab(btn, lang) {
@@ -801,7 +822,9 @@ function addSection() {
 function addItem(btn) {
   const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', image:'', affilliate:false, dailyUse:false, seenInVideos:false, editorialTreatment:'', editorialText:'', editorialNumber:'', annotationPosition:'', imagePosition:'', imageScale:'', editorialStyle:'', personalNote:'' };
   const container = btn.closest('.section-body').querySelector('.items-container');
-  container.appendChild(buildItemRow(item));
+  const row = buildItemRow(item);
+  row.classList.add('open');
+  container.appendChild(row);
   const card = btn.closest('.section-card');
   card.querySelector('.section-card-meta').textContent = card.querySelectorAll('.item-row').length + ' item(s)';
 }
