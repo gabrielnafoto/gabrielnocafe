@@ -1611,11 +1611,16 @@ body.index-open { overflow: hidden; }
   .fiche--item .fiche-body  { flex: 1.2; min-width: 0; }
   .fiche--item .fiche-media { flex: 1; max-width: 380px; }
 
-  /* the number moves out beside the word instead of sitting behind it */
+  /* the number moves out beside the word instead of sitting behind it.
+     Chapters now run directly into one another (no gap between them), so
+     it can no longer rise a full 100% of its own (huge) height above the
+     title without bleeding into the previous chapter's space — nudged up
+     by a fixed, modest amount instead. */
   .chapter-num {
     opacity: .2;
     top: auto;
     bottom: 100%;
+    margin-bottom: -.5em;
     left: -.02em;
     font-size: clamp(120px, 15vw, 230px);
   }
