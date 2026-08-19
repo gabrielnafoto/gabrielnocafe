@@ -226,7 +226,7 @@
 
     if (reduceMotion) {
       document.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
-      document.querySelectorAll(".cover-circle, .chapter-underline").forEach((el) => el.classList.add("drawn"));
+      document.querySelectorAll(".cover-circle, .chapter-underline, .cover-role").forEach((el) => el.classList.add("drawn"));
       return;
     }
 
@@ -250,7 +250,7 @@
       });
     }, { threshold: 0.5 });
 
-    document.querySelectorAll(".cover-circle, .chapter-underline").forEach((el) => drawObserver.observe(el));
+    document.querySelectorAll(".cover-circle, .chapter-underline, .cover-role").forEach((el) => drawObserver.observe(el));
   }
 
   // The masthead shows which chapter you're reading, like a magazine folio.

@@ -640,24 +640,38 @@ body.index-open { overflow: hidden; }
   border-top: 1px solid var(--rule);
   padding-top: 20px;
 }
-/* a handwritten note taped onto the cover photo, like a caption scrawled
-   on the back of a print — deliberate now, instead of a stray line of type
-   that used to get lost underneath the image. */
+/* a handwritten note scrawled across almost the whole cover photo, bleeding
+   past its edges into the page — positioned against .cover-in (which is
+   already position:relative and never has an ambiguous/auto height, unlike
+   .cover-photo at mobile widths, which is what made an earlier version of
+   this invisible on iOS Safari). Revealed with a left-to-right clip-path
+   wipe, the same "drawn" trigger the doodle SVGs already use, so it reads
+   as being written in real time as it scrolls into view. */
 .cover-role {
   position: absolute;
-  left: 6%;
-  bottom: 7%;
+  left: 4%;
+  right: 4%;
+  bottom: 10%;
   z-index: 2;
-  max-width: 88%;
-  font-family: 'Caveat', cursive;
-  font-weight: 600;
-  font-size: clamp(17px, 3.6vw, 22px);
-  line-height: 1.25;
-  color: var(--paper);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
-  transform: rotate(-2.5deg);
+  text-align: right;
   pointer-events: none;
 }
+.cover-role span {
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: clamp(26px, 8vw, 68px);
+  line-height: 1.15;
+  color: var(--paper);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .6);
+  transform: rotate(-2deg);
+  clip-path: inset(0 100% 0 0);
+}
+.cover-role.drawn span {
+  animation: cover-role-write 1.4s cubic-bezier(.65, 0, .35, 1) forwards;
+  animation-delay: .2s;
+}
+@keyframes cover-role-write { to { clip-path: inset(0 0 0 0); } }
 .cover-scroll {
   font-family: 'Space Mono', monospace;
   font-size: 10.5px;
@@ -1625,10 +1639,8 @@ body.index-open { overflow: hidden; }
   .cover { padding-top: 26px; }
 
   /* photo sits behind the type, multiplied into the dark — a real cover.
-     The fade/filter goes on the <img> itself, not the .cover-photo
-     container — .cover-role lives inside that container too, and opacity
-     on a parent drags every descendant down with it, which made the
-     handwritten caption unreadable here. */
+     The fade/filter goes on the <img> itself, not .cover-photo, so it
+     never affects anything else layered above the photo. */
   .cover-photo {
     position: absolute;
     top: 16%;
@@ -1642,10 +1654,8 @@ body.index-open { overflow: hidden; }
     opacity: .42;
     filter: grayscale(.3) contrast(1.1);
   }
-  .cover-role {
-    opacity: 1;
-    z-index: 2;
-  }
+  .cover-role { bottom: 14%; }
+  .cover-role span { font-size: clamp(24px, 10vw, 40px); }
   .cover-title { position: relative; z-index: 2; }
   .cover-in { padding-bottom: 0; }
   .cover-meta { margin-top: 30px; gap: 16px; }
