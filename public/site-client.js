@@ -29,19 +29,27 @@
     if (persist) localStorage.setItem("lang", next);
     document.documentElement.lang = next === "en" ? "en" : "pt-BR";
 
-    document.getElementById("btn-pt")?.classList.toggle("active", next === "pt");
-    document.getElementById("btn-en")?.classList.toggle("active", next === "en");
-
     // Only re-render when the language actually differs from what the server
     // painted — otherwise we'd throw away perfectly good server markup.
     if (next !== SERVER_LANG || persist) {
+      // The overlay's own markup is inside #app, so re-rendering destroys it
+      // while body.index-open (overflow:hidden) stayed behind — the page then
+      // looked fine and simply refused to scroll. Reset the state first.
+      closeIndex({ restoreFocus: false });
+      const mast = document.getElementById("masthead");
+      if (mast) mast.innerHTML = window.SiteRender.renderMasthead(DATA, next);
       app.innerHTML = window.SiteRender.renderApp(DATA, next);
       wirePage();
+      // Re-rendering the header replaced the button that was just clicked;
+      // put focus back on its counterpart so keyboard users aren't dropped.
+      if (persist) document.getElementById(next === "en" ? "btn-en" : "btn-pt")?.focus();
     }
-  }
 
-  document.getElementById("btn-pt")?.addEventListener("click", () => setLang("pt", true));
-  document.getElementById("btn-en")?.addEventListener("click", () => setLang("en", true));
+    document.getElementById("btn-pt")?.classList.toggle("active", next === "pt");
+    document.getElementById("btn-en")?.classList.toggle("active", next === "en");
+    document.getElementById("btn-pt")?.setAttribute("aria-pressed", String(next === "pt"));
+    document.getElementById("btn-en")?.setAttribute("aria-pressed", String(next === "en"));
+  }
 
   /* ------------------------------------------------------------------ */
   /* contents overlay                                                   */
@@ -62,13 +70,15 @@
     ov.querySelector(".index-close")?.focus();
   }
 
-  function closeIndex() {
-    const ov = overlay();
-    if (!ov) return;
-    ov.classList.remove("open");
+  function closeIndex(opts) {
+    const restoreFocus = !opts || opts.restoreFocus !== false;
+    // body/button state is reset even when the overlay element itself is gone
+    // (a language switch re-renders it), so the page can never stay locked.
     document.body.classList.remove("index-open");
     document.getElementById("index-btn")?.setAttribute("aria-expanded", "false");
-    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+    const ov = overlay();
+    if (ov) ov.classList.remove("open");
+    if (restoreFocus && lastFocus && document.contains(lastFocus)) lastFocus.focus();
   }
 
   // Highlight the chapter the reader is currently in, so the contents page
@@ -80,9 +90,13 @@
     });
   }
 
-  document.getElementById("index-btn")?.addEventListener("click", openIndex);
-
+  // Delegated, not bound to the elements themselves: the masthead is
+  // re-rendered on a language switch, which would leave direct listeners
+  // attached to detached nodes (the toggle would then only work once).
   document.addEventListener("click", (e) => {
+    if (e.target.closest("#btn-pt")) { setLang("pt", true); return; }
+    if (e.target.closest("#btn-en")) { setLang("en", true); return; }
+    if (e.target.closest("#index-btn")) { openIndex(); return; }
     if (e.target.closest("#index-close")) { closeIndex(); return; }
     const link = e.target.closest("[data-index-link]");
     if (link) closeIndex(); // let the browser handle the anchor jump

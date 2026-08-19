@@ -36,7 +36,10 @@
   --fg:      var(--paper);
   --accent:  var(--amber);
   --muted:   rgba(244, 236, 224, .58);
-  --faint:   rgba(244, 236, 224, .30);
+  /* .30 measured 2.5:1 against --ink and this token carries real content —
+     the affiliate note, the copy-link button, chapter counts. .52 lands at
+     ~5:1 (AA) while staying clearly quieter than --muted. */
+  --faint:   rgba(244, 236, 224, .52);
   --rule:    rgba(244, 236, 224, .14);
 
   /* --- editorial widths --------------------------------------------------- */
@@ -172,7 +175,7 @@ body::before {
   --fg: var(--ink);
   --accent: var(--burnt);
   --muted: rgba(20, 16, 12, .62);
-  --faint: rgba(20, 16, 12, .34);
+  --faint: rgba(20, 16, 12, .62);   /* ~5:1 on --paper (was .34 → 2.6:1) */
   --rule:  rgba(20, 16, 12, .16);
 }
 /* paper pages get a whisper of vignette — scanner, not vignette-filter */
@@ -328,7 +331,7 @@ body::before {
   font-size: 10.5px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(244, 236, 224, .4);
+  color: rgba(244, 236, 224, .62);   /* AA — was .4 (3.5:1) */
   margin-left: auto;
   white-space: nowrap;
   overflow: hidden;
@@ -400,7 +403,7 @@ body::before {
   border: none;
   font: inherit;
   letter-spacing: inherit;
-  color: rgba(244, 236, 224, .45);
+  color: rgba(244, 236, 224, .62);   /* AA — the inactive language is still a control */
   cursor: pointer;
   padding: 10px 2px;
   min-height: 40px;
@@ -408,7 +411,7 @@ body::before {
   font-weight: 700;
 }
 .lang button.active { color: var(--amber); }
-.lang .sep { color: rgba(244, 236, 224, .22); }
+.lang .sep { color: rgba(244, 236, 224, .38); }
 
 /* ============================================================================
    INDEX OVERLAY — the contents page of the zine
@@ -514,7 +517,7 @@ body::before {
 .index-item .count {
   font-family: 'Space Mono', monospace;
   font-size: 10.5px;
-  color: rgba(20, 16, 12, .45);
+  color: rgba(20, 16, 12, .60);   /* AA — was .45 (3:1) */
   flex-shrink: 0;
 }
 .index-item.current .name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
@@ -533,7 +536,7 @@ body::before {
   font-size: 10.5px;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(20, 16, 12, .38);
+  color: rgba(20, 16, 12, .60);   /* AA — was .38 (2.4:1) */
 }
 .index-foot a {
   font-family: 'Space Mono', monospace;

@@ -68,18 +68,80 @@
       .join("");
   }
 
+  // Session/analytics junk that store fronts paste onto a URL when you copy it
+  // out of a search result. It identifies THAT visit, not the product, so it
+  // has no business being published — and it makes the same product look like
+  // different URLs. Affiliate identity is never in here: the affiliate links in
+  // use carry their code in the PATH (s.click.aliexpress.com/e/_xxx), so
+  // dropping these parameters can't break attribution.
+  const TRACKING_PARAMS = /^(_pos|_sid|_ss|_psq|_v|_sf|srsltid|gclid|gbraid|wbraid|fbclid|igshid|mc_cid|mc_eid|utm_[a-z_]+)$/i;
+
+  function stripTracking(s) {
+    if (!/^https?:/i.test(s) || s.indexOf("?") === -1) return s;
+    try {
+      const u = new URL(s);
+      let changed = false;
+      [...u.searchParams.keys()].forEach((k) => {
+        if (TRACKING_PARAMS.test(k)) { u.searchParams.delete(k); changed = true; }
+      });
+      if (!changed) return s;
+      return u.toString().replace(/\?(?=#|$)/, "");
+    } catch (_) { return s; }
+  }
+
   // Only allow URLs we're willing to put in an href — blocks javascript: etc.
   function safeUrl(url) {
     const s = String(url || "").trim();
     if (!s) return "";
-    if (/^(https?:|mailto:|tel:|\/|#)/i.test(s)) return s;
+    if (/^(https?:|mailto:|tel:|\/|#)/i.test(s)) return stripTracking(s);
     return "";
+  }
+
+  function hostOf(url) {
+    try { return new URL(url).hostname.toLowerCase(); } catch (_) { return ""; }
+  }
+
+  // Known affiliate/redirect hosts. The admin's own flag (the field is spelled
+  // `affilliate` in the data contract — kept as-is) always wins; this is only a
+  // fallback for the links that were saved with the flag left off, so that
+  // rel="sponsored" reflects reality instead of the checkbox being remembered.
+  const AFFILIATE_HOSTS = [
+    "s.click.aliexpress.com", "shope.ee", "amzn.to", "amazon.com.br",
+    "magazinevoce.com.br", "mercadolivre.com", "shopee.com.br",
+  ];
+
+  function isAffiliate(item, url) {
+    if (item && (item.affilliate === true || item.affiliate === true)) return true;
+    const h = hostOf(url);
+    return !!h && AFFILIATE_HOSTS.some((d) => h === d || h.endsWith("." + d) || h.indexOf(d) > -1);
+  }
+
+  // Affiliate links must be declared to search engines (sponsored + nofollow);
+  // every external link gets noopener AND noreferrer. Before, `sponsored` was
+  // stamped on every product link regardless — including the ones that earn
+  // nothing — and noreferrer was missing everywhere.
+  function relFor(item, url) {
+    return isAffiliate(item, url)
+      ? "sponsored nofollow noopener noreferrer"
+      : "noopener noreferrer";
+  }
+
+  // Copy typed into the admin arrives with stray double spaces, a leading or
+  // trailing space, or punctuation pushed off its word ("51 mm ,"). Normalising
+  // here fixes what's already stored in KV and anything typed later, without
+  // touching the wording. Line breaks survive — recordingGear is line-based.
+  function clean(str) {
+    return String(str == null ? "" : str)
+      .replace(/[ \t\u00a0]+/g, " ")
+      .replace(/ +([,.;:!?…])/g, "$1")
+      .split("\n").map((line) => line.trim()).join("\n")
+      .trim();
   }
 
   function f(obj, field, lang) {
     if (!obj) return "";
     const enVal = obj[field + "_en"];
-    return (lang === "en" && enVal) ? enVal : (obj[field] || "");
+    return clean((lang === "en" && enVal) ? enVal : (obj[field] || ""));
   }
 
   function slug(str) {
@@ -413,7 +475,7 @@
       const label = f(it, "label", lang);
       const inner = `<span class="nm">${escapeHtml(name)}</span>${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}`;
       return url
-        ? `<a class="daily-item" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
+        ? `<a class="daily-item" href="${escapeHtml(url)}" target="_blank" rel="${relFor(it, url)}" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
         : `<div class="daily-item">${inner}</div>`;
     }).join("");
 
@@ -434,7 +496,7 @@
     const url = safeUrl(item.url);
     if (!url) return "";
     return `<div class="fiche-actions">
-      <a class="cta" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(item.id || "")}">${escapeHtml(t(lang, "buy"))} <span class="arr" aria-hidden="true">↗</span></a>
+      <a class="cta" href="${escapeHtml(url)}" target="_blank" rel="${relFor(item, url)}" data-track-id="${escapeHtml(item.id || "")}">${escapeHtml(t(lang, "buy"))} <span class="arr" aria-hidden="true">↗</span></a>
       <button class="copy-link" type="button" data-copy="${escapeHtml(url)}">${escapeHtml(t(lang, "copyLink"))}</button>
     </div>`;
   }
@@ -562,9 +624,9 @@
 
   function renderSocials(profile) {
     const links = [
-      profile.instagram && `<a href="${escapeHtml(safeUrl(profile.instagram))}" class="social-a" target="_blank" rel="noopener">instagram ↗</a>`,
-      profile.youtube && `<a href="${escapeHtml(safeUrl(profile.youtube))}" class="social-a" target="_blank" rel="noopener">youtube ↗</a>`,
-      profile.twitter && `<a href="${escapeHtml(safeUrl(profile.twitter))}" class="social-a" target="_blank" rel="noopener">twitter ↗</a>`,
+      profile.instagram && `<a href="${escapeHtml(safeUrl(profile.instagram))}" class="social-a" target="_blank" rel="noopener noreferrer">instagram ↗</a>`,
+      profile.youtube && `<a href="${escapeHtml(safeUrl(profile.youtube))}" class="social-a" target="_blank" rel="noopener noreferrer">youtube ↗</a>`,
+      profile.twitter && `<a href="${escapeHtml(safeUrl(profile.twitter))}" class="social-a" target="_blank" rel="noopener noreferrer">twitter ↗</a>`,
     ].filter(Boolean).join("");
     return links ? `<div class="socials">${links}</div>` : "";
   }
@@ -645,14 +707,23 @@
   /* chapter planning — shared by the page, the contents list and the index */
   /* ---------------------------------------------------------------------- */
 
-  // Assigns numbering, anchors and palettes. Palettes cycle so a cream page
-  // shows up once every three chapters, never twice in a row.
+  // THE single source of truth for chapter order, numbering, anchors and
+  // palettes. Everything that shows a chapter number — the masthead nav, the
+  // chapter headers, the contents overlay — reads `num` from here.
+  //
+  // Numbering is POSITIONAL: the reading order is the numbering. The admin's
+  // `number` field is deliberately ignored, because keeping a hand-typed number
+  // alongside a drag-to-reorder list is what produced "03 Para filtrado" in the
+  // masthead and "06 Para filtrado" in its own header at the same time.
+  //
+  // Palettes cycle so a cream page shows up once every three chapters, never
+  // twice in a row.
   function planChapters(sections, lang) {
     return (sections || [])
       .filter((s) => (s.group || "setup") === "setup")
       .map((sec, i) => ({
         sec,
-        num: pad2(sec.number, i),
+        num: String(i + 1).padStart(2, "0"),
         title: f(sec, "title", lang),
         // Anchor on the stable id, never on the title: titles differ between
         // PT and EN, and a language switch must not invalidate every #link
@@ -662,6 +733,49 @@
         category: sec.category || "",
         palette: PAGE_CYCLE[i % PAGE_CYCLE.length],
       }));
+  }
+
+  // The publication header: wordmark, the numbered contents list distributed
+  // across the bar (desktop), and a running folio that fills in with the
+  // current chapter as you scroll.
+  //
+  // This lives here, not in api/index.js, for one reason: the header used to be
+  // server-only markup, so switching to English re-rendered the whole zine
+  // while the header stayed stubbornly in Portuguese. Rendering it from the
+  // same function on both sides is what makes the language toggle complete.
+  // Returns the INNER markup — <header class="masthead" id="masthead"> is a
+  // stable shell the client writes into (the folio keeps its dataset on it).
+  function renderMasthead(data, lang) {
+    const p = (data || {}).profile || {};
+    const chapters = planChapters((data || {}).sections || [], lang);
+
+    const navItems = chapters.map((c) =>
+      `<a href="#${escapeHtml(c.anchor)}" data-nav-link data-anchor="${escapeHtml(c.anchor)}"><span class="n">${escapeHtml(c.num)}</span>${escapeHtml(c.title)}</a>`
+    ).join("");
+
+    const langBtn = (code, label) =>
+      `<button id="btn-${code}" type="button" class="${lang === code ? "active" : ""}" lang="${code}" aria-pressed="${lang === code ? "true" : "false"}" aria-label="${escapeHtml(label)}">${code}</button>`;
+
+    return `<div class="masthead-in">
+    <a class="mast-brand" href="#capa">
+      <span class="star" aria-hidden="true">✦</span>${escapeHtml(f(p, "name", lang) || "gabriel no café")}
+    </a>
+    <nav class="mast-nav" aria-label="${escapeHtml(t(lang, "contentsTitle"))}">
+      ${navItems}
+    </nav>
+    <div class="mast-folio" id="folio" aria-live="polite"></div>
+    <div class="mast-right">
+      <button class="mast-index-btn" id="index-btn" type="button" aria-expanded="false" aria-controls="index-overlay">
+        <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        ${escapeHtml(t(lang, "contents"))}
+      </button>
+      <div class="lang">
+        ${langBtn("pt", "Português")}
+        <span class="sep" aria-hidden="true">·</span>
+        ${langBtn("en", "English")}
+      </div>
+    </div>
+  </div>`;
   }
 
   // The contents overlay: a real magazine index. Groups by category when there
@@ -737,7 +851,7 @@
   }
 
   return {
-    t, I18N, escapeHtml, f, safeUrl, slug, planChapters,
-    renderApp, renderIndexOverlay, renderSocials,
+    t, I18N, escapeHtml, f, clean, safeUrl, stripTracking, isAffiliate, relFor, slug, planChapters,
+    renderApp, renderMasthead, renderIndexOverlay, renderSocials,
   };
 });
