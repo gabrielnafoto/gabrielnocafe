@@ -208,10 +208,18 @@
       // Pick the chapter closest to the top of the viewport among those visible.
       const visible = entries.filter((e) => e.isIntersecting);
       if (!visible.length) {
-        // Scrolled back above the first chapter (or past the last) — nothing
-        // is current. On mobile this attribute also toggles the brand back
-        // on in place of the folio, so it must clear, not just go stale.
-        delete masthead.dataset.currentAnchor;
+        // Nothing crossing the detection band right now doesn't necessarily
+        // mean nothing is current — right at a chapter boundary, a chapter
+        // can flicker in/out of that band across consecutive frames (scroll
+        // jitter, the mobile browser's own toolbar resizing the viewport).
+        // Only actually clear once we're above the very first chapter or
+        // below the very last one; otherwise keep showing the last chapter
+        // we were confidently in, rather than flashing the brand on and off.
+        const firstTop = chapters[0].getBoundingClientRect().top;
+        const lastRect = chapters[chapters.length - 1].getBoundingClientRect();
+        const aboveAll = firstTop > window.innerHeight * .3;
+        const belowAll = lastRect.bottom < 0;
+        if (aboveAll || belowAll) delete masthead.dataset.currentAnchor;
         return;
       }
       const top = visible.reduce((a, b) =>
