@@ -734,6 +734,28 @@ function buildItemRow(item) {
       </div>
     </div>
 
+    <div class="field" style="margin-top:12px;padding:14px;border:1px solid var(--border);background:var(--card)">
+      <label style="margin-bottom:10px">✎ Personalidade do bloco (opcional)</label>
+      <p class="hint" style="margin-bottom:10px">Diferente do tratamento da foto acima — isso usa o espaço vazio do texto/CTA, não a imagem. Escolha no máximo um gesto por item.</p>
+      <div class="row">
+        <div class="field">
+          <label>Estilo do bloco</label>
+          <select class="i-block-style">
+            <option value="" ${!item.editorialStyle||item.editorialStyle==='clean'?'selected':''}>Clean — sem gesto</option>
+            <option value="personal-note" ${item.editorialStyle==='personal-note'?'selected':''}>Nota pessoal manuscrita</option>
+            <option value="oversized-word" ${item.editorialStyle==='oversized-word'?'selected':''}>Palavra gigante de fundo</option>
+            <option value="editorial-number" ${item.editorialStyle==='editorial-number'?'selected':''}>Número editorial grande</option>
+            <option value="arrow-note" ${item.editorialStyle==='arrow-note'?'selected':''}>Seta + nota pessoal</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nota pessoal (p/ "nota" e "seta + nota")</label>
+          <input type="text" class="i-personal-note" value="${item.personalNote||''}" placeholder="ex: uso todo dia, não precisava. comprei." />
+        </div>
+      </div>
+      <p class="hint">Palavra gigante e número reaproveitam os campos "Texto" e "Número" acima.</p>
+    </div>
+
     <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px">
       <div class="toggle-wrap">
         <div class="toggle ${item.affilliate?'on':''}" onclick="this.classList.toggle('on')"></div>
@@ -777,7 +799,7 @@ function addSection() {
 }
 
 function addItem(btn) {
-  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', image:'', affilliate:false, dailyUse:false, seenInVideos:false, editorialTreatment:'', editorialText:'', editorialNumber:'', annotationPosition:'', imagePosition:'', imageScale:'' };
+  const item = { id: uid(), label:'', label_en:'', name:'', name_en:'', description:'', description_en:'', url:'', image:'', affilliate:false, dailyUse:false, seenInVideos:false, editorialTreatment:'', editorialText:'', editorialNumber:'', annotationPosition:'', imagePosition:'', imageScale:'', editorialStyle:'', personalNote:'' };
   const container = btn.closest('.section-body').querySelector('.items-container');
   container.appendChild(buildItemRow(item));
   const card = btn.closest('.section-card');
@@ -812,6 +834,8 @@ function collectSections() {
       annotationPosition: row.querySelector('.i-annot-pos').value,
       imagePosition: row.querySelector('.i-img-pos').value,
       imageScale: row.querySelector('.i-img-scale').value,
+      editorialStyle: row.querySelector('.i-block-style').value,
+      personalNote: row.querySelector('.i-personal-note').value,
     })),
   }));
 }

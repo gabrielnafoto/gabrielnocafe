@@ -1021,13 +1021,6 @@ body.index-open { overflow: hidden; }
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
-/* inside a product item, the label trails as quiet metadata — not another
-   accent-coloured element competing with the note/CTA/arrow above it */
-.fiche--item .fiche-label {
-  margin-bottom: 0;
-  margin-top: 18px;
-  color: var(--faint);
-}
 .fiche-flag {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -1087,6 +1080,86 @@ body.index-open { overflow: hidden; }
   gap: var(--sp-5);
   flex-wrap: wrap;
   margin-top: var(--sp-5);
+}
+
+/* ============================================================================
+   BLOCK GESTURE — one optional graphic move living in the block's own empty
+   space (not on the photo). item.editorialStyle picks at most one of these;
+   "clean" (the default for most items) renders nothing.
+   ========================================================================== */
+
+/* personal-note: a short aside in the writer's own voice, just past the CTA.
+   annotationPosition ("tr"/"br"/etc, reused from the photo-overlay system)
+   only ever nudges text-align here — there's no absolute positioning inside
+   a block that's still in normal document flow. */
+.block-note {
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: var(--fs-hand);
+  color: var(--accent);
+  margin-top: var(--sp-5);
+  transform: rotate(-1.5deg);
+  max-width: 28ch;
+}
+.block-note.pos-tr, .block-note.pos-br { margin-left: auto; text-align: right; }
+
+/* oversized-word: a big word as pure shape, low-contrast, never competing
+   with the product name above it. Sits in flow so it can never overlap text
+   or bleed past the block on narrow screens. */
+.block-word {
+  display: block;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(40px, 11vw, 90px);
+  line-height: .85;
+  letter-spacing: -.01em;
+  color: var(--accent);
+  opacity: .16;
+  margin-top: var(--sp-4);
+  pointer-events: none;
+  user-select: none;
+  overflow-wrap: break-word;
+}
+.block-word.pos-tr, .block-word.pos-br { text-align: right; }
+
+/* editorial-number: a big number as pure graphic — never reads as an index */
+.block-number {
+  display: block;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: clamp(56px, 14vw, 110px);
+  line-height: .8;
+  color: var(--accent);
+  opacity: .18;
+  margin-top: var(--sp-4);
+  pointer-events: none;
+  user-select: none;
+}
+.block-number.pos-tr, .block-number.pos-br { text-align: right; }
+
+/* arrow-note: a short hand-drawn arrow leading into a personal aside —
+   the transition device between this block and the photo/next block */
+.block-arrow-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+.block-arrow-note .item-arrow { width: 22px; height: 40px; flex-shrink: 0; }
+.block-arrow-note .item-arrow path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.block-arrow-note span {
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: var(--fs-hand);
+  color: var(--accent);
+  padding-top: 2px;
 }
 
 /* CTA is a word, not a button: underline grows from the left on hover */

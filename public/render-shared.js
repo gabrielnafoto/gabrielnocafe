@@ -226,6 +226,41 @@
     return "";
   }
 
+  /* ---------------------------------------------------------------------- */
+  /* product block gesture — one optional graphic move in the block's own    */
+  /* empty space (not on the photo). At most one per item, by design.       */
+  /* ---------------------------------------------------------------------- */
+
+  // item.editorialStyle picks exactly one of these — "clean" (or unset) means
+  // no gesture at all, which is the correct choice for most items.
+  function blockGesture(item, lang, fallbackNumber) {
+    const style = item.editorialStyle;
+    if (!style || style === "clean") return "";
+    const pos = item.annotationPosition || "br";
+
+    if (style === "personal-note") {
+      const note = f(item, "personalNote", lang);
+      if (!note) return "";
+      return `<p class="block-note pos-${escapeHtml(pos)}" aria-hidden="true">${escapeHtml(note)}</p>`;
+    }
+    if (style === "oversized-word") {
+      const word = f(item, "editorialText", lang);
+      if (!word) return "";
+      return `<span class="block-word pos-${escapeHtml(pos)}" aria-hidden="true">${escapeHtml(word)}</span>`;
+    }
+    if (style === "editorial-number") {
+      const num = String(item.editorialNumber || fallbackNumber || "").trim();
+      if (!num) return "";
+      return `<span class="block-number pos-${escapeHtml(pos)}" aria-hidden="true">${escapeHtml(num)}</span>`;
+    }
+    if (style === "arrow-note") {
+      const note = f(item, "personalNote", lang);
+      if (!note) return "";
+      return `<p class="block-arrow-note pos-${escapeHtml(pos)}" aria-hidden="true">${doodleDownArrow()}<span>${escapeHtml(note)}</span></p>`;
+    }
+    return "";
+  }
+
   // The one frame every product photo uses: fixed 4:5 ratio, same width,
   // same weight. `imagePosition` (object-position) and `imageScale` (a light
   // zoom) let Gabriel reframe a specific photo without ever resizing the
@@ -389,31 +424,32 @@
   }
 
   // Unified item layout — one consistent size/weight for every product photo
-  // (small 1:1 frame). `imageAlign` ("left" | "right") lets Gabriel pick which
-  // side the photo sits on per item; falls back to alternating by position so
-  // a long list still reads with rhythm. When there's no photo, the text
+  // (4:5 frame). `imageAlign` ("left" | "right") lets Gabriel pick which side
+  // the photo sits on per item; falls back to alternating by position so a
+  // long list still reads with rhythm. When there's no photo, the text
   // simply runs full width — no empty placeholder box.
+  //
+  // Hierarchy answers three questions in order: what is it (eyebrow + name),
+  // why is it here (a short personal line), what do I do now (CTA). A single
+  // optional block-level gesture (blockGesture) lives in the block's own
+  // empty space — never more than one per item.
   function ficheItem(item, lang, index) {
-    const { body, note } = splitNote(f(item, "description", lang));
+    const desc = f(item, "description", lang);
     const media = productMedia(item, lang, pad2(null, index));
     const sideClass = media ? "" : " fiche--no-media";
+    const gesture = blockGesture(item, lang, pad2(null, index));
 
-    // Hierarchy: product name leads, then the personal phrase, then the CTA —
-    // the label (category metadata) trails last, deliberately quiet.
-    // .rise on both body and media (instead of the whole article) lets the
-    // text settle in first and the photo follow a beat behind — a small
-    // reading-order stagger rather than everything landing at once.
     const body_ = `<div class="fiche-body rise">
-        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
-        ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : (body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : "")}
-        ${note && body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
-        ${ficheActions(item, lang)}
         ${ficheLabel(item, lang, false)}
+        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
+        ${desc ? `<p class="fiche-desc">${escapeHtml(desc)}</p>` : ""}
+        ${ficheActions(item, lang)}
+        ${gesture}
       </div>`;
     const mediaHtml = media ? `<div class="fiche-media rise rise--delay">${media}</div>` : "";
-    // Skip the arrow when the photo already carries its own editorial mark
-    // (a handwritten note draws its own arrow) — one graphic gesture per item.
-    const arrow = media && !item.editorialTreatment
+    // The plain down-arrow is its own gesture — only show it when the item
+    // isn't already using a block gesture or a photo overlay treatment.
+    const arrow = media && !item.editorialTreatment && !gesture
       ? `<span class="item-arrow-wrap" aria-hidden="true">${doodleDownArrow()}</span>` : "";
 
     return `<article class="fiche fiche--item${sideClass}">
