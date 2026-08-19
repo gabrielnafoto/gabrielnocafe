@@ -331,10 +331,11 @@
 
         <div class="cover-photo"${p.photoPositionY ? ` style="--photo-y:${escapeHtml(p.photoPositionY)}%"` : ""}>
           ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang), true)}
+          ${role ? `<span class="cover-role" aria-hidden="true">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
         </div>
+        ${role ? `<span class="sr-only">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
 
         <div class="cover-meta">
-          ${role ? `<span class="cover-role">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
           <a class="cover-scroll" href="#colofao">${escapeHtml(t(lang, "readOn"))} <span class="arr" aria-hidden="true">↓</span></a>
         </div>
       </div>

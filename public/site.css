@@ -103,6 +103,20 @@ img { max-width: 100%; display: block; }
 a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
+/* visually hidden but still reachable by screen readers — for content
+   that has a decorative, aria-hidden twin elsewhere on the page */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* invisible until a keyboard user tabs to it — then jumps straight past
    the masthead to the main content */
 .skip-link {
@@ -626,15 +640,23 @@ body.index-open { overflow: hidden; }
   border-top: 1px solid var(--rule);
   padding-top: 20px;
 }
+/* a handwritten note taped onto the cover photo, like a caption scrawled
+   on the back of a print — deliberate now, instead of a stray line of type
+   that used to get lost underneath the image. */
 .cover-role {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  /* long roles must wrap, never run under the photo or off the screen */
-  max-width: 42ch;
-  line-height: 1.7;
+  position: absolute;
+  left: 6%;
+  bottom: 7%;
+  z-index: 2;
+  max-width: 88%;
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: clamp(17px, 3.6vw, 22px);
+  line-height: 1.25;
+  color: var(--paper);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
+  transform: rotate(-2.5deg);
+  pointer-events: none;
 }
 .cover-scroll {
   font-family: 'Space Mono', monospace;
