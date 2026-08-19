@@ -606,7 +606,7 @@ function buildSectionCard(sec, si) {
   const group = sec.group || 'setup';
   card.innerHTML = `
     <div class="section-card-header" onclick="this.closest('.section-card').classList.toggle('open')">
-      <span class="section-num-badge">${sec.number || String(si+1).padStart(2,'0')}</span>
+      <span class="section-num-badge">${String(si+1).padStart(2,'0')}</span>
       <span class="section-card-title">${sec.title || 'Sem título'}</span>
       <span class="section-card-meta">${(sec.items||[]).length} item(s)</span>
       <span class="section-reorder" onclick="event.stopPropagation()">
@@ -616,8 +616,8 @@ function buildSectionCard(sec, si) {
       <span class="collapse-icon">▾</span>
     </div>
     <div class="section-body">
-      <div class="row-3" style="margin-bottom:16px">
-        <div class="field"><label>Número</label><input type="text" class="sec-number" value="${sec.number||''}" placeholder="01" oninput="updateSecHeader(this)" /></div>
+      <p class="hint" style="margin-bottom:16px">Número da seção: automático, segue a ordem da lista (use ↑/↓ pra mudar).</p>
+      <div class="row" style="margin-bottom:16px">
         <div class="field"><label>Título — PT</label><input type="text" class="sec-title" value="${sec.title||''}" placeholder="Moer" oninput="updateSecHeader(this)" /></div>
         <div class="field"><label>Título — <span style="color:var(--red)">EN</span></label><input type="text" class="sec-title-en" value="${sec.title_en||''}" placeholder="Grind" /></div>
       </div>
@@ -648,7 +648,7 @@ function buildSectionCard(sec, si) {
       <div class="items-container"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
         <button class="btn btn-ghost btn-sm" onclick="addItem(this)">+ Novo item</button>
-        <button class="btn btn-danger btn-sm" onclick="if(confirm('Remover seção?'))this.closest('.section-card').remove()">Remover seção</button>
+        <button class="btn btn-danger btn-sm" onclick="if(confirm('Remover seção?')){this.closest('.section-card').remove();renumberSections()}">Remover seção</button>
       </div>
     </div>`;
   const container = card.querySelector('.items-container');
@@ -658,8 +658,16 @@ function buildSectionCard(sec, si) {
 
 function updateSecHeader(input) {
   const card = input.closest('.section-card');
-  card.querySelector('.section-num-badge').textContent = card.querySelector('.sec-number').value || '—';
   card.querySelector('.section-card-title').textContent = card.querySelector('.sec-title').value || 'Sem título';
+}
+
+// Numbers every section badge by its current position in the list — call
+// after any reorder (moveSection, drag, add, remove) so badges never go stale.
+function renumberSections() {
+  document.querySelectorAll('#sections-list .section-card').forEach((card, i) => {
+    const badge = card.querySelector('.section-num-badge');
+    if (badge) badge.textContent = String(i + 1).padStart(2, '0');
+  });
 }
 
 function buildItemRow(item) {
@@ -808,11 +816,12 @@ function moveSection(btn, dir) {
   if (!sibling) return;
   if (dir < 0) card.parentNode.insertBefore(card, sibling);
   else card.parentNode.insertBefore(sibling, card);
+  renumberSections();
 }
 
 function addSection() {
   if (!data.sections) data.sections = [];
-  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', category: '', group: 'setup', image: '', items: [] };
+  const sec = { id: uid(), title: 'Nova seção', title_en: '', category: '', group: 'setup', image: '', items: [] };
   data.sections.push(sec);
   const card = buildSectionCard(sec, data.sections.length-1);
   card.classList.add('open');
@@ -830,9 +839,9 @@ function addItem(btn) {
 }
 
 function collectSections() {
-  return [...document.querySelectorAll('#sections-list .section-card')].map(card => ({
+  return [...document.querySelectorAll('#sections-list .section-card')].map((card, i) => ({
     id: card.dataset.id,
-    number: card.querySelector('.sec-number').value,
+    number: String(i + 1).padStart(2, '0'),
     title: card.querySelector('.sec-title').value,
     title_en: card.querySelector('.sec-title-en').value,
     category: card.querySelector('.sec-category').value,
