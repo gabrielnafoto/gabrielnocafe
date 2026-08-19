@@ -1113,6 +1113,17 @@ body.index-open { overflow: hidden; }
 .fiche--item { display: flex; flex-direction: column; gap: clamp(16px, 2.4vw, 24px); }
 .fiche--item .fiche-media { position: relative; width: 100%; max-width: 340px; }
 
+/* hand pointing from the copy to its photo — a gesture, not a UI control */
+.item-arrow-wrap { align-self: center; flex-shrink: 0; }
+.item-arrow { display: block; width: 30px; height: 68px; overflow: visible; }
+.item-arrow path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* --- fiche C: archive line, dense and fast -------------------------------- */
 .fiche--c { padding: 16px 0; }
 .fiche--c .fiche-row {
@@ -1474,8 +1485,10 @@ body.index-open { overflow: hidden; }
   .fiche--item {
     flex-direction: row;
     align-items: center;
-    gap: clamp(32px, 5vw, 64px);
+    gap: clamp(20px, 3vw, 40px);
   }
+  /* the arrow turns to point sideways, from copy to photo */
+  .item-arrow { width: 68px; height: 44px; transform: rotate(-90deg); }
   .fiche--item .fiche-body  { flex: 1.2; min-width: 0; }
   .fiche--item .fiche-media { flex: 1; max-width: 380px; }
 

@@ -173,6 +173,14 @@
     </svg>`;
   }
 
+  // Long hand-drawn arrow pointing down — sits between an item's text and its
+  // photo, a hand pointing at "this one" rather than a UI affordance.
+  function doodleDownArrow() {
+    return `<svg class="item-arrow" viewBox="0 0 40 90" aria-hidden="true" focusable="false">
+      <path d="M20,3 C19,28 21,54 20,76 M6,63 C11,70 16,76 20,80 C24,75 29,68 33,61" />
+    </svg>`;
+  }
+
   /* ---------------------------------------------------------------------- */
   /* product image — one fixed frame, five reusable editorial treatments   */
   /* ---------------------------------------------------------------------- */
@@ -398,9 +406,10 @@
         ${ficheActions(item, lang)}
       </div>`;
     const mediaHtml = media ? `<div class="fiche-media">${media}</div>` : "";
+    const arrow = media ? `<span class="item-arrow-wrap" aria-hidden="true">${doodleDownArrow()}</span>` : "";
 
     return `<article class="fiche fiche--item${sideClass} rise">
-      ${body_}${mediaHtml}
+      ${body_}${arrow}${mediaHtml}
     </article>`;
   }
 
