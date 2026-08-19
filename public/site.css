@@ -239,8 +239,14 @@ body::before {
   background: color-mix(in srgb, var(--ink) 92%, transparent);
   backdrop-filter: saturate(140%) blur(8px);
   border-bottom: 1px solid rgba(244, 236, 224, .1);
-  transition: padding .25s ease;
+  transition: padding .25s ease, background-color .4s ease;
 }
+/* the sticky header borrows the current chapter's own ink tint — one more
+   quiet confirmation of "you're in a different chapter now," right where
+   the eye already lands to check position. Text stays --paper regardless
+   (every ink-* palette is dark), so contrast never suffers. */
+.masthead[data-palette="page--ink-warm"] { background: color-mix(in srgb, var(--ink-warm) 92%, transparent); }
+.masthead[data-palette="page--ink-deep"] { background: color-mix(in srgb, var(--ink-deep) 92%, transparent); }
 
 .masthead-in {
   max-width: var(--wide);

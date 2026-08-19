@@ -219,7 +219,10 @@
         const lastRect = chapters[chapters.length - 1].getBoundingClientRect();
         const aboveAll = firstTop > window.innerHeight * .3;
         const belowAll = lastRect.bottom < 0;
-        if (aboveAll || belowAll) delete masthead.dataset.currentAnchor;
+        if (aboveAll || belowAll) {
+          delete masthead.dataset.currentAnchor;
+          delete masthead.dataset.palette;
+        }
         return;
       }
       const top = visible.reduce((a, b) =>
@@ -227,6 +230,10 @@
       const el = top.target;
       folio.innerHTML = `<span class="n">${el.dataset.chapter}</span> ${el.dataset.chapterTitle}`;
       masthead.dataset.currentAnchor = el.id;
+      // Tint the sticky header with the current chapter's own palette —
+      // reinforces "you're in a different chapter now" right where the eye
+      // already lands to check position.
+      masthead.dataset.palette = el.dataset.palette || "";
       // The desktop nav and the (possibly open) contents overlay both double
       // as "you are here" markers — keep them live as the reader scrolls,
       // not just at the moment the overlay happens to open.

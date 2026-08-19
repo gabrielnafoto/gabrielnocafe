@@ -507,7 +507,7 @@
     const countTxt = `${items.length} ${items.length === 1 ? t(lang, "item") : t(lang, "items")}`;
 
     return `<section class="page ${meta.palette} chapter" id="${escapeHtml(meta.anchor)}"
-             data-chapter="${escapeHtml(meta.num)}" data-chapter-title="${escapeHtml(title)}">
+             data-chapter="${escapeHtml(meta.num)}" data-chapter-title="${escapeHtml(title)}" data-palette="${escapeHtml(meta.palette)}">
       <div class="chapter-open">
         <div class="chapter-mark rise">
           <span class="chapter-num" aria-hidden="true">${escapeHtml(meta.num)}</span>
