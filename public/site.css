@@ -1528,9 +1528,11 @@ body.index-open { overflow: hidden; }
   .cover-kicker { max-width: calc(100% - 92px); }
   .cover-meta { margin-top: 30px; gap: 16px; }
 
-  /* photo stays beside the text, just smaller — imageAlign keeps working */
-  .fiche--item { gap: 14px; }
-  .fiche--item .fiche-media { max-width: 34vw; }
+  /* photo takes the full width above the text — side-by-side (imageAlign)
+     only makes sense once there's room for it, on desktop. */
+  .fiche--item { grid-template-columns: 1fr !important; gap: 16px; }
+  .fiche--item .fiche-media { max-width: 100%; order: -1; }
+  .fiche--item .fiche-body { order: 0; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
 
