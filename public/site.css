@@ -1469,6 +1469,16 @@ body.index-open { overflow: hidden; }
   /* COLOPHON: 7/5 split — text weighted left, contents right */
   .colophon-grid { grid-template-columns: 1.35fr 1fr; align-items: start; }
 
+  /* ITEM: text left, photo right — the wide desktop column has room for
+     both side by side instead of a photo stranded under the copy. */
+  .fiche--item {
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(32px, 5vw, 64px);
+  }
+  .fiche--item .fiche-body  { flex: 1.2; min-width: 0; }
+  .fiche--item .fiche-media { flex: 1; max-width: 380px; }
+
   /* the number moves out beside the word instead of sitting behind it */
   .chapter-num {
     opacity: .2;
