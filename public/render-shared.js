@@ -388,10 +388,7 @@
   function ficheItem(item, lang, index) {
     const { body, note } = splitNote(f(item, "description", lang));
     const media = productMedia(item, lang, pad2(null, index));
-    const align = item.imageAlign === "left" || item.imageAlign === "right"
-      ? item.imageAlign
-      : (index % 2 === 0 ? "left" : "right");
-    const sideClass = media ? ` fiche--media-${align}` : " fiche--no-media";
+    const sideClass = media ? "" : " fiche--no-media";
 
     const body_ = `<div class="fiche-body">
         ${ficheLabel(item, lang, false)}
@@ -403,7 +400,7 @@
     const mediaHtml = media ? `<div class="fiche-media">${media}</div>` : "";
 
     return `<article class="fiche fiche--item${sideClass} rise">
-      ${align === "left" ? mediaHtml + body_ : body_ + mediaHtml}
+      ${body_}${mediaHtml}
     </article>`;
   }
 

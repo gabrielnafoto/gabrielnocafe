@@ -1108,15 +1108,10 @@ body.index-open { overflow: hidden; }
 }
 .copy-link:hover, .copy-link:focus-visible { color: var(--muted); }
 
-/* --- unified item layout: one small square frame, text does the talking.
-   `imageAlign` picks which side the photo sits on; items with no photo just
-   run text full-width (.fiche--no-media). --- */
-.fiche--item { display: grid; grid-template-columns: auto 1fr; gap: clamp(16px, 2.4vw, 28px); align-items: center; }
-.fiche--item.fiche--media-right { grid-template-columns: 1fr auto; }
-.fiche--item.fiche--media-right .fiche-media { order: 2; }
-.fiche--item.fiche--media-right .fiche-body  { order: 1; }
-.fiche--item .fiche-media { position: relative; width: 100%; max-width: 286px; }
-.fiche--item.fiche--no-media { display: block; }
+/* --- unified item layout: text first, photo below — same order everywhere.
+   Items with no photo just run text full-width (.fiche--no-media). --- */
+.fiche--item { display: flex; flex-direction: column; gap: clamp(16px, 2.4vw, 24px); }
+.fiche--item .fiche-media { position: relative; width: 100%; max-width: 340px; }
 
 /* --- fiche C: archive line, dense and fast -------------------------------- */
 .fiche--c { padding: 16px 0; }
@@ -1528,11 +1523,7 @@ body.index-open { overflow: hidden; }
   .cover-kicker { max-width: calc(100% - 92px); }
   .cover-meta { margin-top: 30px; gap: 16px; }
 
-  /* photo takes the full width above the text — side-by-side (imageAlign)
-     only makes sense once there's room for it, on desktop. */
-  .fiche--item { grid-template-columns: 1fr !important; gap: 16px; }
-  .fiche--item .fiche-media { max-width: 100%; order: -1; }
-  .fiche--item .fiche-body { order: 0; }
+  .fiche--item .fiche-media { max-width: 100%; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
 
