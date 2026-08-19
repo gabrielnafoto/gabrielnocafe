@@ -644,19 +644,20 @@ body.index-open { overflow: hidden; }
    past its edges into the page — positioned against .cover-in (which is
    already position:relative and never has an ambiguous/auto height, unlike
    .cover-photo at mobile widths, which is what made an earlier version of
-   this invisible on iOS Safari). Revealed with a left-to-right clip-path
-   wipe, the same "drawn" trigger the doodle SVGs already use, so it reads
-   as being written in real time as it scrolls into view. */
+   this invisible on iOS Safari). Sits low, clear of the face. Every
+   character is its own span (typeChars() in render-shared.js) so it can be
+   revealed one letter at a time, like it's being written in real time —
+   triggered by the same "drawn" IntersectionObserver the doodle SVGs use. */
 .cover-role {
   position: absolute;
   left: 4%;
   right: 4%;
-  bottom: 10%;
+  bottom: 3%;
   z-index: 2;
   text-align: right;
   pointer-events: none;
 }
-.cover-role span {
+.cover-role > span {
   display: inline-block;
   font-family: 'Caveat', cursive;
   font-weight: 600;
@@ -665,13 +666,13 @@ body.index-open { overflow: hidden; }
   color: var(--paper);
   text-shadow: 0 2px 18px rgba(0, 0, 0, .6);
   transform: rotate(-2deg);
-  clip-path: inset(0 100% 0 0);
 }
-.cover-role.drawn span {
-  animation: cover-role-write 1.4s cubic-bezier(.65, 0, .35, 1) forwards;
-  animation-delay: .2s;
+.cover-role > span > span { opacity: 0; }
+.cover-role.drawn > span > span {
+  animation: cover-role-letter .01s linear forwards;
+  animation-delay: calc(.2s + var(--i) * 28ms);
 }
-@keyframes cover-role-write { to { clip-path: inset(0 0 0 0); } }
+@keyframes cover-role-letter { to { opacity: 1; } }
 .cover-scroll {
   font-family: 'Space Mono', monospace;
   font-size: 10.5px;
@@ -1654,7 +1655,7 @@ body.index-open { overflow: hidden; }
     opacity: .42;
     filter: grayscale(.3) contrast(1.1);
   }
-  .cover-role { bottom: 14%; }
+  .cover-role { bottom: 4%; }
   .cover-role span { font-size: clamp(24px, 10vw, 40px); }
   .cover-title { position: relative; z-index: 2; }
   .cover-in { padding-bottom: 0; }
@@ -1705,6 +1706,7 @@ body.index-open { overflow: hidden; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
   .rise { opacity: 1; transform: none; }
   .cover-circle path, .chapter-underline path { stroke-dashoffset: 0; }
+  .cover-role > span > span { opacity: 1; }
 }
 
 @media print {

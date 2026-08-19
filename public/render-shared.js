@@ -63,6 +63,15 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // Wraps every character in its own span carrying a --i index, so CSS can
+  // stagger them into a letter-by-letter "handwriting" reveal. Spaces stay
+  // as real spaces (not spans) so the line still wraps naturally.
+  function typeChars(text) {
+    return [...String(text || "")]
+      .map((ch, i) => ch === " " ? " " : `<span style="--i:${i}">${escapeHtml(ch)}</span>`)
+      .join("");
+  }
+
   // Only allow URLs we're willing to put in an href — blocks javascript: etc.
   function safeUrl(url) {
     const s = String(url || "").trim();
@@ -332,7 +341,7 @@
         <div class="cover-photo"${p.photoPositionY ? ` style="--photo-y:${escapeHtml(p.photoPositionY)}%"` : ""}>
           ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang), true)}
         </div>
-        ${role ? `<div class="cover-role" aria-hidden="true"><span>${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span></div>` : ""}
+        ${role ? `<div class="cover-role" aria-hidden="true"><span>${typeChars(`${p.name || ""} — ${role}`)}</span></div>` : ""}
         ${role ? `<span class="sr-only">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
 
         <div class="cover-meta">
