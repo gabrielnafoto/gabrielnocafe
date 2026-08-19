@@ -1364,14 +1364,22 @@ body.index-open { overflow: hidden; }
 }
 .gear-value { color: var(--muted); }
 
-.backcover-note {
+.backcover-note { max-width: 46ch; margin-bottom: clamp(20px, 3vw, 30px); }
+.note-lede {
   font-family: 'Caveat', cursive;
   font-weight: 600;
-  font-size: clamp(20px, 3vw, 26px);
+  font-size: clamp(22px, 3.4vw, 30px);
+  line-height: 1.25;
   color: var(--amber);
-  transform: rotate(-1.5deg);
-  max-width: 26ch;
-  margin-bottom: clamp(20px, 3vw, 30px);
+  transform: rotate(-1deg);
+  display: inline-block;
+}
+.note-rest {
+  font-family: 'Space Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--muted);
+  margin-top: 12px;
 }
 
 .backcover-star {

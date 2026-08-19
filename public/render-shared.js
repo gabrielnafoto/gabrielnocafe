@@ -87,6 +87,28 @@
     return String(i + 1).padStart(2, "0");
   }
 
+  // The inverse of splitNote: pulls the FIRST sentence out as a big
+  // handwritten "lede", leaving the rest as normal, readable body copy.
+  // A whole paragraph set in a script face is exhausting to read — one
+  // hooky line in Caveat, then plain text, reads far better.
+  function splitLede(text) {
+    const s = String(text || "").trim();
+    if (!s) return { lede: "", rest: "" };
+    // Short enough to read comfortably as one handwritten block on its own —
+    // the whole thing IS the lede, nothing repeats underneath.
+    if (s.length <= 90) return { lede: s, rest: "" };
+    // Longer notes: a short opening phrase acts as a handwritten kicker,
+    // and the FULL text (not just the remainder) reads as normal body copy
+    // underneath — so nothing is cut or duplicated, just given two paces.
+    const words = s.split(/\s+/);
+    let lede = "";
+    for (const w of words) {
+      if ((lede ? lede + " " + w : w).length > 42) break;
+      lede = lede ? lede + " " + w : w;
+    }
+    return { lede: lede ? lede + "…" : "", rest: s };
+  }
+
   // Splits a description into body + handwritten aside. When there's more than
   // one sentence, the LAST one becomes the margin note in Caveat — a personal
   // remark pulled out of prose, no new admin field required.
@@ -562,6 +584,7 @@
     const credits = f(p, "role", lang);
     const gear = parseGear(f(p, "recordingGear", lang));
     const thanks = f(s, "thanksNote", lang);
+    const { lede: thanksLede, rest: thanksRest } = splitLede(thanks);
     const year = new Date().getFullYear();
 
     const gearRows = gear.map((g) => `<div class="gear-row">
@@ -581,7 +604,10 @@
           <div class="gear-list">${gearRows}</div>
         </div>` : ""}
 
-        ${thanks ? `<p class="backcover-note">${escapeHtml(thanks)}</p>` : ""}
+        ${thanks ? `<div class="backcover-note">
+          ${thanksLede ? `<p class="note-lede">${escapeHtml(thanksLede)}</p>` : ""}
+          ${thanksRest ? `<p class="note-rest">${escapeHtml(thanksRest)}</p>` : ""}
+        </div>` : ""}
 
         <span class="backcover-star" aria-hidden="true">✦</span>
       </div>
