@@ -218,12 +218,13 @@
     return "";
   }
 
-  // The one frame every product photo uses: fixed 4:5 ratio, same width,
+  // The one frame every product photo uses: fixed 1:1 ratio, same width,
   // same weight. `imagePosition` (object-position) and `imageScale` (a light
   // zoom) let Gabriel reframe a specific photo without ever resizing the
   // frame itself.
   function productMedia(item, lang, fallbackNumber) {
     const url = safeUrl(item.image);
+    if (!url) return "";
     const styleParts = [];
     if (item.imagePosition) styleParts.push(`object-position:${item.imagePosition}`);
     const scale = Number(item.imageScale);
@@ -231,14 +232,8 @@
     const styleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
     const overlay = editorialOverlay(item, lang, fallbackNumber);
 
-    if (url) {
-      return `<div class="ph ph--4x5">
-        <img src="${escapeHtml(url)}" alt="${escapeHtml(f(item, "name", lang))}" loading="lazy"${styleAttr} />
-        ${overlay}
-      </div>`;
-    }
-    return `<div class="ph ph--4x5 ph--empty" role="img" aria-label="${escapeHtml(t(lang, "photoProduct"))}">
-      <span>✦<br/>${escapeHtml(t(lang, "photoProduct"))}<br/>4:5</span>
+    return `<div class="ph ph--1x1">
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(f(item, "name", lang))}" loading="lazy"${styleAttr} />
       ${overlay}
     </div>`;
   }
@@ -385,34 +380,30 @@
     </div>`;
   }
 
-  // A — photo first, text after. Same frame as B; only the order differs.
-  function ficheA(item, lang, index) {
+  // Unified item layout — one consistent size/weight for every product photo
+  // (small 1:1 frame). `imageAlign` ("left" | "right") lets Gabriel pick which
+  // side the photo sits on per item; falls back to alternating by position so
+  // a long list still reads with rhythm. When there's no photo, the text
+  // simply runs full width — no empty placeholder box.
+  function ficheItem(item, lang, index) {
     const { body, note } = splitNote(f(item, "description", lang));
-    return `<article class="fiche fiche--a rise">
-      <div class="fiche-media">${productMedia(item, lang, pad2(null, index))}</div>
-      <div class="fiche-body">
-        ${ficheLabel(item, lang, false)}
-        <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
-        ${body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
-        ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : ""}
-        ${ficheActions(item, lang)}
-      </div>
-    </article>`;
-  }
+    const media = productMedia(item, lang, pad2(null, index));
+    const align = item.imageAlign === "left" || item.imageAlign === "right"
+      ? item.imageAlign
+      : (index % 2 === 0 ? "left" : "right");
+    const sideClass = media ? ` fiche--media-${align}` : " fiche--no-media";
 
-  // B — text first, photo after. Mirrors A on desktop (photo swaps to the
-  // other side) — same aspect-ratio, same width, same visual weight as A.
-  function ficheB(item, lang, index) {
-    const { body, note } = splitNote(f(item, "description", lang));
-    return `<article class="fiche fiche--b rise">
-      <div class="fiche-body">
+    const body_ = `<div class="fiche-body">
         ${ficheLabel(item, lang, false)}
         <h3 class="fiche-name">${escapeHtml(f(item, "name", lang))}</h3>
         ${body ? `<p class="fiche-desc">${escapeHtml(body)}</p>` : ""}
         ${note ? `<p class="fiche-note">${escapeHtml(note)}</p>` : ""}
         ${ficheActions(item, lang)}
-      </div>
-      <div class="fiche-media">${productMedia(item, lang, pad2(null, index))}</div>
+      </div>`;
+    const mediaHtml = media ? `<div class="fiche-media">${media}</div>` : "";
+
+    return `<article class="fiche fiche--item${sideClass} rise">
+      ${align === "left" ? mediaHtml + body_ : body_ + mediaHtml}
     </article>`;
   }
 
@@ -429,14 +420,11 @@
     </article>`;
   }
 
-  // Alternation pattern: A, B, C, B, A, … never two identical in a row.
-  const FICHE_ORDER = [ficheA, ficheB, ficheC, ficheB];
-
+  // Every main-list item uses the same unified layout now — ficheC is kept
+  // only for the "+N mais" overflow and the archive section, never mixed
+  // into the primary alternation (that's what was silently hiding photos).
   function renderFiche(item, index, lang) {
-    const fn = FICHE_ORDER[index % FICHE_ORDER.length];
-    // ficheC's third param is `isArchive`, not an index — never confuse the two.
-    if (fn === ficheC) return fn(item, lang, false);
-    return fn(item, lang, index);
+    return ficheItem(item, lang, index);
   }
 
   /* ---------------------------------------------------------------------- */
@@ -478,10 +466,6 @@
         <div class="chapter-intro rise">
           <span class="chapter-count">${escapeHtml(t(lang, "chapter"))} ${escapeHtml(meta.num)} — ${escapeHtml(countTxt)}</span>
         </div>
-        <figure class="chapter-photo rise">
-          ${photo(sec.image, "3x4", t(lang, "photoChapter"), title)}
-          <figcaption class="cap">✦ ${escapeHtml(title)}</figcaption>
-        </figure>
       </div>
       <div class="chapter-items">${headHtml}${restHtml}</div>
     </section>`;

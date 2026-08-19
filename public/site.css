@@ -828,17 +828,6 @@ body.index-open { overflow: hidden; }
   color: var(--faint);
 }
 
-.chapter-photo { position: relative; }
-.chapter-photo .cap {
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin-top: 8px;
-  display: block;
-}
-
 .chapter-items {
   max-width: var(--wide);
   margin-inline: auto;
@@ -1119,12 +1108,12 @@ body.index-open { overflow: hidden; }
 }
 .copy-link:hover, .copy-link:focus-visible { color: var(--muted); }
 
-/* --- fiche A and B share ONE frame (same aspect-ratio, width, weight) —
-   the only difference is which side the photo lands on. All creative
-   variation happens INSIDE the frame via .ph-treat, never through size. --- */
-.fiche--a, .fiche--b { display: grid; gap: clamp(20px, 3vw, 44px); }
-.fiche--a .fiche-media, .fiche--b .fiche-media { position: relative; }
-.fiche--a .fiche-body, .fiche--b .fiche-body { align-self: center; }
+/* --- unified item layout: one small square frame, text does the talking.
+   `imageAlign` picks which side the photo sits on; items with no photo just
+   run text full-width (.fiche--no-media). --- */
+.fiche--item { display: grid; gap: clamp(16px, 2.4vw, 28px); align-items: center; }
+.fiche--item .fiche-media { position: relative; width: 100%; max-width: 220px; }
+.fiche--item.fiche--no-media { display: block; }
 
 /* --- fiche C: archive line, dense and fast -------------------------------- */
 .fiche--c { padding: 16px 0; }
@@ -1482,18 +1471,6 @@ body.index-open { overflow: hidden; }
   /* COLOPHON: 7/5 split — text weighted left, contents right */
   .colophon-grid { grid-template-columns: 1.35fr 1fr; align-items: start; }
 
-  /* CHAPTER OPENER: number + word left, photo right */
-  .chapter-open {
-    grid-template-columns: 1.5fr 1fr;
-    grid-template-areas:
-      "mark  photo"
-      "intro photo";
-    align-items: start;
-  }
-  .chapter-mark  { grid-area: mark; }
-  .chapter-intro { grid-area: intro; }
-  .chapter-photo { grid-area: photo; align-self: end; }
-
   /* the number moves out beside the word instead of sitting behind it */
   .chapter-num {
     opacity: .2;
@@ -1503,17 +1480,12 @@ body.index-open { overflow: hidden; }
     font-size: clamp(120px, 15vw, 230px);
   }
 
-  /* FICHE A: photo left (5), text right (7) */
-  .fiche--a { grid-template-columns: 5fr 7fr; align-items: center; }
-
-  /* FICHE B: text left (7), photo right (5) — same photo:text ratio as A,
-     mirrored — so the two never carry different visual weight. */
-  .fiche--b {
-    grid-template-columns: 7fr 5fr;
-    align-items: center;
-  }
-  .fiche--b .fiche-media { order: 2; }
-  .fiche--b .fiche-body  { order: 1; }
+  /* item: small square photo on whichever side imageAlign picks, text takes
+     the rest of the row. */
+  .fiche--item { grid-template-columns: auto 1fr; }
+  .fiche--item.fiche--media-right { grid-template-columns: 1fr auto; }
+  .fiche--item.fiche--media-right .fiche-media { order: 2; }
+  .fiche--item.fiche--media-right .fiche-body  { order: 1; }
 
   /* FICHE C stays a line, but pushes the CTA to the right edge */
   .fiche--c .fiche-row { flex-wrap: nowrap; align-items: baseline; }
@@ -1560,15 +1532,11 @@ body.index-open { overflow: hidden; }
   .cover-kicker { max-width: calc(100% - 92px); }
   .cover-meta { margin-top: 30px; gap: 16px; }
 
-  /* every product photo bleeds to the screen edge at the same width — A and
-     B are visually identical on mobile, only the stacking order differs
-     (photo-then-text for A, text-then-photo for B). */
-  .fiche--a .fiche-media, .fiche--b .fiche-media {
-    margin-inline: calc(var(--gutter) * -1);
-    width: 100vw;
-    max-width: 100vw;
-  }
-  .fiche--a .ph, .fiche--b .ph { border-left: none; border-right: none; }
+  /* small square photo, text stacked below — alignment choice only matters
+     on wider screens where there's room for a side-by-side row. */
+  .fiche--item { grid-template-columns: 1fr; gap: 16px; }
+  .fiche--item .fiche-media { max-width: 132px; order: -1 !important; }
+  .fiche--item .fiche-body { order: 0 !important; }
 
   .fiche--c .fiche-name { flex-basis: 100%; }
 
