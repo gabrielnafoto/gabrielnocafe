@@ -550,6 +550,10 @@
     const { lede: thanksLede, rest: thanksRest } = splitLede(thanks);
     const year = new Date().getFullYear();
 
+    // The cover's headline comes back one last time, oversized — the same
+    // sentence the publication opened with now closes it.
+    const signoff = f(s, "headline", lang) || (lang === "en" ? "what i use." : "o que eu uso.");
+
     const gearRows = gear.map((g) => `<div class="gear-row">
       ${g.label ? `<span class="gear-label">${escapeHtml(g.label)}</span>` : ""}
       <span class="gear-value">${escapeHtml(g.value)}</span>
@@ -572,7 +576,7 @@
           ${thanksRest ? `<p class="note-rest">${escapeHtml(thanksRest)}</p>` : ""}
         </div>` : ""}
 
-        <span class="backcover-star" aria-hidden="true">✦</span>
+        <p class="backcover-signoff">${escapeHtml(signoff)}</p>
       </div>
       <div class="backcover-foot">
         ${renderSocials(p)}

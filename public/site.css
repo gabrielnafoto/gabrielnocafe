@@ -1330,7 +1330,7 @@ body.index-open { overflow: hidden; }
 }
 .gear-value { color: var(--muted); }
 
-.backcover-note { max-width: 46ch; margin-bottom: clamp(20px, 3vw, 30px); }
+.backcover-note { max-width: 46ch; margin-bottom: clamp(40px, 7vw, 90px); }
 .note-lede {
   font-family: 'Caveat', cursive;
   font-weight: 600;
@@ -1348,11 +1348,17 @@ body.index-open { overflow: hidden; }
   margin-top: 12px;
 }
 
-.backcover-star {
-  color: var(--amber);
-  font-size: clamp(26px, 5vw, 54px);
-  display: inline-block;
-  transform: rotate(12deg);
+/* the cover's headline returns, oversized, as the publication's last page —
+   same device as .cover-title, deliberately smaller so the hero still wins */
+.backcover-signoff {
+  font-family: 'Anton', 'Fredoka', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(44px, 11vw, 150px);
+  line-height: .88;
+  letter-spacing: -.015em;
+  color: var(--paper);
+  max-width: 16ch;
 }
 
 .backcover-foot {
