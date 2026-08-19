@@ -116,6 +116,9 @@
     .toast.error { background: var(--danger); }
 
     .hint { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+    .upload-row { display: flex; gap: 8px; align-items: center; }
+    .upload-row input[type=url] { flex: 1; min-width: 0; }
+    .upload-btn { flex-shrink: 0; white-space: nowrap; }
     hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
     /* BLOCK CARD — visually separates groups in Perfil & Site */
@@ -203,9 +206,13 @@
           <div class="field"><label>handle</label><input type="text" id="p-handle" placeholder="@seuhandle" /></div>
         </div>
         <div class="field">
-          <label>URL da foto de perfil</label>
-          <input type="url" id="p-photo" placeholder="https://.../sua-foto.jpg" />
-          <p class="hint">Cole o link de uma imagem já hospedada (ex: arquivo em /profile.jpg no site, ou qualquer URL pública). Deixe vazio pra usar as iniciais do nome.</p>
+          <label>Foto de perfil</label>
+          <div class="upload-row">
+            <input type="url" id="p-photo" placeholder="https://.../sua-foto.jpg" />
+            <button type="button" class="btn btn-ghost btn-sm upload-btn">📤 enviar</button>
+            <input type="file" accept="image/*" class="upload-file" hidden />
+          </div>
+          <p class="hint">Envie um arquivo do seu computador/celular, ou cole um link direto. Deixe vazio pra usar as iniciais do nome.</p>
         </div>
         <div class="row">
           <div class="field"><label>função / papel — PT</label><input type="text" id="p-role" placeholder="Fotógrafo, filmmaker & coffee creator" /><p class="hint">Aparece ao lado do nome no topo.</p></div>
@@ -335,6 +342,67 @@ async function saveAll() {
 
 function v(id) { return document.getElementById(id)?.value || ''; }
 function set(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; }
+
+// Resize/compress an image client-side before upload — keeps uploads fast
+// and files small (phone photos are often 5-10MB, we only need ~1600px for web).
+function compressImage(file, maxDim = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('compress failed')), 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')); };
+    img.src = url;
+  });
+}
+
+async function uploadImage(file) {
+  const blob = await compressImage(file);
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'image/jpeg', 'Authorization': `Bearer ${password}` },
+    body: blob,
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'Erro ao enviar imagem.');
+  return json.url;
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.upload-btn');
+  if (!btn) return;
+  btn.closest('.upload-row').querySelector('.upload-file').click();
+});
+
+document.addEventListener('change', async (e) => {
+  const fileInput = e.target.closest('.upload-file');
+  if (!fileInput || !fileInput.files[0]) return;
+  const row = fileInput.closest('.upload-row');
+  const urlInput = row.querySelector('input[type=url]');
+  const btn = row.querySelector('.upload-btn');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'enviando…';
+  try {
+    urlInput.value = await uploadImage(fileInput.files[0]);
+    showToast('Foto enviada ✓', false);
+  } catch (err) {
+    showToast(err.message || 'Erro ao enviar imagem', true);
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+    fileInput.value = '';
+  }
+});
 
 async function translateText(text) {
   if (!text || !text.trim()) return '';
@@ -480,7 +548,11 @@ function buildSectionCard(sec, si) {
       </div>
       <div class="field" style="margin-bottom:20px">
         <label>Foto da categoria (opcional)</label>
-        <input type="url" class="sec-image" value="${sec.image||''}" placeholder="https://..." />
+        <div class="upload-row">
+          <input type="url" class="sec-image" value="${sec.image||''}" placeholder="https://..." />
+          <button type="button" class="btn btn-ghost btn-sm upload-btn">📤 enviar</button>
+          <input type="file" accept="image/*" class="upload-file" hidden />
+        </div>
         <p class="hint">Aparece como uma foto editorial logo abaixo do título da categoria. Deixe vazio se não tiver.</p>
       </div>
       <div class="items-container"></div>
@@ -532,7 +604,14 @@ function buildItemRow(item) {
     </div>
     <div class="row" style="margin-top:12px">
       <div class="field"><label>URL do link</label><input type="url" class="i-url" value="${item.url||''}" placeholder="https://..." /></div>
-      <div class="field"><label>URL da imagem (opcional)</label><input type="url" class="i-image" value="${item.image||''}" placeholder="https://..." /></div>
+      <div class="field">
+        <label>Foto do produto (opcional)</label>
+        <div class="upload-row">
+          <input type="url" class="i-image" value="${item.image||''}" placeholder="https://..." />
+          <button type="button" class="btn btn-ghost btn-sm upload-btn">📤 enviar</button>
+          <input type="file" accept="image/*" class="upload-file" hidden />
+        </div>
+      </div>
     </div>
     <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px">
       <div class="toggle-wrap">
