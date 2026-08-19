@@ -52,10 +52,6 @@
   // Index 0 is the cover (always --ink), so chapters start their own cycle.
   const PAGE_CYCLE = ["page--ink-warm", "page--ink-deep", "page--paper"];
 
-  // How many big fiches a chapter shows before the rest collapses into
-  // an archive list. Keeps a 40-item chapter from running forever.
-  const FICHE_BUDGET = 4;
-
   function t(lang, key) { return (I18N[lang] || I18N.pt)[key] || ""; }
 
   function escapeHtml(str) {
@@ -486,23 +482,10 @@
     const items = sec.items || [];
     const title = f(sec, "title", lang);
 
-    // Long chapters: the first few get full editorial treatment, the rest
-    // collapse into an archive list behind a "+ more" toggle.
-    const head = items.slice(0, FICHE_BUDGET);
-    const rest = items.slice(FICHE_BUDGET);
-
-    const headHtml = head.map((it, i) => renderFiche(it, i, lang)).join("");
-    const restHtml = rest.length
-      ? `<div class="fiche-rest" id="rest-${escapeHtml(meta.anchor)}" hidden>
-           ${rest.map((it) => ficheC(it, lang, false)).join("")}
-         </div>
-         <button class="more-toggle" type="button" aria-expanded="false" aria-controls="rest-${escapeHtml(meta.anchor)}"
-                 data-more data-label-more="+ ${escapeHtml(String(rest.length))} ${escapeHtml(t(lang, "more"))}"
-                 data-label-less="− ${escapeHtml(t(lang, "close"))}">
-           <span class="more-txt">+ ${escapeHtml(String(rest.length))} ${escapeHtml(t(lang, "more"))}</span>
-           <span class="arr" aria-hidden="true">↓</span>
-         </button>`
-      : "";
+    // Every item renders in full — no "+N mais" collapse. The chapter
+    // itself is already click-to-reveal (renderChapter's own toggle), so
+    // a second layer of hiding on top of that just added an extra click.
+    const headHtml = items.map((it, i) => renderFiche(it, i, lang)).join("");
 
     const countTxt = `${items.length} ${items.length === 1 ? t(lang, "item") : t(lang, "items")}`;
 
@@ -520,7 +503,7 @@
           <span class="chapter-toggle-hint"><span class="chapter-toggle-arr" aria-hidden="true">↓</span></span>
         </div>
       </div>
-      <div class="chapter-items" id="items-${escapeHtml(meta.anchor)}" hidden>${headHtml}${restHtml}</div>
+      <div class="chapter-items" id="items-${escapeHtml(meta.anchor)}" hidden>${headHtml}</div>
     </section>`;
   }
 
