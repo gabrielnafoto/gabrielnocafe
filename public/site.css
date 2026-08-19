@@ -1624,7 +1624,11 @@ body.index-open { overflow: hidden; }
 @media (max-width: 759px) {
   .cover { padding-top: 26px; }
 
-  /* photo sits behind the type, multiplied into the dark — a real cover */
+  /* photo sits behind the type, multiplied into the dark — a real cover.
+     The fade/filter goes on the <img> itself, not the .cover-photo
+     container — .cover-role lives inside that container too, and opacity
+     on a parent drags every descendant down with it, which made the
+     handwritten caption unreadable here. */
   .cover-photo {
     position: absolute;
     top: 16%;
@@ -1632,8 +1636,14 @@ body.index-open { overflow: hidden; }
     width: 74%;
     margin: 0;
     z-index: 0;
+  }
+  .cover-photo .ph img {
     opacity: .42;
     filter: grayscale(.3) contrast(1.1);
+  }
+  .cover-role {
+    opacity: 1;
+    z-index: 2;
   }
   .cover-title { position: relative; z-index: 2; }
   .cover-in { padding-bottom: 0; }
