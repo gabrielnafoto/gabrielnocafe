@@ -478,38 +478,6 @@
   }
 
   /* ---------------------------------------------------------------------- */
-  /* interlude — seen in my videos                                          */
-  /* ---------------------------------------------------------------------- */
-
-  function renderInterlude(sections, lang, palette) {
-    const items = [];
-    (sections || []).forEach((sec) => (sec.items || []).forEach((it) => { if (it.seenInVideos) items.push(it); }));
-    if (!items.length) return "";
-
-    const frames = items.map((it) => {
-      const url = safeUrl(it.url);
-      const name = f(it, "name", lang);
-      const label = f(it, "label", lang);
-      const inner = `${photo(it.image, "3x4", t(lang, "photoFrame"), name)}
-        <div class="frame-cap">
-          <span class="nm">${escapeHtml(name)}</span>
-          ${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}
-        </div>`;
-      return url
-        ? `<a class="frame rise" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
-        : `<div class="frame rise">${inner}</div>`;
-    }).join("");
-
-    return `<section class="page ${palette} interlude" id="videos">
-      <div class="interlude-head rise">
-        <h2 class="interlude-title">${escapeHtml(t(lang, "videosTitle"))}</h2>
-        <p class="interlude-sub">${escapeHtml(t(lang, "videosDesc"))}</p>
-      </div>
-      <div class="interlude-grid">${frames}</div>
-    </section>`;
-  }
-
-  /* ---------------------------------------------------------------------- */
   /* archive — "already tried"                                              */
   /* ---------------------------------------------------------------------- */
 
@@ -662,7 +630,6 @@
     }
 
     const hasArchive = (data.sections || []).some((s) => s.group === "other" && (s.items || []).length);
-    const hasVideos = (data.sections || []).some((s) => (s.items || []).some((i) => i.seenInVideos));
 
     return `<div class="index-overlay" id="index-overlay" role="dialog" aria-modal="true" aria-label="${escapeHtml(t(lang, "contentsTitle"))}">
       <div class="index-top">
@@ -671,7 +638,6 @@
       </div>
       <nav class="index-list">
         ${body}
-        ${hasVideos ? `<a class="index-item" href="#videos" data-index-link data-anchor="videos"><span class="num">✦</span><span class="name">${escapeHtml(t(lang, "videosTitle"))}</span><span class="count"></span></a>` : ""}
         ${hasArchive ? `<a class="index-item" href="#arquivo" data-index-link data-anchor="arquivo"><span class="num">✦</span><span class="name">${escapeHtml(t(lang, "archiveTitle"))}</span><span class="count"></span></a>` : ""}
       </nav>
       <div class="index-foot">
@@ -694,19 +660,7 @@
 
     const chapters = planChapters(sections, lang);
 
-    // The interlude drops in after the second chapter so the reel breaks up;
-    // with fewer chapters it goes at the end of the run.
-    const interludeAfter = chapters.length >= 3 ? 1 : chapters.length - 1;
-
-    // Give the interlude a palette that doesn't repeat its neighbour's.
-    const interludePalette = PAGE_CYCLE[(interludeAfter + 1) % PAGE_CYCLE.length] === "page--paper"
-      ? "page--ink" : "page--paper";
-
-    const chapterHtml = chapters.map((meta, i) => {
-      let html = renderChapter(meta.sec, lang, meta);
-      if (i === interludeAfter) html += renderInterlude(sections, lang, interludePalette);
-      return html;
-    }).join("");
+    const chapterHtml = chapters.map((meta) => renderChapter(meta.sec, lang, meta)).join("");
 
     return [
       renderCover(d, lang),

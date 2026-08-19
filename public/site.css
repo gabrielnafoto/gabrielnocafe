@@ -1170,72 +1170,6 @@ body.index-open { overflow: hidden; }
 .fiche-rest[hidden] { display: none; }
 
 /* ============================================================================
-   INTERLUDE — seen in my videos, as a photo page
-   ========================================================================== */
-
-.interlude { padding: clamp(46px, 7vw, 100px) 0; }
-.interlude-head {
-  max-width: var(--wide);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-  margin-bottom: clamp(26px, 4vw, 48px);
-}
-.interlude-title {
-  font-family: 'Anton', sans-serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  font-size: clamp(38px, 9vw, 96px);
-  line-height: .9;
-  letter-spacing: -.015em;
-  color: var(--fg);
-  max-width: 14ch;
-}
-.interlude-sub {
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
-  max-width: 44ch;
-  margin-top: 16px;
-}
-
-.interlude-grid {
-  max-width: var(--wide);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(12px, 2vw, 24px);
-}
-.frame { text-decoration: none; color: var(--fg); display: block; }
-.frame .ph { transition: transform .4s cubic-bezier(.4, 0, .2, 1); }
-.frame:hover .ph { transform: scale(1.015); }
-.frame-cap {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-.frame-cap .nm {
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  overflow-wrap: break-word;
-  min-width: 0;
-}
-.frame-cap .lb {
-  font-family: 'Space Mono', monospace;
-  font-size: 9.5px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
-/* stagger the grid so it reads as a layout, not a matrix */
-.interlude-grid .frame:nth-child(3n+1) { grid-column: span 2; }
-.interlude-grid .frame:nth-child(3n+1) .ph { aspect-ratio: 16 / 9; }
-
-/* ============================================================================
    ARCHIVE — "already tried", the back of the zine
    ========================================================================== */
 
@@ -1505,13 +1439,6 @@ body.index-open { overflow: hidden; }
   .fiche--c .fiche-row { flex-wrap: nowrap; align-items: baseline; }
   .fiche--c .fiche-actions { margin-top: 0; margin-left: auto; flex-shrink: 0; }
 
-  .interlude-grid { grid-template-columns: repeat(3, 1fr); }
-  .interlude-grid .frame:nth-child(3n+1) { grid-column: span 1; }
-  .interlude-grid .frame:nth-child(3n+1) .ph { aspect-ratio: 3 / 4; }
-  /* every 4th frame takes two columns — breaks the matrix */
-  .interlude-grid .frame:nth-child(4n) { grid-column: span 2; }
-  .interlude-grid .frame:nth-child(4n) .ph { aspect-ratio: 16 / 9; }
-
   .index-list { padding-top: 20px; }
 }
 
@@ -1559,8 +1486,6 @@ body.index-open { overflow: hidden; }
   /* chapter number sits behind the word */
   .chapter-num { opacity: .13; }
   .chapter-open { padding-top: 54px; }
-
-  .interlude-grid .frame:nth-child(3n+1) .ph { aspect-ratio: 3 / 2; }
 
   .backcover { min-height: 68vh; }
   .backcover-foot { flex-direction: column; align-items: flex-start; }
