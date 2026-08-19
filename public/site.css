@@ -802,7 +802,10 @@ body.index-open { overflow: hidden; }
    CHAPTERS — opener + fiches
    ========================================================================== */
 
-.chapter { padding-bottom: clamp(40px, 6vw, 90px); }
+/* no padding-bottom here on purpose — the last product's photo runs right
+   into the next chapter's own opening (which already carries a big
+   padding-top). A gap here read as a stray empty beat between two
+   chapters, especially when the one in between is short. */
 
 /* a small step of luminosity separates the chapter's own opening beat from
    the product list beneath it — same palette, no new colour, just enough
