@@ -153,6 +153,24 @@
 
     const chapterToggle = e.target.closest("[data-chapter-toggle]");
     if (chapterToggle) toggleChapter(chapterToggle);
+
+    const carouselNav = e.target.closest("[data-nav]");
+    if (carouselNav) {
+      const track = carouselNav.closest("[data-carousel]")?.querySelector("[data-track]");
+      if (track) {
+        const dir = Number(carouselNav.dataset.nav);
+        track.scrollBy({ left: track.clientWidth * dir, behavior: "smooth" });
+      }
+    }
+
+    const dot = e.target.closest("[data-goto]");
+    if (dot) {
+      const track = dot.closest("[data-carousel]")?.querySelector("[data-track]");
+      if (track) {
+        const i = Number(dot.dataset.goto);
+        track.scrollTo({ left: track.clientWidth * i, behavior: "smooth" });
+      }
+    }
   });
 
   document.addEventListener("keydown", (e) => {
@@ -182,6 +200,9 @@
       });
       panel.removeAttribute("hidden");
       panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+      // Carousels inside a chapter that was hidden had a zero-size root
+      // when wireCarousels() first ran — re-observe now that it's visible.
+      wireCarousels();
       // Collapsing an earlier chapter shrinks everything above this one,
       // so the page jumps and the chapter you just opened can land
       // mid-viewport instead of at the top. Pin its own header back to the
@@ -307,10 +328,40 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* product photo carousels — keep the dots in sync with manual swipes  */
+  /* ------------------------------------------------------------------ */
+
+  let carouselObservers = [];
+
+  function wireCarousels() {
+    carouselObservers.forEach((o) => o.disconnect());
+    carouselObservers = [];
+
+    document.querySelectorAll("[data-carousel]").forEach((carousel) => {
+      const track = carousel.querySelector("[data-track]");
+      const dots = [...carousel.querySelectorAll("[data-goto]")];
+      if (!track || !dots.length) return;
+
+      const slideObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const i = Number(entry.target.dataset.slide);
+          dots.forEach((d, di) => {
+            d.classList.toggle("is-active", di === i);
+            d.setAttribute("aria-current", di === i ? "true" : "false");
+          });
+        });
+      }, { root: track, threshold: 0.6 });
+
+      track.querySelectorAll("[data-slide]").forEach((slide) => slideObserver.observe(slide));
+      carouselObservers.push(slideObserver);
+    });
+  }
 
   function wirePage() {
     wireMotion();
     wireFolio();
+    wireCarousels();
     openChapterFromHash();
   }
 

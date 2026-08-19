@@ -273,21 +273,49 @@
 
   // The one frame every product photo uses: fixed 4:5 ratio, same width,
   // same weight. `imagePosition` (object-position) and `imageScale` (a light
-  // zoom) let Gabriel reframe a specific photo without ever resizing the
-  // frame itself.
+  // zoom) apply to the cover photo only — extra gallery shots are assumed
+  // to already be framed how Gabriel wants them.
+  //
+  // `item.gallery` (array of extra photo URLs, admin-editable) turns the
+  // frame into a horizontal scroll-snap carousel: item.image is always
+  // slide one, gallery photos follow. One photo behaves exactly as before
+  // (no carousel chrome at all) — this only activates with 2+ photos.
   function productMedia(item, lang, fallbackNumber) {
-    const url = safeUrl(item.image);
-    if (!url) return "";
+    const cover = safeUrl(item.image);
+    const extra = (item.gallery || []).map(safeUrl).filter(Boolean);
+    const photos = [cover, ...extra].filter(Boolean);
+    if (!photos.length) return "";
+
+    const name = escapeHtml(f(item, "name", lang));
+    // Only the cover slide carries imagePosition/imageScale and the
+    // editorial-treatment overlay — extra photos stay clean.
     const styleParts = [];
     if (item.imagePosition) styleParts.push(`object-position:${item.imagePosition}`);
     const scale = Number(item.imageScale);
     if (scale && scale !== 1 && scale > 0 && scale <= 2) styleParts.push(`transform:scale(${scale})`);
-    const styleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
+    const coverStyleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
     const overlay = editorialOverlay(item, lang, fallbackNumber);
 
-    return `<div class="ph ph--4x5">
-      <img src="${escapeHtml(url)}" alt="${escapeHtml(f(item, "name", lang))}" loading="lazy"${styleAttr} />
-      ${overlay}
+    if (photos.length === 1) {
+      return `<div class="ph ph--4x5">
+        <img src="${escapeHtml(photos[0])}" alt="${name}" loading="lazy"${coverStyleAttr} />
+        ${overlay}
+      </div>`;
+    }
+
+    const slides = photos.map((url, i) => `<div class="ph-slide" data-slide="${i}">
+        <img src="${escapeHtml(url)}" alt="${name}${i > 0 ? ` — foto ${i + 1}` : ""}" loading="lazy"${i === 0 ? coverStyleAttr : ""} />
+        ${i === 0 ? overlay : ""}
+      </div>`).join("");
+    const dots = photos.map((_, i) =>
+      `<button type="button" class="ph-dot${i === 0 ? " is-active" : ""}" data-goto="${i}" aria-label="Foto ${i + 1} de ${photos.length}" aria-current="${i === 0 ? "true" : "false"}"></button>`
+    ).join("");
+
+    return `<div class="ph ph--4x5 ph--carousel" data-carousel>
+      <div class="ph-track" data-track tabindex="0" role="group" aria-label="${photos.length} fotos — arraste ou use as setas para ver mais">${slides}</div>
+      <button type="button" class="ph-nav ph-nav--prev" data-nav="-1" aria-label="Foto anterior">‹</button>
+      <button type="button" class="ph-nav ph-nav--next" data-nav="1" aria-label="Próxima foto">›</button>
+      <div class="ph-dots">${dots}</div>
     </div>`;
   }
 
