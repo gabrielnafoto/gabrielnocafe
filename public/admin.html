@@ -478,6 +478,11 @@ function buildSectionCard(sec, si) {
           </select>
         </div>
       </div>
+      <div class="field" style="margin-bottom:20px">
+        <label>Foto da categoria (opcional)</label>
+        <input type="url" class="sec-image" value="${sec.image||''}" placeholder="https://..." />
+        <p class="hint">Aparece como uma foto editorial logo abaixo do título da categoria. Deixe vazio se não tiver.</p>
+      </div>
       <div class="items-container"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
         <button class="btn btn-ghost btn-sm" onclick="addItem(this)">+ Novo item</button>
@@ -556,7 +561,7 @@ function switchLangTab(btn, lang) {
 
 function addSection() {
   if (!data.sections) data.sections = [];
-  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', category: '', group: 'setup', items: [] };
+  const sec = { id: uid(), number: String(data.sections.length+1).padStart(2,'0'), title: 'Nova seção', title_en: '', category: '', group: 'setup', image: '', items: [] };
   data.sections.push(sec);
   const card = buildSectionCard(sec, data.sections.length-1);
   card.classList.add('open');
@@ -579,6 +584,7 @@ function collectSections() {
     title_en: card.querySelector('.sec-title-en').value,
     category: card.querySelector('.sec-category').value,
     group: card.querySelector('.sec-group').value,
+    image: card.querySelector('.sec-image').value,
     items: [...card.querySelectorAll('.item-row')].map(row => ({
       id: row.dataset.id,
       label: row.querySelector('.i-label').value,
