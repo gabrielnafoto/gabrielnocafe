@@ -130,11 +130,14 @@
 
   // Renders a real image when one is set, otherwise a clearly-marked
   // placeholder that holds the exact composition shape. Gabriel drops photos
-  // into `image` (admin) and the layout doesn't move.
-  function photo(src, ratio, caption, alt) {
+  // into `image` (admin) and the layout doesn't move. `eager` is for the one
+  // photo that's always above the fold (the cover) — lazy-loading it just
+  // delays the first thing a visitor sees.
+  function photo(src, ratio, caption, alt, eager) {
     const url = safeUrl(src);
     if (url) {
-      return `<div class="ph ph--${ratio}"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt || "")}" loading="lazy" /></div>`;
+      const loadAttr = eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`;
+      return `<div class="ph ph--${ratio}"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt || "")}" ${loadAttr} /></div>`;
     }
     return `<div class="ph ph--${ratio} ph--empty" role="img" aria-label="${escapeHtml(caption || "")}">
       <span>✦<br/>${escapeHtml(caption || "")}<br/>${ratio.replace("x", ":")}</span>
@@ -318,10 +321,6 @@
       <div class="cover-in">
         ${tagline ? `<span class="cover-kicker">${escapeHtml(tagline)}</span>` : ""}
 
-        <div class="cover-stamp" aria-hidden="true">
-          <span>★ CAFÉ<br/>ARTESANAL<br/>EST. 2026</span>
-        </div>
-
         <h1 class="cover-title">
           ${l1 ? `<span class="l1">${escapeHtml(l1)}</span>` : ""}
           ${l2 ? `<span class="l2">${escapeHtml(l2)}</span>` : ""}
@@ -329,7 +328,7 @@
         </h1>
 
         <div class="cover-photo"${p.photoPositionY ? ` style="--photo-y:${escapeHtml(p.photoPositionY)}%"` : ""}>
-          ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang))}
+          ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang), true)}
         </div>
 
         <div class="cover-meta">
