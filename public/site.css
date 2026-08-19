@@ -283,7 +283,11 @@ body::before {
 .mast-nav a:hover, .mast-nav a:focus-visible { color: var(--paper); border-bottom-color: var(--amber); }
 .mast-nav a.current { color: var(--paper); border-bottom-color: var(--amber); }
 
-/* running folio — tells you which chapter you're in, like a magazine footer */
+/* running folio — tells you which chapter you're in, like a magazine footer.
+   On mobile there's no room beside the brand, so the folio REPLACES it once
+   you've scrolled into a chapter — the one place you most need to know
+   where you are, since the desktop mast-nav's .current highlight doesn't
+   exist there either. */
 .mast-folio {
   display: none;
   font-family: 'Space Mono', monospace;
@@ -298,6 +302,16 @@ body::before {
   max-width: 30ch;
 }
 .mast-folio .n { color: var(--amber); }
+
+@media (max-width: 759px) {
+  .masthead[data-current-anchor] .mast-brand { display: none; }
+  .masthead[data-current-anchor] .mast-folio {
+    display: block;
+    font-size: 11px;
+    color: var(--paper);
+    max-width: 62vw;
+  }
+}
 
 .mast-right {
   margin-left: auto;

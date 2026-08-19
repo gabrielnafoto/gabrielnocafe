@@ -207,7 +207,13 @@
     folioObserver = new IntersectionObserver((entries) => {
       // Pick the chapter closest to the top of the viewport among those visible.
       const visible = entries.filter((e) => e.isIntersecting);
-      if (!visible.length) return;
+      if (!visible.length) {
+        // Scrolled back above the first chapter (or past the last) — nothing
+        // is current. On mobile this attribute also toggles the brand back
+        // on in place of the folio, so it must clear, not just go stale.
+        delete masthead.dataset.currentAnchor;
+        return;
+      }
       const top = visible.reduce((a, b) =>
         Math.abs(a.boundingClientRect.top) < Math.abs(b.boundingClientRect.top) ? a : b);
       const el = top.target;
