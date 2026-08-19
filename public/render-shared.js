@@ -520,6 +520,19 @@
     </section>`;
   }
 
+  // A sparse breathing beat between two dense chapters — almost nothing on
+  // screen but the next chapter's number, waiting in negative space. Chapters
+  // otherwise run back to back with only a colour change between them; this
+  // gives the scroll an actual pause, the "turned a page" feeling, without
+  // adding any new content (per brief: no new sections, just choreography).
+  // Carries the PREVIOUS chapter's palette (--bg/--fg only exist on .page
+  // elements) so it reads as a pause within the page just read, not a jump.
+  function renderChapterBreak(prevPalette, nextMeta) {
+    return `<div class="page ${prevPalette} chapter-break" aria-hidden="true">
+      <span class="chapter-break-num">${escapeHtml(nextMeta.num)}</span>
+    </div>`;
+  }
+
   /* ---------------------------------------------------------------------- */
   /* archive — "already tried"                                              */
   /* ---------------------------------------------------------------------- */
@@ -707,7 +720,13 @@
 
     const chapters = planChapters(sections, lang);
 
-    const chapterHtml = chapters.map((meta) => renderChapter(meta.sec, lang, meta)).join("");
+    // Chapters are all visually dense — insert a sparse breathing beat
+    // between consecutive ones (never before the first) so the scroll
+    // alternates density instead of running dense-dense-dense-dense.
+    const chapterHtml = chapters.map((meta, i) => {
+      const brk = i > 0 ? renderChapterBreak(chapters[i - 1].palette, meta) : "";
+      return brk + renderChapter(meta.sec, lang, meta);
+    }).join("");
 
     return [
       renderCover(d, lang),

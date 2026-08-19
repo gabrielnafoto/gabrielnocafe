@@ -757,6 +757,27 @@ body.index-open { overflow: hidden; }
 
 .chapter { padding-bottom: clamp(40px, 6vw, 90px); }
 
+/* a sparse breathing beat between two dense chapters — almost nothing on
+   screen but the next number, waiting in negative space. Uses the page's
+   own ink background (whatever chapter precedes it), so it reads as a
+   pause within the current page, not a new section. */
+.chapter-break {
+  min-height: 42vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.chapter-break-num {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: clamp(70px, 16vw, 160px);
+  line-height: .8;
+  color: var(--fg);
+  opacity: .12;
+  user-select: none;
+}
+
 .chapter-open {
   max-width: var(--wide);
   margin-inline: auto;
