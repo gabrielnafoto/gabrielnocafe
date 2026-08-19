@@ -44,6 +44,33 @@
   --wide:    1320px;   /* full editorial spread */
   --column:  1080px;   /* standard chapter column */
   --narrow:  640px;    /* reading measure */
+
+  /* --- spacing scale -------------------------------------------------------
+     Small, fixed steps for anything relating two adjacent pieces of the same
+     idea (a label to its title, a button to its neighbour). Section-level
+     rhythm (the gap BETWEEN ideas) stays on its own clamp()s below — that's
+     deliberately larger and viewport-aware, not on this scale. --------------- */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  24px;
+  --sp-6:  32px;
+  --sp-7:  48px;
+
+  /* --- type scale — six tiers, one job each -------------------------------
+     hero      → the cover headline, nothing bigger exists on the page
+     display   → chapter numbers/titles, back-cover sign-off
+     product   → a product's name, the protagonist of its fiche
+     body      → reading copy
+     meta      → labels, folio, CTAs — always Space Mono, always quiet
+     hand      → Caveat annotations — the one handwritten voice, one size ---- */
+  --fs-hero:    clamp(72px, 19vw, 250px);
+  --fs-display: clamp(46px, 12vw, 130px);
+  --fs-product: clamp(30px, 6.4vw, 56px);
+  --fs-body:    clamp(13px, 1.4vw, 14px);
+  --fs-meta:    10.5px;
+  --fs-hand:    clamp(19px, 2.8vw, 26px);
 }
 
 html {
@@ -159,7 +186,7 @@ body::before {
 .t-body {
   font-family: 'Space Mono', monospace;
   font-weight: 400;
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.72;
   color: var(--muted);
 }
@@ -516,7 +543,7 @@ body.index-open { overflow: hidden; }
   font-family: 'Anton', 'Fredoka', sans-serif;
   font-weight: 400;
   text-transform: uppercase;
-  font-size: clamp(72px, 19vw, 250px);
+  font-size: var(--fs-hero);
   line-height: .82;
   letter-spacing: -.015em;
   color: var(--paper);
@@ -623,9 +650,9 @@ body.index-open { overflow: hidden; }
 .colophon-hand {
   font-family: 'Caveat', cursive;
   font-weight: 600;
-  font-size: clamp(19px, 2.4vw, 25px);
+  font-size: var(--fs-hand);
   color: var(--amber);
-  margin-top: 22px;
+  margin-top: var(--sp-5);
   line-height: 1.35;
 }
 
@@ -789,7 +816,7 @@ body.index-open { overflow: hidden; }
   font-family: 'Anton', 'Fredoka', sans-serif;
   font-weight: 400;
   text-transform: uppercase;
-  font-size: clamp(46px, 13vw, 140px);
+  font-size: var(--fs-display);
   line-height: .86;
   letter-spacing: -.015em;
   color: var(--fg);
@@ -1015,17 +1042,17 @@ body.index-open { overflow: hidden; }
 .fiche-name {
   font-family: 'Fredoka', sans-serif;
   font-weight: 700;
-  font-size: clamp(30px, 6.4vw, 58px);
+  font-size: var(--fs-product);
   line-height: 1.02;
   letter-spacing: -.02em;
   color: var(--fg);
-  margin-bottom: 14px;
+  margin-bottom: var(--sp-3);
   overflow-wrap: break-word;
 }
 
 .fiche-desc {
   font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.72;
   color: var(--muted);
   max-width: 52ch;
@@ -1035,11 +1062,11 @@ body.index-open { overflow: hidden; }
 .fiche-note {
   font-family: 'Caveat', cursive;
   font-weight: 600;
-  font-size: clamp(19px, 2.6vw, 26px);
+  font-size: var(--fs-hand);
   line-height: 1.3;
   color: var(--accent);
-  margin-top: 16px;
-  padding-left: 20px;
+  margin-top: var(--sp-4);
+  padding-left: var(--sp-5);
   position: relative;
   max-width: 32ch;
 }
@@ -1057,9 +1084,9 @@ body.index-open { overflow: hidden; }
 .fiche-actions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: var(--sp-5);
   flex-wrap: wrap;
-  margin-top: 22px;
+  margin-top: var(--sp-5);
 }
 
 /* CTA is a word, not a button: underline grows from the left on hover */
