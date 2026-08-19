@@ -172,6 +172,7 @@
     <div class="tabs">
       <button class="tab active" onclick="switchTab('conteudo', this)">Conteúdo</button>
       <button class="tab" onclick="switchTab('perfil', this)">Perfil & Site</button>
+      <button class="tab" onclick="switchTab('stats', this)">📊 Estatísticas</button>
     </div>
 
     <!-- CONTEÚDO -->
@@ -315,6 +316,18 @@
           <div class="field" style="margin-bottom:0"><label>bilhete — <span style="color:var(--red)">EN</span></label><textarea id="s-thanks-en" placeholder="hey — thanks for scrolling all the way down..."></textarea></div>
         </div>
       </div>
+    </div>
+
+    <!-- ESTATÍSTICAS -->
+    <div id="tab-stats" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <div style="font-size:16px;font-weight:600">Cliques em "ver produto"</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Quantas vezes cada item foi clicado (capa, faixa "todo dia", vídeos e produtos). Contagem simples, sem rastreamento de pessoas.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadStats()">↻ atualizar</button>
+      </div>
+      <div id="stats-list" style="font-size:13px;color:var(--muted)">Carregando…</div>
     </div>
   </div>
 </div>
@@ -768,6 +781,44 @@ function switchTab(name, btn) {
   btn.classList.add('active');
   document.getElementById('tab-conteudo').style.display = name === 'conteudo' ? 'block' : 'none';
   document.getElementById('tab-perfil').style.display = name === 'perfil' ? 'block' : 'none';
+  document.getElementById('tab-stats').style.display = name === 'stats' ? 'block' : 'none';
+  if (name === 'stats') loadStats();
+}
+
+async function loadStats() {
+  const el = document.getElementById('stats-list');
+  el.textContent = 'Carregando…';
+  try {
+    const res = await fetch('/api/track', { headers: { 'Authorization': `Bearer ${password}` } });
+    if (!res.ok) throw new Error('failed');
+    const counts = await res.json();
+
+    // Cross-reference every known item id with its name/section, so the
+    // list reads "Timemore C5 Pro — 12 cliques", not raw ids.
+    const known = [];
+    (data.sections || []).forEach(sec => (sec.items || []).forEach(it => {
+      known.push({ id: it.id, name: it.name || 'Sem nome', section: sec.title || '' });
+    }));
+    const rows = known
+      .map(k => ({ ...k, count: counts[k.id] || 0 }))
+      .filter(r => r.count > 0)
+      .sort((a, b) => b.count - a.count);
+
+    if (!rows.length) {
+      el.innerHTML = '<p>Ainda sem cliques registrados — ou o Vercel Blob/KV pode não estar conectado. Volte aqui depois que o link circular um pouco.</p>';
+      return;
+    }
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:1px">${rows.map(r => `
+      <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 14px;background:var(--card);border:1px solid var(--border)">
+        <div>
+          <div style="color:var(--text);font-weight:600">${r.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${r.section}</div>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--red)">${r.count}</div>
+      </div>`).join('')}</div>`;
+  } catch (e) {
+    el.textContent = 'Não consegui carregar as estatísticas agora.';
+  }
 }
 
 function showToast(msg, isError) {

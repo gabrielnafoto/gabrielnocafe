@@ -110,6 +110,19 @@
   /* ------------------------------------------------------------------ */
 
   app.addEventListener("click", (e) => {
+    // Fire-and-forget click count. Links open in a new tab (target="_blank"),
+    // so the current page never unloads — a plain fetch is enough, no
+    // sendBeacon needed. Never blocks the click or surfaces an error.
+    const tracked = e.target.closest("[data-track-id]");
+    if (tracked?.dataset.trackId) {
+      fetch("/api/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: tracked.dataset.trackId }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {
       const url = copyBtn.dataset.copy;

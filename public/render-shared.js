@@ -350,7 +350,7 @@
       const label = f(it, "label", lang);
       const inner = `<span class="nm">${escapeHtml(name)}</span>${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}`;
       return url
-        ? `<a class="daily-item" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored">${inner}</a>`
+        ? `<a class="daily-item" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
         : `<div class="daily-item">${inner}</div>`;
     }).join("");
 
@@ -371,7 +371,7 @@
     const url = safeUrl(item.url);
     if (!url) return "";
     return `<div class="fiche-actions">
-      <a class="cta" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored">${escapeHtml(t(lang, "buy"))} <span class="arr" aria-hidden="true">↗</span></a>
+      <a class="cta" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(item.id || "")}">${escapeHtml(t(lang, "buy"))} <span class="arr" aria-hidden="true">↗</span></a>
       <button class="copy-link" type="button" data-copy="${escapeHtml(url)}">${escapeHtml(t(lang, "copyLink"))}</button>
     </div>`;
   }
@@ -506,7 +506,7 @@
           ${label ? `<span class="lb">${escapeHtml(label)}</span>` : ""}
         </div>`;
       return url
-        ? `<a class="frame rise" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored">${inner}</a>`
+        ? `<a class="frame rise" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored" data-track-id="${escapeHtml(it.id || "")}">${inner}</a>`
         : `<div class="frame rise">${inner}</div>`;
     }).join("");
 

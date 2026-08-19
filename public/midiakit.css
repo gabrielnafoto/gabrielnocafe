@@ -1,0 +1,137 @@
+/* ============================================================================
+   public/midiakit.css — press kit page.
+   Reuses the site's own palette tokens (see site.css :root) so this page
+   reads as the same publication, not a bolted-on microsite.
+   ========================================================================== */
+
+.mk-body { background: var(--ink); color: var(--paper); font-family: 'Space Mono', monospace; }
+
+.mk-wrap { max-width: 1120px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+
+.mk-eyebrow {
+  font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--amber);
+  display: flex; align-items: center; gap: 8px;
+}
+.mk-eyebrow::before { content: '✦'; font-size: 10px; }
+
+.mk-section { padding: 88px 0; border-bottom: 1px solid var(--rule); }
+.mk-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 44px; flex-wrap: wrap; }
+.mk-section-title {
+  font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px);
+  line-height: .95; text-transform: uppercase; text-wrap: balance; margin: 6px 0 0;
+}
+.mk-section-index { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--faint); white-space: nowrap; }
+
+/* ---------- hero ---------- */
+.mk-hero { position: relative; padding: 56px 0 72px; border-bottom: 1px solid var(--rule); }
+.mk-hero-top { display: flex; justify-content: space-between; align-items: center; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); padding-bottom: 40px; }
+.mk-hero-top .mk-mark { color: var(--paper); font-family: 'Fredoka', sans-serif; font-weight: 600; letter-spacing: .02em; }
+.mk-hero-top .mk-mark .dot { color: var(--amber); }
+.mk-badge { border: 1px solid var(--rule); border-radius: 999px; padding: 8px 16px; font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+.mk-hero-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 48px; align-items: center; }
+@media (max-width: 820px) { .mk-hero-grid { grid-template-columns: 1fr; } }
+
+.mk-hero-title {
+  font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(52px, 9vw, 108px);
+  line-height: .86; text-transform: uppercase; text-wrap: balance; margin: 18px 0 0;
+}
+.mk-hero-title em { font-style: normal; color: var(--amber); }
+.mk-hero-sub { font-family: 'Space Mono', monospace; font-size: 15px; line-height: 1.6; color: var(--muted); max-width: 46ch; margin: 22px 0 0; }
+.mk-hero-hand { font-family: 'Caveat', cursive; font-size: 26px; color: var(--amber); margin-top: 10px; display: block; }
+
+.mk-hero-photo { position: relative; border-radius: 2px; overflow: hidden; aspect-ratio: 4/5; }
+.mk-hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mk-hero-caption { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--faint); margin-top: 10px; display: flex; justify-content: space-between; }
+
+.mk-hero-strip { margin-top: 56px; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.mk-hero-strip .mk-cell { padding: 20px 22px; border-left: 1px solid var(--rule); font-family: 'Space Mono', monospace; }
+.mk-hero-strip .mk-cell:first-child { border-left: none; }
+.mk-hero-strip .mk-num { font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(24px, 3.4vw, 36px); color: var(--paper); font-variant-numeric: tabular-nums; }
+.mk-hero-strip .mk-lbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-top: 6px; }
+@media (max-width: 700px) { .mk-hero-strip { grid-template-columns: repeat(2, 1fr); } .mk-hero-strip .mk-cell:nth-child(3) { border-left: none; } }
+
+/* ---------- sobre ---------- */
+.mk-about p { font-size: 17px; line-height: 1.75; color: var(--muted); max-width: 66ch; margin: 0 0 18px; }
+.mk-about strong { color: var(--paper); font-weight: 600; }
+
+/* ---------- numeros ---------- */
+.mk-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.mk-stat { background: var(--ink); padding: 28px 24px; }
+.mk-stat .mk-num { font-family: 'Anton', sans-serif; font-size: clamp(30px, 3.6vw, 42px); color: var(--paper); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.mk-stat .mk-lbl { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .06em; color: var(--faint); margin-top: 8px; }
+@media (max-width: 820px) { .mk-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.mk-window-note { margin-top: 18px; font-family: 'Space Mono', monospace; font-size: 11.5px; color: var(--faint); display: flex; align-items: center; gap: 8px; }
+.mk-window-note::before { content: '↳'; color: var(--amber); }
+
+.mk-secondary-stats { margin-top: 56px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px; }
+@media (max-width: 900px) { .mk-secondary-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .mk-secondary-stats { grid-template-columns: repeat(2, 1fr); } }
+.mk-mini-stat .mk-num { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 22px; color: var(--amber); font-variant-numeric: tabular-nums; }
+.mk-mini-stat .mk-lbl { font-family: 'Space Mono', monospace; font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+
+/* ---------- audiencia ---------- */
+.mk-aud-grid { display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 48px; }
+@media (max-width: 900px) { .mk-aud-grid { grid-template-columns: 1fr; } }
+.mk-aud-block h3 { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 0 0 20px; font-weight: 400; }
+.mk-bar-row { margin-bottom: 14px; }
+.mk-bar-row .mk-top { display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 12.5px; margin-bottom: 6px; }
+.mk-bar-row .mk-pct { color: var(--amber); font-variant-numeric: tabular-nums; }
+.mk-bar-track { height: 8px; background: var(--ink-warm); border-radius: 1px; overflow: hidden; }
+.mk-bar-fill { height: 100%; background: linear-gradient(90deg, var(--burnt), var(--amber)); border-radius: 1px; }
+
+.mk-geo-list { list-style: none; margin: 0; padding: 0; }
+.mk-geo-list li { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--rule); font-family: 'Space Mono', monospace; font-size: 13px; }
+.mk-geo-list .mk-place { color: var(--paper); }
+.mk-geo-list .mk-val { color: var(--amber); font-variant-numeric: tabular-nums; }
+
+/* ---------- conteudo ---------- */
+.mk-post-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+@media (max-width: 900px) { .mk-post-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .mk-post-grid { grid-template-columns: 1fr; } }
+.mk-post-card { display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+.mk-post-card .mk-photo { position: relative; aspect-ratio: 4/5; border-radius: 2px; overflow: hidden; transition: filter .2s ease, transform .2s ease; }
+.mk-post-card:hover .mk-photo { filter: brightness(1.08); transform: translateY(-2px); }
+.mk-post-card:focus-visible .mk-photo { outline: 2px solid var(--amber); outline-offset: 3px; }
+.mk-post-card .mk-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mk-post-card .mk-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,16,12,.35) 0%, transparent 22%, transparent 70%, rgba(20,16,12,.55) 100%); pointer-events: none; }
+.mk-post-card .mk-rank { position: absolute; top: 14px; left: 14px; font-family: 'Anton', sans-serif; font-size: 20px; color: var(--paper); text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.mk-post-card .mk-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s ease; }
+.mk-post-card:hover .mk-play { opacity: 1; }
+.mk-post-card .mk-play span { width: 52px; height: 52px; border-radius: 50%; background: rgba(20,16,12,.55); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; color: var(--paper); font-size: 18px; }
+.mk-post-card .mk-open-hint { position: absolute; bottom: 14px; right: 14px; font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: rgba(20,16,12,.82); background: rgba(244,236,224,.88); padding: 5px 9px; border-radius: 2px; opacity: 0; transform: translateY(4px); transition: opacity .2s ease, transform .2s ease; }
+.mk-post-card:hover .mk-open-hint { opacity: 1; transform: translateY(0); }
+.mk-post-card .mk-cap { margin-top: 14px; font-size: 14px; line-height: 1.5; color: var(--muted); min-height: 42px; transition: color .2s ease; }
+.mk-post-card:hover .mk-cap { color: var(--paper); }
+.mk-post-card .mk-stats { margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap; font-family: 'Space Mono', monospace; font-size: 11.5px; color: var(--faint); border-top: 1px solid var(--rule); padding-top: 12px; }
+.mk-post-card .mk-stats b { color: var(--amber); font-variant-numeric: tabular-nums; }
+.mk-post-card .mk-date { font-family: 'Space Mono', monospace; font-size: 10.5px; color: var(--faint); margin-top: 8px; }
+
+/* ---------- marcas ---------- */
+.mk-brand-cloud { display: flex; flex-wrap: wrap; gap: 12px; }
+.mk-brand-pill { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--paper); border: 1px solid var(--rule); border-radius: 999px; padding: 10px 18px; display: flex; align-items: center; gap: 8px; }
+.mk-brand-pill::before { content: '☕'; font-size: 11px; }
+.mk-brand-note { margin-top: 24px; font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 62ch; }
+
+.mk-offer-grid { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+@media (max-width: 820px) { .mk-offer-grid { grid-template-columns: 1fr; } }
+.mk-offer { background: var(--ink); padding: 28px; }
+.mk-offer .mk-n { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--amber); }
+.mk-offer h4 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; margin: 10px 0 8px; }
+.mk-offer p { font-family: 'Space Mono', monospace; font-size: 12.5px; line-height: 1.7; color: var(--muted); margin: 0; }
+
+/* ---------- contato ---------- */
+.mk-contact { padding-bottom: 96px; }
+.mk-contact-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: end; }
+@media (max-width: 820px) { .mk-contact-grid { grid-template-columns: 1fr; } }
+.mk-contact-title { font-family: 'Anton', sans-serif; font-size: clamp(40px, 7vw, 84px); line-height: .92; text-transform: uppercase; text-wrap: balance; margin: 0; }
+.mk-contact-title .mk-hand { font-family: 'Caveat', cursive; font-size: .5em; color: var(--amber); display: block; margin-top: 6px; text-transform: none; }
+.mk-contact-list { list-style: none; margin: 0; padding: 0; }
+.mk-contact-list li { padding: 18px 0; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; font-family: 'Space Mono', monospace; font-size: 14px; }
+.mk-contact-list li:last-child { border-bottom: 1px solid var(--rule); }
+.mk-contact-list .mk-k { color: var(--faint); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.mk-contact-list .mk-v { color: var(--amber); }
+
+.mk-footer { padding: 32px 0 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--faint); }
