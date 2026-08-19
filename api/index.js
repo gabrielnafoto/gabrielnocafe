@@ -19,6 +19,7 @@ module.exports = async function handler(req, res) {
 
   const host = req.headers.host || SITE_URL_FALLBACK;
   const canonical = `https://${host}/`;
+  const ogImage = `https://${host}/api/og`;
   const metaTitle = "Gabriel no Café — Setup, Coffee & Creativity";
   const metaDesc = "Meu setup de café, equipamentos que uso, receitas e outras coisas que fazem parte do Gabriel no Café.";
 
@@ -74,9 +75,13 @@ module.exports = async function handler(req, res) {
   <meta property="og:description" content="${escapeHtml(metaDesc)}" />
   <meta property="og:url" content="${escapeHtml(canonical)}" />
   <meta property="og:site_name" content="${escapeHtml(f(p, "name", lang) || "Gabriel no Café")}" />
-  <meta name="twitter:card" content="summary" />
+  <meta property="og:image" content="${escapeHtml(ogImage)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(metaTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
+  <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fredoka:wght@600;700&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
