@@ -2,7 +2,9 @@
   "version": 2,
   "routes": [
     { "src": "/api/data", "dest": "/api/data.js" },
+    { "src": "/api/midiakit-data", "dest": "/api/midiakit-data.js" },
     { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/midiakit", "dest": "/api/midiakit.js" },
     { "src": "/", "dest": "/api/index.js" }
   ]
 }
