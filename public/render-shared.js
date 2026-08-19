@@ -180,7 +180,7 @@
           <span class="l3">${escapeHtml(lastWord)}<span class="dot">${escapeHtml(lastDot)}</span>${doodleCircle()}</span>
         </h1>
 
-        <div class="cover-photo">
+        <div class="cover-photo"${p.photoPositionY ? ` style="--photo-y:${escapeHtml(p.photoPositionY)}%"` : ""}>
           ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang))}
         </div>
 

@@ -214,6 +214,16 @@
           </div>
           <p class="hint">Envie um arquivo do seu computador/celular, ou cole um link direto. Deixe vazio pra usar as iniciais do nome.</p>
         </div>
+        <div class="field">
+          <label>Enquadramento da foto (capa)</label>
+          <select id="p-photo-y">
+            <option value="20">Mostrar mais o topo (cabeça/cabelo)</option>
+            <option value="50">Centralizado</option>
+            <option value="68" selected>Puxar pra baixo (rosto inteiro)</option>
+            <option value="85">Bem pra baixo (rosto + ombros)</option>
+          </select>
+          <p class="hint">Ajusta qual parte da foto aparece no recorte vertical da capa.</p>
+        </div>
         <div class="row">
           <div class="field"><label>função / papel — PT</label><input type="text" id="p-role" placeholder="Fotógrafo, filmmaker & coffee creator" /><p class="hint">Aparece ao lado do nome no topo.</p></div>
           <div class="field"><label>função / papel — <span style="color:var(--red)">EN</span></label><input type="text" id="p-role-en" placeholder="Photographer, filmmaker & coffee creator" /></div>
@@ -468,6 +478,7 @@ function renderAll() {
   const p = data.profile || {};
   const s = data.site || {};
   set('p-name', p.name); set('p-handle', p.handle); set('p-photo', p.photo);
+  set('p-photo-y', p.photoPositionY || '68');
   set('p-role', p.role); set('p-role-en', p.role_en);
   set('p-bio', p.bio); set('p-bio-en', p.bio_en);
   set('p-intro', p.intro); set('p-intro-en', p.intro_en);
@@ -486,7 +497,7 @@ function renderAll() {
 function getFormData() {
   return {
     profile: {
-      name: v('p-name'), handle: v('p-handle'), photo: v('p-photo'),
+      name: v('p-name'), handle: v('p-handle'), photo: v('p-photo'), photoPositionY: v('p-photo-y'),
       role: v('p-role'), role_en: v('p-role-en'),
       bio: v('p-bio'), bio_en: v('p-bio-en'),
       intro: v('p-intro'), intro_en: v('p-intro-en'),

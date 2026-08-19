@@ -560,6 +560,7 @@ body.index-open { overflow: hidden; }
   aspect-ratio: 4 / 5;
 }
 .cover-photo .ph { height: 100%; }
+.cover-photo .ph img { object-position: center var(--photo-y, 68%); }
 
 .cover-meta {
   margin-top: clamp(26px, 4vw, 48px);
