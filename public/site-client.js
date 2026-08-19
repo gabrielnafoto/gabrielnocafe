@@ -150,7 +150,56 @@
       // Newly revealed fiches should settle in like the rest of the page.
       if (open) panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
     }
+
+    const chapterToggle = e.target.closest("[data-chapter-toggle]");
+    if (chapterToggle) toggleChapter(chapterToggle);
   });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const chapterToggle = e.target.closest("[data-chapter-toggle]");
+    if (!chapterToggle) return;
+    e.preventDefault();
+    toggleChapter(chapterToggle);
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* chapters: click a chapter's own opener to reveal/hide its products  */
+  /* ------------------------------------------------------------------ */
+
+  // Only one chapter open at a time — opening one collapses whichever
+  // other chapter was open, so the page never stacks up several long lists.
+  function toggleChapter(toggle, forceOpen) {
+    const panel = document.getElementById(toggle.getAttribute("aria-controls"));
+    if (!panel) return;
+    const isOpen = toggle.getAttribute("aria-expanded") === "true";
+    const willOpen = forceOpen !== undefined ? forceOpen : !isOpen;
+    if (willOpen === isOpen) return;
+
+    if (willOpen) {
+      document.querySelectorAll("[data-chapter-toggle][aria-expanded='true']").forEach((other) => {
+        if (other !== toggle) toggleChapter(other, false);
+      });
+      panel.removeAttribute("hidden");
+      panel.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+    } else {
+      panel.setAttribute("hidden", "");
+    }
+    toggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  }
+
+  // Arriving via a chapter link (index overlay, masthead nav, a direct
+  // #cap-... URL) should open that chapter instead of scrolling to a
+  // closed, empty-looking header.
+  function openChapterFromHash() {
+    const id = location.hash.slice(1);
+    if (!id) return;
+    const section = document.getElementById(id);
+    const toggle = section?.querySelector("[data-chapter-toggle]");
+    if (toggle) toggleChapter(toggle, true);
+  }
+
+  window.addEventListener("hashchange", openChapterFromHash);
 
   /* ------------------------------------------------------------------ */
   /* motion: entrances, drawn doodles, running folio                    */
@@ -251,6 +300,7 @@
   function wirePage() {
     wireMotion();
     wireFolio();
+    openChapterFromHash();
   }
 
   // Hydrate to the visitor's preferred language, then wire everything up.

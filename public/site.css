@@ -827,6 +827,8 @@ body.index-open { overflow: hidden; }
   position: relative;
   display: grid;
   gap: clamp(22px, 3vw, 44px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .chapter-open::before {
   content: '';
@@ -839,7 +841,23 @@ body.index-open { overflow: hidden; }
   background: color-mix(in srgb, var(--fg) 4%, transparent);
   border-bottom: 1px solid var(--rule);
   z-index: -1;
+  transition: background-color .2s ease;
 }
+.chapter-open:hover::before { background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.chapter-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+/* the little "reveal the products" cue, beside the item count */
+.chapter-toggle-hint {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+}
+.chapter-toggle-arr {
+  display: inline-block;
+  color: var(--faint);
+  transition: transform .25s cubic-bezier(.6, .05, .3, 1);
+}
+.chapter-open[aria-expanded="true"] .chapter-toggle-arr { transform: rotate(180deg); }
 
 .chapter-mark { position: relative; }
 
@@ -893,7 +911,7 @@ body.index-open { overflow: hidden; }
 }
 .chapter-underline.drawn path { animation: draw 700ms cubic-bezier(.6, .05, .3, 1) forwards; }
 
-.chapter-intro { display: grid; gap: 18px; align-content: start; }
+.chapter-intro { display: flex; align-items: center; gap: 18px; }
 .chapter-count {
   font-family: 'Space Mono', monospace;
   font-weight: 700;

@@ -508,7 +508,8 @@
 
     return `<section class="page ${meta.palette} chapter" id="${escapeHtml(meta.anchor)}"
              data-chapter="${escapeHtml(meta.num)}" data-chapter-title="${escapeHtml(title)}" data-palette="${escapeHtml(meta.palette)}">
-      <div class="chapter-open">
+      <div class="chapter-open" data-chapter-toggle role="button" tabindex="0"
+           aria-expanded="false" aria-controls="items-${escapeHtml(meta.anchor)}">
         <div class="chapter-mark rise">
           <span class="chapter-num" aria-hidden="true">${escapeHtml(meta.num)}</span>
           <h2 class="chapter-title">${escapeHtml(title)}</h2>
@@ -516,9 +517,10 @@
         </div>
         <div class="chapter-intro rise">
           <span class="chapter-count">${escapeHtml(t(lang, "chapter"))} ${escapeHtml(meta.num)} — ${escapeHtml(countTxt)}</span>
+          <span class="chapter-toggle-hint"><span class="chapter-toggle-arr" aria-hidden="true">↓</span></span>
         </div>
       </div>
-      <div class="chapter-items">${headHtml}${restHtml}</div>
+      <div class="chapter-items" id="items-${escapeHtml(meta.anchor)}" hidden>${headHtml}${restHtml}</div>
     </section>`;
   }
 
