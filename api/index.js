@@ -4,7 +4,7 @@
 // and motion — reusing the same render functions from public/render-shared.js.
 
 const { getData } = require("../lib/store.js");
-const { renderApp, renderMasthead, escapeHtml, f, t } = require("../public/render-shared.js");
+const { renderApp, renderMasthead, escapeHtml, f, t, safeUrl } = require("../public/render-shared.js");
 
 const SITE_URL_FALLBACK = "gabrielnocafe.vercel.app";
 const FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23e8a856' d='M10 0 11.5 8 20 10 11.5 12 10 20 8.5 12 0 10 8.5 8Z'/%3E%3C/svg%3E";
@@ -20,11 +20,60 @@ module.exports = async function handler(req, res) {
   const host = req.headers.host || SITE_URL_FALLBACK;
   const canonical = `https://${host}/`;
   const ogImage = `https://${host}/api/og`;
-  const metaTitle = "Gabriel no Café — Setup, Coffee & Creativity";
-  const metaDesc = "Meu setup de café, equipamentos que uso, receitas e outras coisas que fazem parte do Gabriel no Café.";
+  // Built from the same fields the admin edits (site.title/tagline), so
+  // renaming the publication or rewriting the tagline actually shows up in
+  // search results and share previews — not just on the page itself.
+  const siteName = f(s, "title", lang) || "gabriel no café";
+  const tagline = f(s, "tagline", lang) || "café, criatividade e as coisas que eu realmente uso.";
+  const metaTitle = `${siteName} — ${tagline}`;
+  const metaDesc = f(s, "subheadline", lang) ||
+    "Meu setup de café, equipamentos que uso, receitas e outras coisas que fazem parte do Gabriel no Café.";
 
   const bodyHtml = renderApp(data, lang);
   const dataJson = JSON.stringify(data).replace(/</g, "\\u003c");
+
+  // Structured data: who Gabriel is, and the equipment list as an ItemList —
+  // this is the only place on the page that names every product as data
+  // rather than prose, which is what rich-result crawlers actually parse.
+  const items = [];
+  (data.sections || []).forEach((sec) => {
+    if ((sec.group || "setup") !== "setup") return;
+    (sec.items || []).forEach((it) => {
+      const url = safeUrl(it.url);
+      const name = f(it, "name", lang);
+      if (!url || !name) return;
+      items.push({ name, url, image: safeUrl(it.image) || undefined });
+    });
+  });
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "name": f(p, "name", lang) || "Gabriel",
+        "url": canonical,
+        "jobTitle": f(p, "role", lang) || undefined,
+        "image": safeUrl(p.photo) || undefined,
+        "sameAs": [safeUrl(p.instagram), safeUrl(p.youtube), safeUrl(p.twitter)].filter(Boolean),
+      },
+      items.length
+        ? {
+            "@type": "ItemList",
+            "name": siteName,
+            "itemListElement": items.map((it, i) => ({
+              "@type": "ListItem",
+              "position": i + 1,
+              "item": {
+                "@type": "Product",
+                "name": it.name,
+                "url": it.url,
+                "image": it.image,
+              },
+            })),
+          }
+        : undefined,
+    ].filter(Boolean),
+  };
 
   // The masthead is rendered by the SAME function the client uses, so the
   // language toggle can re-render it instead of leaving it stuck in Portuguese.
@@ -58,6 +107,7 @@ module.exports = async function handler(req, res) {
   <meta name="twitter:title" content="${escapeHtml(metaTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
+  <script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fredoka:wght@600;700&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
