@@ -691,7 +691,6 @@
   function renderBackCover(data, lang) {
     const p = data.profile || {};
     const s = data.site || {};
-    const title = f(s, "title", lang) || "gabriel no café";
     const credits = f(p, "role", lang);
     const gear = parseGear(f(p, "recordingGear", lang));
     const thanks = f(s, "thanksNote", lang);
@@ -738,7 +737,6 @@
       <div class="backcover-foot">
         ${renderSocials(p)}
         <div class="backcover-copy">
-          ${escapeHtml(title)}<br/>
           ${escapeHtml(p.handle || "")} · © ${year}
         </div>
       </div>
