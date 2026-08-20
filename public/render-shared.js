@@ -29,7 +29,7 @@
       photoCover: "foto — capa", photoChapter: "foto — capítulo", photoProduct: "foto — produto", photoFrame: "frame de vídeo",
       readOn: "role pra ver",
       thisIssue: "esta edição", creditsBy: "fotografado, filmado e editado por",
-      gearHeading: "equipamento de gravação",
+      gearHeading: "por trás dos vídeos", thanksHeading: "se você chegou até aqui...",
       skipToContent: "pular para o conteúdo",
     },
     en: {
@@ -43,7 +43,7 @@
       photoCover: "photo — cover", photoChapter: "photo — chapter", photoProduct: "photo — product", photoFrame: "video frame",
       readOn: "scroll on",
       thisIssue: "this issue", creditsBy: "photographed, filmed and edited by",
-      gearHeading: "recording gear",
+      gearHeading: "behind the videos", thanksHeading: "if you made it this far...",
       skipToContent: "skip to content",
     },
   };
@@ -156,26 +156,30 @@
     return String(i + 1).padStart(2, "0");
   }
 
-  // The inverse of splitNote: pulls the FIRST sentence out as a big
-  // handwritten "lede", leaving the rest as normal, readable body copy.
-  // A whole paragraph set in a script face is exhausting to read — one
-  // hooky line in Caveat, then plain text, reads far better.
-  function splitLede(text) {
-    const s = String(text || "").trim();
-    if (!s) return { lede: "", rest: "" };
-    // Short enough to read comfortably as one handwritten block on its own —
-    // the whole thing IS the lede, nothing repeats underneath.
-    if (s.length <= 90) return { lede: s, rest: "" };
-    // Longer notes: a short opening phrase acts as a handwritten kicker,
-    // and the FULL text (not just the remainder) reads as normal body copy
-    // underneath — so nothing is cut or duplicated, just given two paces.
-    const words = s.split(/\s+/);
-    let lede = "";
-    for (const w of words) {
-      if ((lede ? lede + " " + w : w).length > 42) break;
-      lede = lede ? lede + " " + w : w;
+  // Splits a note into real paragraphs on blank lines (\n\n) — respects
+  // whatever the author actually wrote instead of guessing a "lede" out of
+  // one run-on block. Each paragraph reads as its own short beat.
+  function splitParagraphs(text) {
+    return String(text || "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  }
+
+  // If the LAST paragraph is short and reads like a closing line ("é só um
+  // café.", "it's just coffee."), pull it out as the big typographic
+  // sign-off and drop it from the note body — one clean split, nothing
+  // duplicated. Otherwise the note is left whole and the caller falls back
+  // to a fixed sign-off string.
+  const SIGNOFF_HINT = /(é só um café|it'?s just coffee)/i;
+  function extractSignoff(text) {
+    const paragraphs = splitParagraphs(text);
+    if (!paragraphs.length) return { body: [], signoff: "" };
+    const last = paragraphs[paragraphs.length - 1];
+    if (last.length <= 60 && SIGNOFF_HINT.test(last)) {
+      // Strip a trailing decorative mark (✦ etc.) and stray punctuation the
+      // sentence doesn't need once it's standing alone, oversized.
+      const clean = last.replace(/[\s✦*·]+$/u, "").trim();
+      return { body: paragraphs.slice(0, -1), signoff: clean };
     }
-    return { lede: lede ? lede + "…" : "", rest: s };
+    return { body: paragraphs, signoff: "" };
   }
 
   // Splits a description into body + handwritten aside. When there's more than
@@ -673,21 +677,36 @@
     </aside>`;
   }
 
-  // Turns a plain textarea (one line per item, "Label: Value" or just a bare
-  // line) into notebook rows — no image, no admin repeater, just typing.
+  // Turns a plain textarea into the creator-gear groups — still just typing,
+  // no admin repeater UI to build/maintain. One line per category:
+  //   Categoria: Item um, Item dois
+  // Multiple items on a line split on commas. Any item can carry an
+  // optional link with `Nome|https://url` — the `|` is never valid in a
+  // product name, so it's an unambiguous separator.
   function parseGear(text) {
     return String(text || "")
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
-      .map((line) => {
-        const i = line.indexOf(":");
-        return i > -1
-          ? { label: line.slice(0, i).trim(), value: line.slice(i + 1).trim() }
-          : { label: "", value: line };
-      });
+      .map((line, i) => {
+        const colon = line.indexOf(":");
+        const category = colon > -1 ? line.slice(0, colon).trim() : "";
+        const rest = colon > -1 ? line.slice(colon + 1) : line;
+        const items = rest.split(",").map((raw) => {
+          const [name, url] = raw.split("|").map((s) => s.trim());
+          return { name, url: url || "" };
+        }).filter((it) => it.name);
+        return { number: String(i + 1).padStart(2, "0"), category, items };
+      })
+      .filter((g) => g.items.length);
   }
 
+  // Five editorial beats, in strict reading order: author credit -> creator
+  // gear -> a deliberate pause -> a short personal note -> the closing line.
+  // Each is its own block so the spacing between them can do the work of
+  // separating "who made this / what they used" (production facts) from
+  // "thank you for reading" (a personal aside) — instead of one long column
+  // where both read as the same kind of content.
   function renderBackCover(data, lang) {
     const p = data.profile || {};
     const s = data.site || {};
@@ -695,33 +714,47 @@
     const credits = f(p, "role", lang);
     const gear = parseGear(f(p, "recordingGear", lang));
     const thanks = f(s, "thanksNote", lang);
-    const { lede: thanksLede, rest: thanksRest } = splitLede(thanks);
+    const { body: thanksParagraphs, signoff: extractedSignoff } = extractSignoff(thanks);
     const year = new Date().getFullYear();
 
-    // The cover's headline comes back one last time, oversized — the same
-    // sentence the publication opened with now closes it.
-    const signoff = f(s, "headline", lang) || (lang === "en" ? "what i use." : "o que eu uso.");
+    // Prefer a sign-off line pulled from the thanks note itself (nothing
+    // duplicated — see extractSignoff); fall back to a fixed line rather
+    // than repeating the cover's own headline, which the note it replaced
+    // had no real reason to say twice.
+    const signoff = extractedSignoff || (lang === "en" ? "it's just coffee." : "é só um café.");
 
-    const gearRows = gear.map((g) => `<div class="gear-row">
-      ${g.label ? `<span class="gear-label">${escapeHtml(g.label)}</span>` : ""}
-      <span class="gear-value">${escapeHtml(g.value)}</span>
+    const gearGroups = gear.map((g) => `<div class="gear-group">
+      <span class="gear-number" aria-hidden="true">${escapeHtml(g.number)}</span>
+      <div class="gear-group-body">
+        ${g.category ? `<span class="gear-category">${escapeHtml(g.category)}</span>` : ""}
+        <div class="gear-items">
+          ${g.items.map((it) => it.url
+            ? `<a class="gear-item" href="${escapeHtml(safeUrl(it.url))}" target="_blank" rel="${relFor({}, it.url)}">${escapeHtml(it.name)} <span class="arr" aria-hidden="true">↗</span></a>`
+            : `<span class="gear-item">${escapeHtml(it.name)}</span>`
+          ).join("")}
+        </div>
+      </div>
     </div>`).join("");
 
     return `<footer class="page page--ink-deep backcover">
       <div class="backcover-in rise">
-        <div class="backcover-masthead">
-          <span class="backcover-issue">${escapeHtml(t(lang, "thisIssue"))} — ${year}</span>
-          <p class="backcover-credits">${escapeHtml(t(lang, "creditsBy"))} ${escapeHtml(p.name || "")}${credits ? ` — ${escapeHtml(credits)}` : ""}</p>
+        <div class="backcover-credit-gear">
+          <div class="backcover-credit">
+            <span class="backcover-issue">${escapeHtml(t(lang, "thisIssue"))} — ${year}</span>
+            <p class="backcover-credits">${escapeHtml(t(lang, "creditsBy"))} ${escapeHtml(p.name || "")}${credits ? ` — ${escapeHtml(credits)}` : ""}</p>
+          </div>
+
+          ${gearGroups ? `<div class="backcover-gear">
+            <span class="gear-heading">${escapeHtml(t(lang, "gearHeading"))}</span>
+            <div class="gear-list">${gearGroups}</div>
+          </div>` : ""}
         </div>
 
-        ${gearRows ? `<div class="backcover-gear">
-          <span class="gear-heading">✦ ${escapeHtml(t(lang, "gearHeading"))}</span>
-          <div class="gear-list">${gearRows}</div>
-        </div>` : ""}
+        ${thanksParagraphs.length ? `<div class="backcover-pause" aria-hidden="true">✦</div>
 
-        ${thanks ? `<div class="backcover-note">
-          ${thanksLede ? `<p class="note-lede">${escapeHtml(thanksLede)}</p>` : ""}
-          ${thanksRest ? `<p class="note-rest">${escapeHtml(thanksRest)}</p>` : ""}
+        <div class="backcover-note">
+          <p class="note-heading">${escapeHtml(t(lang, "thanksHeading"))}</p>
+          ${thanksParagraphs.map((para) => `<p class="note-para">${escapeHtml(para)}</p>`).join("")}
         </div>` : ""}
 
         <p class="backcover-signoff">${escapeHtml(signoff)}</p>

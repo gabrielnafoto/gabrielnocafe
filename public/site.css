@@ -1499,8 +1499,10 @@ body.index-open { overflow: hidden; }
   padding-inline: var(--gutter);
   width: 100%;
 }
-/* colophon — the zine's own masthead, instead of repeating the cover line */
-.backcover-masthead { margin-bottom: clamp(28px, 4vw, 44px); }
+
+/* --- 1. author credit — a masthead line, not a headline. Deliberately
+   quiet: it names who made this without competing with anything below. --- */
+.backcover-credit { margin-bottom: clamp(40px, 6vw, 72px); }
 .backcover-issue {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -1512,68 +1514,101 @@ body.index-open { overflow: hidden; }
 .backcover-credits {
   font-family: 'Fredoka', sans-serif;
   font-weight: 600;
-  font-size: clamp(22px, 3.6vw, 34px);
-  line-height: 1.25;
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.4;
   color: var(--paper);
-  margin-top: 8px;
-  max-width: 22ch;
+  margin-top: 6px;
+  max-width: 32ch;
 }
 
+/* --- 2. creator gear — its own small heading, numbered groups. Name of the
+   gear leads (protagonist); category is quiet metadata above it, not a
+   label column. Stacks in one axis at every width — the 2-up desktop grid
+   lives on .gear-group-body's own internal layout, not a page-level table. --- */
 .backcover-gear {
-  margin-bottom: clamp(24px, 3.5vw, 36px);
-  padding-top: clamp(20px, 3vw, 28px);
-  border-top: 1px dashed var(--rule);
-  max-width: 360px;
+  margin-bottom: clamp(48px, 7vw, 84px);
+  max-width: 640px;
 }
 .gear-heading {
   display: block;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: 10.5px;
-  letter-spacing: .14em;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 12px;
-}
-.gear-list { display: flex; flex-direction: column; gap: 8px; }
-.gear-row {
-  display: flex;
-  gap: 14px;
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-}
-.gear-label {
-  flex: 0 0 auto;
-  min-width: 90px;
   color: var(--faint);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  font-size: 10.5px;
-  padding-top: .2em;
+  margin-bottom: clamp(20px, 3vw, 28px);
 }
-.gear-value { color: var(--muted); }
+.gear-list { display: flex; flex-direction: column; gap: clamp(18px, 2.6vw, 26px); }
+.gear-group { display: flex; gap: 16px; align-items: baseline; }
+.gear-number {
+  flex: 0 0 auto;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--accent);
+  opacity: .6;
+  padding-top: .15em;
+}
+.gear-group-body { min-width: 0; }
+.gear-category {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.gear-items { display: flex; flex-wrap: wrap; column-gap: 14px; row-gap: 2px; }
+.gear-item {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: clamp(17px, 2.4vw, 21px);
+  color: var(--paper);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+a.gear-item { border-bottom: 1px solid transparent; transition: border-color .18s, color .18s; }
+a.gear-item:hover, a.gear-item:focus-visible { color: var(--accent); border-color: currentColor; }
+.gear-item .arr { font-size: 12px; }
 
-.backcover-note { max-width: 46ch; margin-bottom: clamp(40px, 7vw, 90px); }
-.note-lede {
+/* --- 3. the pause — nothing but a mark and a lot of empty space either
+   side of it. The one signal that the technical part just ended. --- */
+.backcover-pause {
+  text-align: center;
+  color: var(--accent);
+  font-size: 15px;
+  margin: 0 0 clamp(48px, 7vw, 84px);
+}
+
+/* --- 4. the note — a short personal aside, not more editorial prose. The
+   heading uses the site's own handwriting voice, sized well below any real
+   heading so it reads as a scrawled note, not a section title. Paragraphs
+   get real air between them instead of running together. --- */
+.backcover-note { max-width: 46ch; margin-bottom: clamp(56px, 8vw, 96px); }
+.note-heading {
   font-family: 'Caveat', cursive;
   font-weight: 600;
-  font-size: clamp(22px, 3.4vw, 30px);
-  line-height: 1.25;
+  font-size: clamp(19px, 2.6vw, 24px);
   color: var(--amber);
   transform: rotate(-1deg);
   display: inline-block;
+  margin-bottom: 14px;
 }
-.note-rest {
+.note-para {
   font-family: 'Space Mono', monospace;
   font-size: 12.5px;
   line-height: 1.75;
   color: var(--muted);
-  margin-top: 12px;
 }
+.note-para + .note-para { margin-top: 16px; }
 
-/* the cover's headline returns, oversized, as the publication's last page —
-   same device as .cover-title, deliberately smaller so the hero still wins */
+/* --- 5. the sign-off — the last page. Typography and negative space only;
+   deliberately capped smaller than the hero (--fs-hero) so the cover still
+   wins the largest-type contest, but still the biggest thing down here. --- */
 .backcover-signoff {
   font-family: 'Anton', 'Fredoka', sans-serif;
   font-weight: 400;
@@ -1716,6 +1751,20 @@ body.index-open { overflow: hidden; }
   .fiche--c .fiche-actions { margin-top: 0; margin-left: auto; flex-shrink: 0; }
 
   .index-list { padding-top: 20px; }
+
+  /* BACK COVER: credit and gear share a row (credit narrow/left, gear
+     wide/right) — the wide desktop column has room for an editorial split
+     instead of one long stacked column. Pause/note/sign-off stay full-width
+     underneath: they're the shared closing beats, not part of that split. */
+  .backcover-credit-gear {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: clamp(40px, 6vw, 90px);
+    align-items: start;
+    margin-bottom: clamp(48px, 7vw, 84px);
+  }
+  .backcover-credit { margin-bottom: 0; }
+  .backcover-gear { margin-bottom: 0; max-width: none; }
 }
 
 @media (min-width: 1100px) {

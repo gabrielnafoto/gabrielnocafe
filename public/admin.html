@@ -250,7 +250,7 @@
           <div class="field">
             <label>equipamento de gravação — PT</label>
             <textarea id="p-gear" placeholder="Câmera: iPhone 15 Pro&#10;Áudio: microfone de lapela&#10;Edição: CapCut"></textarea>
-            <p class="hint">Uma linha por item, formato "Label: valor". Aparece no rodapé final, sem precisar de foto.</p>
+            <p class="hint">Uma linha por categoria: "Categoria: item um, item dois". Vira o bloco numerado "por trás dos vídeos" no rodapé. Pra linkar um item, use "Nome|https://link" (o link é opcional).</p>
           </div>
           <div class="field"><label>equipamento de gravação — <span style="color:var(--red)">EN</span></label><textarea id="p-gear-en" placeholder="Camera: iPhone 15 Pro&#10;Audio: lavalier mic&#10;Editing: CapCut"></textarea></div>
         </div>
@@ -321,7 +321,11 @@
           </div>
         </div>
         <div class="row">
-          <div class="field" style="margin-bottom:0"><label>bilhete — PT</label><textarea id="s-thanks" placeholder="ei — obrigado por ter chegado até aqui..."></textarea></div>
+          <div class="field" style="margin-bottom:0">
+            <label>bilhete — PT</label>
+            <textarea id="s-thanks" placeholder="ei — obrigado por ter chegado até aqui..."></textarea>
+            <p class="hint">Separe em parágrafos curtos com uma linha em branco entre eles. Se o último parágrafo terminar com algo como "é só um café", ele vira o fechamento gigante da página automaticamente.</p>
+          </div>
           <div class="field" style="margin-bottom:0"><label>bilhete — <span style="color:var(--red)">EN</span></label><textarea id="s-thanks-en" placeholder="hey — thanks for scrolling all the way down..."></textarea></div>
         </div>
       </div>
