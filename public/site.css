@@ -1606,21 +1606,6 @@ a.gear-item:hover, a.gear-item:focus-visible { color: var(--accent); border-colo
 }
 .note-para + .note-para { margin-top: 16px; }
 
-/* --- 5. the sign-off — the last page. Typography and negative space only;
-   deliberately capped smaller than the hero (--fs-hero) so the cover still
-   wins the largest-type contest, but still the biggest thing down here. --- */
-.backcover-signoff {
-  font-family: 'Anton', 'Fredoka', sans-serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  font-size: clamp(44px, 11vw, 150px);
-  line-height: .88;
-  letter-spacing: -.015em;
-  color: var(--paper);
-  max-width: 16ch;
-  overflow-wrap: break-word;
-}
-
 .backcover-foot {
   max-width: var(--wide);
   margin-inline: auto;

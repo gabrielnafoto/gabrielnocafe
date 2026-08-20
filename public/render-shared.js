@@ -163,25 +163,6 @@
     return String(text || "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   }
 
-  // If the LAST paragraph is short and reads like a closing line ("é só um
-  // café.", "it's just coffee."), pull it out as the big typographic
-  // sign-off and drop it from the note body — one clean split, nothing
-  // duplicated. Otherwise the note is left whole and the caller falls back
-  // to a fixed sign-off string.
-  const SIGNOFF_HINT = /(é só um café|it'?s just coffee)/i;
-  function extractSignoff(text) {
-    const paragraphs = splitParagraphs(text);
-    if (!paragraphs.length) return { body: [], signoff: "" };
-    const last = paragraphs[paragraphs.length - 1];
-    if (last.length <= 60 && SIGNOFF_HINT.test(last)) {
-      // Strip a trailing decorative mark (✦ etc.) and stray punctuation the
-      // sentence doesn't need once it's standing alone, oversized.
-      const clean = last.replace(/[\s✦*·]+$/u, "").trim();
-      return { body: paragraphs.slice(0, -1), signoff: clean };
-    }
-    return { body: paragraphs, signoff: "" };
-  }
-
   // Splits a description into body + handwritten aside. When there's more than
   // one sentence, the LAST one becomes the margin note in Caveat — a personal
   // remark pulled out of prose, no new admin field required.
@@ -714,14 +695,11 @@
     const credits = f(p, "role", lang);
     const gear = parseGear(f(p, "recordingGear", lang));
     const thanks = f(s, "thanksNote", lang);
-    const { body: thanksParagraphs, signoff: extractedSignoff } = extractSignoff(thanks);
+    // The note's own closing line ("é só um café.") stays part of the note
+    // — no separate oversized sign-off sitting right above the @handle/
+    // copyright line, which read as two endings stacked on top of each other.
+    const thanksParagraphs = splitParagraphs(thanks);
     const year = new Date().getFullYear();
-
-    // Prefer a sign-off line pulled from the thanks note itself (nothing
-    // duplicated — see extractSignoff); fall back to a fixed line rather
-    // than repeating the cover's own headline, which the note it replaced
-    // had no real reason to say twice.
-    const signoff = extractedSignoff || (lang === "en" ? "it's just coffee." : "é só um café.");
 
     const gearGroups = gear.map((g) => `<div class="gear-group">
       <span class="gear-number" aria-hidden="true">${escapeHtml(g.number)}</span>
@@ -756,8 +734,6 @@
           <p class="note-heading">${escapeHtml(t(lang, "thanksHeading"))}</p>
           ${thanksParagraphs.map((para) => `<p class="note-para">${escapeHtml(para)}</p>`).join("")}
         </div>` : ""}
-
-        <p class="backcover-signoff">${escapeHtml(signoff)}</p>
       </div>
       <div class="backcover-foot">
         ${renderSocials(p)}
