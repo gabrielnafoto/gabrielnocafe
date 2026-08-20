@@ -145,6 +145,17 @@
         toast.classList.add("show");
         clearTimeout(toast._timer);
         toast._timer = setTimeout(() => toast.classList.remove("show"), 1800);
+
+        // Local feedback on the button itself — the toast is easy to miss
+        // when it lands in a corner of the screen far from where you clicked.
+        if (!copyBtn.dataset.originalText) copyBtn.dataset.originalText = copyBtn.textContent;
+        copyBtn.textContent = window.SiteRender.t(lang, "copied");
+        copyBtn.classList.add("is-copied");
+        clearTimeout(copyBtn._resetTimer);
+        copyBtn._resetTimer = setTimeout(() => {
+          copyBtn.textContent = copyBtn.dataset.originalText;
+          copyBtn.classList.remove("is-copied");
+        }, 1800);
       };
       if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(done).catch(() => {});

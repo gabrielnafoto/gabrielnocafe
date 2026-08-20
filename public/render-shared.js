@@ -818,8 +818,8 @@
       </nav>
       <div class="index-foot">
         <a href="#capa" data-index-link data-anchor="capa">${escapeHtml(t(lang, "back"))}</a>
-        <span class="soon">${escapeHtml(t(lang, "recipes"))} — ${escapeHtml(t(lang, "soon"))}</span>
-        <span class="soon">${escapeHtml(t(lang, "favorites"))} — ${escapeHtml(t(lang, "soon"))}</span>
+        <span class="soon" aria-disabled="true" title="${escapeHtml(t(lang, "soon"))}">${escapeHtml(t(lang, "recipes"))} — ${escapeHtml(t(lang, "soon"))}</span>
+        <span class="soon" aria-disabled="true" title="${escapeHtml(t(lang, "soon"))}">${escapeHtml(t(lang, "favorites"))} — ${escapeHtml(t(lang, "soon"))}</span>
       </div>
     </div>`;
   }

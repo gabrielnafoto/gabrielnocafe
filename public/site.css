@@ -537,6 +537,7 @@ body::before {
   letter-spacing: .12em;
   text-transform: uppercase;
   color: rgba(20, 16, 12, .60);   /* AA — was .38 (2.4:1) */
+  cursor: default;
 }
 .index-foot a {
   font-family: 'Space Mono', monospace;
@@ -1363,6 +1364,7 @@ body.index-open { overflow: hidden; }
   transition: color .18s;
 }
 .copy-link:hover, .copy-link:focus-visible { color: var(--muted); }
+.copy-link.is-copied { color: var(--accent); }
 
 /* --- unified item layout: text first, photo below — same order everywhere.
    Items with no photo just run text full-width (.fiche--no-media). --- */
