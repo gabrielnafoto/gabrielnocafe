@@ -197,16 +197,44 @@
   /* photo slots                                                            */
   /* ---------------------------------------------------------------------- */
 
+  // Every photo comes off Vercel Blob at its original upload resolution —
+  // a phone in a 4:5 frame doesn't need a desktop-width JPEG. Routes through
+  // Vercel's built-in Image Optimization endpoint (works on any Vercel
+  // project, not just Next.js — configured via vercel.json's `images` key)
+  // to resize + serve AVIF/WebP on the fly, with edge caching.
+  const IMG_WIDTHS = [320, 480, 640, 828, 1080, 1280, 1920];
+
+  function optimizedSrc(url, width) {
+    return `/_vercel/image?url=${encodeURIComponent(url)}&w=${width}&q=75`;
+  }
+
+  // `sizes` tells the browser how wide the image will actually be laid out,
+  // so it can pick the right srcset candidate without downloading all of
+  // them to check. Every photo frame on this site is capped by --wide
+  // (1320px) and scales down proportionally on narrower screens — a rough
+  // "up to N, otherwise the viewport" is accurate enough without wiring a
+  // bespoke value through every call site.
+  function srcsetFor(url, maxWidth) {
+    const widths = IMG_WIDTHS.filter((w) => w <= maxWidth * 2); // allow for high-DPI screens
+    if (!widths.includes(IMG_WIDTHS[IMG_WIDTHS.length - 1]) && maxWidth * 2 > widths[widths.length - 1]) {
+      widths.push(IMG_WIDTHS[IMG_WIDTHS.length - 1]);
+    }
+    return widths.map((w) => `${optimizedSrc(url, w)} ${w}w`).join(", ");
+  }
+
   // Renders a real image when one is set, otherwise a clearly-marked
   // placeholder that holds the exact composition shape. Gabriel drops photos
   // into `image` (admin) and the layout doesn't move. `eager` is for the one
   // photo that's always above the fold (the cover) — lazy-loading it just
-  // delays the first thing a visitor sees.
-  function photo(src, ratio, caption, alt, eager) {
+  // delays the first thing a visitor sees. `maxWidth` is the frame's own cap
+  // in CSS px, used to build a right-sized srcset.
+  function photo(src, ratio, caption, alt, eager, maxWidth) {
     const url = safeUrl(src);
     if (url) {
       const loadAttr = eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`;
-      return `<div class="ph ph--${ratio}"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt || "")}" ${loadAttr} /></div>`;
+      const w = maxWidth || 700;
+      const srcset = ` srcset="${escapeHtml(srcsetFor(url, w))}" sizes="(min-width: ${w}px) ${w}px, 100vw"`;
+      return `<div class="ph ph--${ratio}"><img src="${escapeHtml(optimizedSrc(url, w))}"${srcset} alt="${escapeHtml(alt || "")}" ${loadAttr} /></div>`;
     }
     return `<div class="ph ph--${ratio} ph--empty" role="img" aria-label="${escapeHtml(caption || "")}">
       <span>✦<br/>${escapeHtml(caption || "")}<br/>${ratio.replace("x", ":")}</span>
@@ -358,15 +386,20 @@
     const coverStyleAttr = styleParts.length ? ` style="${escapeHtml(styleParts.join(";"))}"` : "";
     const overlay = editorialOverlay(item, lang, fallbackNumber);
 
+    // Product photos are never wider than ~520px in any layout (a capped
+    // side-by-side column on desktop, full-bleed but narrow on mobile).
+    const PRODUCT_MAX_W = 520;
+    const productSrcset = ` srcset="${escapeHtml(srcsetFor(photos[0], PRODUCT_MAX_W))}" sizes="(min-width: 760px) ${PRODUCT_MAX_W}px, 100vw"`;
+
     if (photos.length === 1) {
       return `<div class="ph ph--4x5">
-        <img src="${escapeHtml(photos[0])}" alt="${name}" loading="lazy"${coverStyleAttr} />
+        <img src="${escapeHtml(optimizedSrc(photos[0], PRODUCT_MAX_W))}"${productSrcset} alt="${name}" loading="lazy"${coverStyleAttr} />
         ${overlay}
       </div>`;
     }
 
     const slides = photos.map((url, i) => `<div class="ph-slide" data-slide="${i}">
-        <img src="${escapeHtml(url)}" alt="${name}${i > 0 ? ` — foto ${i + 1}` : ""}" loading="lazy"${i === 0 ? coverStyleAttr : ""} />
+        <img src="${escapeHtml(optimizedSrc(url, PRODUCT_MAX_W))}" srcset="${escapeHtml(srcsetFor(url, PRODUCT_MAX_W))}" sizes="(min-width: 760px) ${PRODUCT_MAX_W}px, 100vw" alt="${name}${i > 0 ? ` — foto ${i + 1}` : ""}" loading="lazy"${i === 0 ? coverStyleAttr : ""} />
         ${i === 0 ? overlay : ""}
       </div>`).join("");
     const dots = photos.map((_, i) =>
@@ -425,7 +458,7 @@
         </h1>
 
         <div class="cover-photo"${p.photoPositionY ? ` style="--photo-y:${escapeHtml(p.photoPositionY)}%"` : ""}>
-          ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang), true)}
+          ${photo(p.photo, "4x5", t(lang, "photoCover"), f(p, "name", lang), true, 700)}
         </div>
         ${role ? `<div class="cover-role" aria-hidden="true"><span>${typeChars(`${p.name || ""} — ${role}`)}</span></div>` : ""}
         ${role ? `<span class="sr-only">${escapeHtml(p.name || "")} — ${escapeHtml(role)}</span>` : ""}
