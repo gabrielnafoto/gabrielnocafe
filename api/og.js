@@ -5,6 +5,11 @@
 
 import { ImageResponse } from "@vercel/og";
 import { getData } from "../lib/store.js";
+// render-shared.js is a UMD/CommonJS module — named-export interop for it
+// isn't reliable across bundlers/runtimes, so pull it in as the default
+// export and destructure explicitly instead.
+import renderShared from "../public/render-shared.js";
+const { clean } = renderShared;
 
 export const config = { runtime: "edge" };
 
@@ -38,9 +43,9 @@ export default async function handler() {
   const profile = data.profile || {};
   const site = data.site || {};
 
-  const name = profile.name || "Gabriel";
-  const tagline = site.tagline || "café, criatividade e as coisas que eu realmente uso.";
-  const headline = site.headline || "é só um café.";
+  const name = clean(profile.name) || "Gabriel";
+  const tagline = clean(site.tagline) || "café, criatividade e as coisas que eu realmente uso.";
+  const headline = clean(site.headline) || "é só um café.";
   const { lead, last } = splitHeadline(headline);
   const sampleText = `${name}${tagline}${lead}${last}✦`;
 

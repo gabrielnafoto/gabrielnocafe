@@ -1,6 +1,23 @@
 // api/data.js — Vercel Serverless Function (CommonJS)
 
 const { getData, saveData } = require("../lib/store.js");
+const { clean } = require("../public/render-shared.js");
+
+// Runs clean() (strip stray double-spaces, leading/trailing space, and
+// punctuation pushed off its word) over every string the admin saves, not
+// just at render time — keeps the data itself tidy for anything that reads
+// it directly (api/og.js, admin.html re-opening a field, /api/data
+// consumers) instead of relying on every reader to normalise on the way out.
+function deepClean(value) {
+  if (typeof value === "string") return clean(value);
+  if (Array.isArray(value)) return value.map(deepClean);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const k of Object.keys(value)) out[k] = deepClean(value[k]);
+    return out;
+  }
+  return value;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,7 +43,7 @@ module.exports = async function handler(req, res) {
     if (!req.body) return res.status(200).json({ ok: true });
 
     try {
-      const persisted = await saveData(req.body);
+      const persisted = await saveData(deepClean(req.body));
       return res.status(200).json({ ok: true, persisted });
     } catch (err) {
       return res.status(500).json({ error: "Erro ao salvar." });
