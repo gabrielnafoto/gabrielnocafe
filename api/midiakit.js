@@ -48,6 +48,53 @@ function postCard(post) {
   </a>`;
 }
 
+// One card per real collab (product-seeding / permuta) — a plain-language
+// summary of the deal (who sent what, what came out of it) next to the one
+// confirmed post's real, traceable numbers. Never invents figures for
+// deliverables that haven't run yet — a collab can list 2 reels while only
+// 1 has actually posted, and the card only shows the post/story that exist.
+function collabCard(c) {
+  const dateFmt = c.post?.date
+    ? new Date(c.post.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+    : "";
+  const deliverables = (c.deliverables || []).map((d) => `<span class="mk-collab-pill">${escapeHtml(d)}</span>`).join("");
+
+  const postBlock = c.post ? `<a class="mk-post-card" href="${escapeHtml(c.post.permalink)}" target="_blank" rel="noopener">
+      <div class="mk-photo">
+        <img src="${escapeHtml(c.post.thumbnail)}" alt="Capa do reel — collab ${escapeHtml(c.brand)}" loading="lazy">
+        <div class="mk-play"><span>▶</span></div>
+        <span class="mk-open-hint">Ver no Instagram ↗</span>
+      </div>
+      <p class="mk-cap">"${escapeHtml(c.post.caption)}"</p>
+      <div class="mk-stats"><span>Alcance <b>${money(c.post.reach)}</b></span><span>Views <b>${money(c.post.views)}</b></span><span>Salvos <b>${money(c.post.saves)}</b></span></div>
+      <div class="mk-date">${escapeHtml(dateFmt)}</div>
+    </a>` : "";
+
+  const storyBlock = c.story ? `<div class="mk-collab-story">
+      <span class="mk-collab-story-label">✦ Story da mesma collab</span>
+      <div class="mk-collab-story-stats">
+        <span>Views <b>${money(c.story.views)}</b></span>
+        <span>Interações <b>${money(c.story.interactions)}</b></span>
+        <span>Curtidas <b>${money(c.story.likes)}</b></span>
+        <span>Compart. <b>${money(c.story.shares)}</b></span>
+        <span>Toques na figurinha <b>${money(c.story.stickerTaps)}</b></span>
+      </div>
+    </div>` : "";
+
+  return `<div class="mk-collab-card">
+    <div class="mk-collab-text">
+      <div class="mk-collab-head">
+        <span class="mk-collab-brand">${escapeHtml(c.brand)}</span>
+        <span class="mk-collab-kind">${escapeHtml(c.kind)}</span>
+      </div>
+      <p class="mk-collab-summary">${escapeHtml(c.summary)}</p>
+      ${deliverables ? `<div class="mk-collab-deliverables">${deliverables}</div>` : ""}
+      ${storyBlock}
+    </div>
+    ${postBlock}
+  </div>`;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end("Method not allowed");
 
@@ -88,6 +135,7 @@ module.exports = async function handler(req, res) {
 
   const postCards = d.topPosts.map(postCard).join("\n");
   const brandPills = d.brands.map((b) => `<span class="mk-brand-pill">${escapeHtml(b)}</span>`).join("");
+  const collabCards = (d.collabs || []).map(collabCard).join("");
 
   const bodyHtml = `
 <div class="mk-body">
@@ -210,9 +258,20 @@ module.exports = async function handler(req, res) {
     </div>
   </section>
 
+  ${collabCards ? `<section class="mk-section" id="collabs">
+    <div class="mk-section-head">
+      <div>
+        <div class="mk-eyebrow">06 — Collabs recentes</div>
+        <h2 class="mk-section-title">Como já<br>funcionou na prática</h2>
+      </div>
+      <div class="mk-section-index">Números reais, do próprio Instagram</div>
+    </div>
+    <div class="mk-collab-list">${collabCards}</div>
+  </section>` : ""}
+
   <section class="mk-section mk-contact" id="contato">
     <div class="mk-section-head" style="margin-top:0">
-      <div class="mk-eyebrow">06 — Contato</div>
+      <div class="mk-eyebrow">07 — Contato</div>
     </div>
     <div class="mk-contact-grid">
       <h2 class="mk-contact-title">Bora tomar<br>um café?<span class="mk-hand">vamos conversar sobre a parceria</span></h2>

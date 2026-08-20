@@ -122,6 +122,41 @@
 .mk-offer h4 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 17px; margin: 10px 0 8px; }
 .mk-offer p { font-family: 'Space Mono', monospace; font-size: 12.5px; line-height: 1.7; color: var(--muted); margin: 0; }
 
+/* ---------- collabs ---------- */
+.mk-collab-list { display: flex; flex-direction: column; gap: 40px; }
+.mk-collab-card {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 40px;
+  align-items: start;
+  padding: 32px;
+  border: 1px solid var(--rule);
+}
+@media (max-width: 760px) { .mk-collab-card { grid-template-columns: 1fr; } }
+.mk-collab-card .mk-post-card { max-width: 260px; }
+@media (max-width: 760px) { .mk-collab-card .mk-post-card { max-width: 220px; } }
+
+.mk-collab-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.mk-collab-brand { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 22px; color: var(--paper); }
+.mk-collab-kind { font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); }
+.mk-collab-summary { font-size: 14.5px; line-height: 1.7; color: var(--muted); max-width: 56ch; }
+
+.mk-collab-deliverables { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.mk-collab-pill {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.mk-collab-story { margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--rule); }
+.mk-collab-story-label { font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 12px; }
+.mk-collab-story-stats { display: flex; flex-wrap: wrap; gap: 16px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--faint); }
+.mk-collab-story-stats b { color: var(--amber); font-variant-numeric: tabular-nums; }
+
 /* ---------- contato ---------- */
 .mk-contact { padding-bottom: 96px; }
 .mk-contact-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: end; }
